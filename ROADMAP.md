@@ -1,4 +1,4 @@
-# Roadmap: Nidelven River Adventure
+# Nidelven River Adventure - Roadmap
 
 Last updated: 2026-05-13
 
@@ -6,51 +6,36 @@ Last updated: 2026-05-13
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-## Current Status: Phase 2 Features Complete ✅
+## Completed ✅
 
-| Phase | Status | Description |
-|-------|--------|-------------|
-| MVP | ✅ Complete | Core gameplay |
-| Phase 1 | ✅ Complete | Content (vegetation, day/night) |
-| Phase 2 | ✅ Complete | Polish (photo mode) |
-| Phase 3 | 🔄 In Progress | Data Integration (DEM import) |
+| Feature | Issue |
+|---------|-------|
+| Terrain + River | - |
+| Boat Physics | #1 |
+| Audio System | #2 |
+| Save/Load | #3 |
+| Kartverket DEM | #4 |
+| Vegetation | #5 |
+| Day/Night Cycle | #6 |
+| Photo Mode | #7 |
 
-## Completed Features
+## In Progress 🔄
 
-### MVP ✅
-- Terrain Generation
-- River Flow
-- Camera Following
-- Boat Physics (#1)
-- Soundscape (#2)
-- Save/Load (#3)
+| Feature | Issue | Priority |
+|---------|-------|----------|
+| Steam Integration | #8 | High |
+| Wildlife System | #9 | Medium |
 
-### Phase 1 ✅
-- Vegetation System (#5)
-- Day/Night Cycle (#6)
+## Future Ideas
 
-### Phase 2 ✅
-- Photo Mode (#7)
-
-## Open Issues
-
-| # | Title | Phase |
-|---|-------|-------|
-| 4 | Import real DEM data from Kartverket | Phase 3 |
+- Weather effects (rain, fog)
+- Multiplayer co-op
+- VR support
+- Additional rivers (Norge)
 
 ## CI/CD
 
-| Pipeline | Status |
-|----------|--------|
-| Python MVP | ✅ Passing |
-| Unity Test | ⏸️ Needs license secret |
-| Unity Build | ⏸️ Needs license secret |
+- ✅ Python MVP checks passing
+- ⏸️ Unity builds (needs Steam secrets)
 
-## Recent Commits
-
-- feat: PhotoMode with filters and capture
-- feat: DayNightCycle with dynamic lighting
-- feat: VegetationGenerator with GPU instancing
-- feat: BoatController, AudioManager, SaveManager
-- docs: Updated README and ROADMAP
-- CI: Fixed Python workflow
+See [CI_SETUP.md](CI_SETUP.md) for configuration.
