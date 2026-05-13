@@ -6,8 +6,32 @@ A relaxing river exploration game set on the real Nidelven river in Agder, Norwa
 
 Paddle, kayak, or canoe down the entire 67km stretch of Nidelven — from the forests of Røysland to the coastal waters of Arendal. Experience the real landscape: every bend, every rapid, every waterfall exists in the real world.
 
-**Current scope:** Single-player relaxing exploration.
+**Current scope:** Single-player relaxing exploration.  
 **Future potential:** Time trials, multiplayer co-op, online racing, weather/survival mechanics.
+
+## Quick Start
+
+### For Players
+
+Download the latest build from [Releases](https://github.com/egkristi/Nidelven-river-adventure/releases) (coming soon).
+
+### For Developers
+
+```bash
+# Clone the repo
+git clone https://github.com/egkristi/Nidelven-river-adventure.git
+cd Nidelven-river-adventure
+
+# Setup Python MVP (uses UV)
+cd mvp
+uv sync
+
+# Run the MVP previewer
+uv run mvp
+
+# Or open in Unity
+# File → Open Project → select this folder
+```
 
 ## Tech Stack
 
@@ -15,105 +39,103 @@ Paddle, kayak, or canoe down the entire 67km stretch of Nidelven — from the fo
 |-------|-----------|
 | Engine | Unity 6000 (LTS) |
 | Render Pipeline | URP (Universal Render Pipeline) |
-| Terrain | Real-world DEM → Unity Terrain / Mesh |
-| Imagery | Satellite + aerial orthophotos |
-| Water | Unity Water System + custom river flow |
-| Physics | Unity Physics (Buoyancy, fluid dynamics) |
-| Data Pipeline | Python / GDAL / QGIS preprocessing |
-
-## Data Sources
-
-| Data Type | Source | Resolution |
-|-----------|--------|------------|
-| Elevation (DEM) | [Kartverket Høydedata](https://hoydedata.no) | 1m laser scanned |
-| Aerial Imagery | [Kartverket Norge i Bilder](https://norgeibilder.no) | 10-25cm |
-| Satellite | Sentinel-2 (ESA) | 10m |
-| River centerline | OpenStreetMap | vector |
-| Water flow data | NVE (Norges vassdrags- og energidirektorat) | gauging stations |
-| Vegetation / land cover | AR5 (Kartverket) | vector |
-
-See [`docs/data-pipeline.md`](docs/data-pipeline.md) for the full ingestion workflow.
+| Terrain | Real-world DEM → Unity Terrain |
+| Water | Custom URP shader with flow |
+| Physics | Unity Physics (Buoyancy) |
+| Data Pipeline | Python 3.11 + UV + GDAL |
 
 ## Project Structure
 
 ```
 Nidelven-river-adventure/
-├── Assets/
+├── Assets/                 # Unity project
 │   ├── Scripts/
-│   │   ├── Core/           # Game loop, state management
-│   │   ├── Environment/    # Terrain, water, weather, vegetation
-│   │   ├── Player/         # Paddle mechanics, boat physics, camera
-│   │   ├── UI/             # Menus, HUD, map
-│   │   ├── Data/           # Save/load, telemetry
-│   │   └── Networking/     # (future) multiplayer
-│   ├── Materials/
-│   ├── Prefabs/
-│   ├── Scenes/
-│   ├── Shaders/            # Custom water, terrain blending
-│   ├── Audio/
-│   ├── Resources/          # Runtime-loaded assets
-│   ├── Editor/             # Custom editor tools
-│   ├── Plugins/
-│   └── StreamingAssets/    # DEM tiles, satellite imagery
-├── docs/
-│   ├── data-pipeline.md    # Real-world data ingestion
-│   ├── technical-architecture.md
-│   └── contributing.md
-├── design/
-│   └── gdd.md              # Game Design Document
-├── scripts/                # Python / GDAL preprocessing scripts
-├── data-sources/           # Raw downloaded data (gitignored)
-├── .github/workflows/
-└── ProjectSettings/
+│   │   ├── Core/          # GameManager
+│   │   ├── Environment/     # Terrain, River
+│   │   ├── Player/          # Boat, Camera
+│   │   └── UI/
+│   ├── Shaders/           # Water shader
+│   └── Scenes/
+├── mvp/                    # Python terrain previewer
+│   ├── dem_downloader.py
+│   ├── terrain_mesh.py
+│   ├── river_flow.py
+│   └── renderer.py
+├── docs/                   # Documentation
+│   ├── data-pipeline.md
+│   └── ROADMAP.md
+└── design/
+    └── gdd.md              # Game Design Document
 ```
 
-## Quick Start (for developers)
+## Controls
 
-### Prerequisites
+| Key | Action |
+|-----|--------|
+| Space | Pause/Resume auto-follow |
+| Left Click + Drag | Orbit camera |
+| Scroll | Zoom in/out |
+| Up/Down | Speed up/slow down |
+| R | Reset to start |
 
-- Unity 6000 LTS (or latest 6.x)
-- Python 3.10+ (data pipeline)
-- GDAL 3.6+ (ogr2ogr, gdalwarp, gdaldem)
-- QGIS (optional, for visual inspection)
+## Development
 
-### Data Setup
+### Python MVP
+
+The `mvp/` folder contains a standalone Python previewer for rapid iteration:
 
 ```bash
-# 1. Clone the repo
-git clone https://github.com/egkristi/Nidelven-river-adventure.git
-cd Nidelven-river-adventure
-
-# 2. Download and process real-world data
-python scripts/download_data.py --river nidelven --output data-sources/
-python scripts/process_dem.py --input data-sources/dem/ --output Assets/StreamingAssets/Terrain/
-python scripts/process_imagery.py --input data-sources/imagery/ --output Assets/StreamingAssets/Imagery/
-
-# 3. Open in Unity
-# File → Open Project → select this folder
+cd mvp
+uv run python minimal.py      # Zero-dependency ASCII preview
+uv run python -m mvp.main     # Full 3D preview
+uv run python -m mvp.main --download  # Download real DEM
 ```
 
-### Play
+### Unity Setup
 
-1. Open `Assets/Scenes/River.unity`
-2. Press Play
-3. Select your vessel (kayak, canoe, or raft)
-4. Paddle downstream and enjoy the scenery
+1. Create GameObjects: GameManager, Terrain, River, CameraRig
+2. Add components:
+   - Terrain → TerrainGenerator
+   - River → RiverController
+   - CameraRig → RiverCamera
+   - (empty) → GameManager
+3. Link references (see Scripts/README.md)
+4. Press Play
 
-## Milestones
+### CI/CD
 
-| Phase | Goal | Status |
-|-------|------|--------|
-| 0 | Research & data collection | 🔄 In Progress |
-| 1 | Terrain generation pipeline | ⬜ |
-| 2 | Water system & river flow | ⬜ |
-| 3 | Player controller (kayak) | ⬜ |
-| 4 | Vegetation & environment | ⬜ |
-| 5 | Soundscape & atmosphere | ⬜ |
-| 6 | UI, menus, save system | ⬜ |
-| 7 | Polish & optimization | ⬜ |
-| 8 | Steam release prep | ⬜ |
+GitHub Actions runs:
+- ✅ Python MVP linting (ruff, black, mypy)
+- ✅ Minimal MVP execution test
+- ⏸️ Unity tests (requires Unity license secrets)
 
-See [Issues](https://github.com/egkristi/Nidelven-river-adventure/issues) for detailed tasks.
+## Data Sources
+
+| Data | Source | Resolution |
+|------|--------|------------|
+| DEM | [Kartverket](https://hoydedata.no) | 1m/10m |
+| Imagery | [Kartverket](https://norgeibilder.no) | 10-25cm |
+| Satellite | Sentinel-2 (ESA) | 10m |
+| River | OpenStreetMap | vector |
+
+## Roadmap
+
+See [ROADMAP.md](ROADMAP.md) for detailed development status.
+
+### Current: MVP Phase
+- ✅ Terrain generation
+- ✅ River flow
+- ✅ Camera following
+- 🔄 Boat physics (Issue #1)
+- ⬜ Soundscape (Issue #2)
+- ⬜ Save/load (Issue #3)
+
+## Contributing
+
+1. Check [ROADMAP.md](ROADMAP.md) for open tasks
+2. See [GitHub Issues](https://github.com/egkristi/Nidelven-river-adventure/issues)
+3. Follow existing code style (UV + ruff + black)
+4. Submit PR with clear description
 
 ## License
 
