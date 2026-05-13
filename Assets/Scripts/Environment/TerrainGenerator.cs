@@ -1,0 +1,385 @@
+using UnityEngine;
+using System.IO;
+
+namespace Nidelven.Environment
+{
+    /// <summary>
+    /// Generates Unity Terrain from DEM (Digital Elevation Model) data.
+    /// Supports GeoTIFF import and synthetic terrain generation.
+    /// </summary>
+    public class TerrainGenerator : MonoBehaviour
+    {
+        [Header("Data Source")]
+        [Tooltip("Path to DEM file (GeoTIFF or RAW). If empty, generates synthetic terrain.")]
+        public string demFilePath = "";
+        
+        [Tooltip("Use synthetic terrain when no DEM file is available")]
+        public bool useSyntheticFallback = true;
+        
+        [Header("Terrain Settings")]
+        [Tooltip("Size of terrain in world units (meters)")]
+        public Vector3 terrainSize = new Vector3(2000f, 500f, 2000f);
+        
+        [Tooltip("Resolution of terrain heightmap")]
+        public int resolution = 513; // Unity Terrain uses power of 2 + 1
+        
+        [Tooltip("Height scale multiplier")]
+        public float heightScale = 1f;
+        
+        [Header("Visual Settings")]
+        [Tooltip("Material for terrain")]
+        public Material terrainMaterial;
+        
+        [Tooltip("Base terrain color")]
+        public Color baseColor = new Color(0.35f, 0.5f, 0.25f);
+        
+        [Header("River Integration")]
+        [Tooltip("River path for terrain deformation")]
+        public Transform riverPath;
+        
+        [Tooltip("River width for carving")]
+        public float riverWidth = 20f;
+        
+        [Tooltip("River depth")]
+        public float riverDepth = 5f;
+        
+        private Terrain terrain;
+        private TerrainData terrainData;
+        
+        void Start()
+        {
+            GenerateTerrain();
+        }
+        
+        /// <summary>
+        /// Main terrain generation entry point.
+        /// </summary>
+        public void GenerateTerrain()
+        {
+            // Create or get terrain
+            terrain = GetComponent<Terrain>();
+            if (terrain == null)
+            {
+                terrain = gameObject.AddComponent<Terrain>();
+            }
+            
+            terrainData = new TerrainData();
+            terrainData.size = terrainSize;
+            terrainData.heightmapResolution = resolution;
+            
+            // Generate heightmap
+            float[,] heights = GenerateHeightmap();
+            
+            // Apply river carving if river path exists
+            if (riverPath != null)
+            {
+                heights = CarveRiver(heights);
+            }
+            
+            terrainData.SetHeights(0, 0, heights);
+            terrain.terrainData = terrainData;
+            
+            // Apply material
+            if (terrainMaterial != null)
+            {
+                terrain.materialTemplate = terrainMaterial;
+            }
+            
+            // Add terrain collider
+            TerrainCollider collider = GetComponent<TerrainCollider>();
+            if (collider == null)
+            {
+                collider = gameObject.AddComponent<TerrainCollider>();
+            }
+            collider.terrainData = terrainData;
+            
+            Debug.Log($"Terrain generated: {resolution}x{resolution}, size: {terrainSize}");
+        }
+        
+        /// <summary>
+        /// Generate heightmap from DEM or synthetic data.
+        /// </summary>
+        float[,] GenerateHeightmap()
+        {
+            // Try to load real DEM data
+            if (!string.IsNullOrEmpty(demFilePath) && File.Exists(demFilePath))
+            {
+                try
+                {
+                    return LoadDemFromFile(demFilePath);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogWarning($"Failed to load DEM: {e.Message}. Using synthetic.");
+                }
+            }
+            
+            // Generate synthetic terrain
+            if (useSyntheticFallback)
+            {
+                return GenerateSyntheticHeightmap();
+            }
+            
+            // Flat terrain as last resort
+            return new float[resolution, resolution];
+        }
+        
+        /// <summary>
+        /// Load DEM data from file (GeoTIFF or RAW format).
+        /// </summary>
+        float[,] LoadDemFromFile(string path)
+        {
+            string ext = Path.GetExtension(path).ToLower();
+            
+            if (ext == ".tif" || ext == ".tiff")
+            {
+                return LoadGeoTiff(path);
+            }
+            else if (ext == ".raw" || ext == ".dem")
+            {
+                return LoadRawDem(path);
+            }
+            else
+            {
+                throw new System.NotSupportedException($"DEM format not supported: {ext}");
+            }
+        }
+        
+        /// <summary>
+        /// Load GeoTIFF using GDAL (requires GDAL for Unity plugin).
+        /// Fallback to raw bytes if GDAL not available.
+        /// </summary>
+        float[,] LoadGeoTiff(string path)
+        {
+            // For MVP: Use raw byte reading as fallback
+            // Full implementation would use GDAL bindings
+            
+            byte[] bytes = File.ReadAllBytes(path);
+            
+            // Simple 16-bit grayscale interpretation
+            // Real implementation needs TIFF parsing
+            int width = Mathf.FloorToInt(Mathf.Sqrt(bytes.Length / 2));
+            int height = width;
+            
+            float[,] heights = new float[height, width];
+            
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int idx = (y * width + x) * 2;
+                    if (idx + 1 < bytes.Length)
+                    {
+                        ushort value = (ushort)(bytes[idx] | (bytes[idx + 1] << 8));
+                        heights[y, x] = value / 65535f * heightScale;
+                    }
+                }
+            }
+            
+            // Resample to target resolution
+            return ResampleHeightmap(heights, resolution, resolution);
+        }
+        
+        /// <summary>
+        /// Load raw DEM format (16-bit grayscale).
+        /// </summary>
+        float[,] LoadRawDem(string path)
+        {
+            byte[] bytes = File.ReadAllBytes(path);
+            int width = Mathf.FloorToInt(Mathf.Sqrt(bytes.Length / 2));
+            int height = width;
+            
+            float[,] heights = new float[height, width];
+            
+            for (int y = 0; y < height; y++)
+            {
+                for (int x = 0; x < width; x++)
+                {
+                    int idx = (y * width + x) * 2;
+                    if (idx + 1 < bytes.Length)
+                    {
+                        ushort value = (ushort)(bytes[idx] | (bytes[idx + 1] << 8));
+                        heights[y, x] = value / 65535f * heightScale;
+                    }
+                }
+            }
+            
+            return ResampleHeightmap(heights, resolution, resolution);
+        }
+        
+        /// <summary>
+        /// Generate synthetic terrain simulating the Nidelven river valley.
+        /// </summary>
+        float[,] GenerateSyntheticHeightmap()
+        {
+            float[,] heights = new float[resolution, resolution];
+            
+            // Seed for reproducibility
+            Random.InitState(42);
+            
+            for (int y = 0; y < resolution; y++)
+            {
+                float normalizedY = y / (float)(resolution - 1);
+                
+                // River path (sine wave)
+                float riverX = 0.5f + 0.15f * Mathf.Sin(normalizedY * Mathf.PI * 3f);
+                
+                for (int x = 0; x < resolution; x++)
+                {
+                    float normalizedX = x / (float)(resolution - 1);
+                    
+                    // Distance from river
+                    float dist = Mathf.Abs(normalizedX - riverX);
+                    
+                    // Height composition
+                    float baseHeight = 0.1f;
+                    float riverDepth = 0.05f * Mathf.Exp(-dist * 20f);
+                    float hills = dist * dist * 0.5f;
+                    float noise = Random.value * 0.02f;
+                    
+                    // Waterfall feature
+                    float waterfall = 0f;
+                    if (normalizedY > 0.55f && normalizedY < 0.65f)
+                    {
+                        waterfall = 0.1f * Mathf.Sin((normalizedY - 0.55f) / 0.1f * Mathf.PI);
+                    }
+                    
+                    heights[y, x] = Mathf.Clamp01(baseHeight + riverDepth + hills + noise + waterfall);
+                }
+            }
+            
+            return heights;
+        }
+        
+        /// <summary>
+        /// Carve river channel into terrain.
+        /// </summary>
+        float[,] CarveRiver(float[,] heights)
+        {
+            if (riverPath == null) return heights;
+            
+            // Sample river path points
+            int pathLength = riverPath.childCount;
+            if (pathLength == 0) return heights;
+            
+            Vector3[] pathPoints = new Vector3[pathLength];
+            for (int i = 0; i < pathLength; i++)
+            {
+                pathPoints[i] = riverPath.GetChild(i).position;
+            }
+            
+            // Convert world positions to heightmap coordinates
+            for (int i = 0; i < pathLength - 1; i++)
+            {
+                Vector3 p1 = pathPoints[i];
+                Vector3 p2 = pathPoints[i + 1];
+                
+                // Sample along segment
+                int samples = Mathf.CeilToInt(Vector3.Distance(p1, p2));
+                for (int s = 0; s <= samples; s++)
+                {
+                    float t = s / (float)samples;
+                    Vector3 pos = Vector3.Lerp(p1, p2, t);
+                    
+                    // World to heightmap coordinates
+                    int hmX = Mathf.FloorToInt((pos.x / terrainSize.x + 0.5f) * resolution);
+                    int hmY = Mathf.FloorToInt((pos.z / terrainSize.z + 0.5f) * resolution);
+                    
+                    // Carve area around river point
+                    int radius = Mathf.CeilToInt(riverWidth / terrainSize.x * resolution);
+                    for (int dy = -radius; dy <= radius; dy++)
+                    {
+                        for (int dx = -radius; dx <= radius; dx++)
+                        {
+                            int nx = hmX + dx;
+                            int ny = hmY + dy;
+                            
+                            if (nx >= 0 && nx < resolution && ny >= 0 && ny < resolution)
+                            {
+                                float dist = Mathf.Sqrt(dx * dx + dy * dy) / radius;
+                                float carveAmount = Mathf.Exp(-dist * dist * 2f) * riverDepth / terrainSize.y;
+                                heights[ny, nx] = Mathf.Max(0, heights[ny, nx] - carveAmount);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            return heights;
+        }
+        
+        /// <summary>
+        /// Resample heightmap to target resolution using bilinear interpolation.
+        /// </summary>
+        float[,] ResampleHeightmap(float[,] source, int targetWidth, int targetHeight)
+        {
+            int sourceWidth = source.GetLength(1);
+            int sourceHeight = source.GetLength(0);
+            
+            if (sourceWidth == targetWidth && sourceHeight == targetHeight)
+            {
+                return source;
+            }
+            
+            float[,] result = new float[targetHeight, targetWidth];
+            
+            float xScale = (sourceWidth - 1) / (float)(targetWidth - 1);
+            float yScale = (sourceHeight - 1) / (float)(targetHeight - 1);
+            
+            for (int y = 0; y < targetHeight; y++)
+            {
+                for (int x = 0; x < targetWidth; x++)
+                {
+                    float srcX = x * xScale;
+                    float srcY = y * yScale;
+                    
+                    int x0 = Mathf.FloorToInt(srcX);
+                    int y0 = Mathf.FloorToInt(srcY);
+                    int x1 = Mathf.Min(x0 + 1, sourceWidth - 1);
+                    int y1 = Mathf.Min(y0 + 1, sourceHeight - 1);
+                    
+                    float fx = srcX - x0;
+                    float fy = srcY - y0;
+                    
+                    float v00 = source[y0, x0];
+                    float v10 = source[y0, x1];
+                    float v01 = source[y1, x0];
+                    float v11 = source[y1, x1];
+                    
+                    result[y, x] = v00 * (1 - fx) * (1 - fy)
+                                 + v10 * fx * (1 - fy)
+                                 + v01 * (1 - fx) * fy
+                                 + v11 * fx * fy;
+                }
+            }
+            
+            return result;
+        }
+        
+        /// <summary>
+        /// Get terrain height at world position.
+        /// </summary>
+        public float GetHeightAt(Vector3 worldPos)
+        {
+            if (terrainData == null) return 0f;
+            
+            float normalizedX = (worldPos.x / terrainSize.x) + 0.5f;
+            float normalizedZ = (worldPos.z / terrainSize.z) + 0.5f;
+            
+            return terrainData.GetInterpolatedHeight(normalizedX, normalizedZ);
+        }
+        
+        /// <summary>
+        /// Get terrain normal at world position.
+        /// </summary>
+        public Vector3 GetNormalAt(Vector3 worldPos)
+        {
+            if (terrainData == null) return Vector3.up;
+            
+            float normalizedX = (worldPos.x / terrainSize.x) + 0.5f;
+            float normalizedZ = (worldPos.z / terrainSize.z) + 0.5f;
+            
+            return terrainData.GetInterpolatedNormal(normalizedX, normalizedZ);
+        }
+    }
+}
