@@ -20,27 +20,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install UV
-        uses: astral-sh/setup-uv@v3
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          version: "0.11.0"
+          python-version: '3.11'
 
-      - name: Sync Dependencies
-        working-directory: ./mvp
-        run: uv sync --all-extras || uv pip install -e . --system
+      - name: Install dependencies
+        run: |
+          pip install ruff black
 
       - name: Lint with Ruff
         working-directory: ./mvp
-        run: uv run ruff check . --output-format=github || python3 -m ruff check . --output-format=github || true
+        run: ruff check . --output-format=github || true
 
       - name: Format Check with Black
         working-directory: ./mvp
-        run: uv run black --check --diff . || python3 -m black --check --diff . || true
+        run: black --check --diff . || true
 
       - name: Test MVP Minimal Runs
         working-directory: ./mvp
         run: |
-          python3 -c "from mvp.minimal import create_sample_dem_ascii; print('Import OK')" || true
+          python3 -c "from minimal import create_sample_dem_ascii; print('Import OK')"
           timeout 10 python3 minimal.py || echo "Minimal MVP runs (timeout expected)"
 
   # Unity checks - only runs if secrets are configured
