@@ -50,7 +50,7 @@ uv run mvp
 Nidelven-river-adventure/
 ├── Assets/                 # Unity project
 │   ├── Scripts/
-│   │   ├── Core/          # GameManager, AudioManager, SaveManager
+│   │   ├── Core/          # GameManager, AudioManager, SaveManager, PhotoMode
 │   │   ├── Environment/     # TerrainGenerator, RiverController, VegetationGenerator, DayNightCycle
 │   │   ├── Player/          # BoatController, RiverCamera
 │   │   └── UI/
@@ -69,6 +69,11 @@ Nidelven-river-adventure/
 ```
 
 ## Controls
+
+### General
+| Key | Action |
+|-----|--------|
+| F12 | Toggle Photo Mode |
 
 ### Camera (Auto-Follow Mode)
 | Key | Action |
@@ -89,11 +94,22 @@ Nidelven-river-adventure/
 | Shift | Sprint (uses stamina) |
 | Space | Brake / Recover from capsize |
 
+### Photo Mode
+| Key | Action |
+|-----|--------|
+| F12 | Exit Photo Mode |
+| Space | Capture Screenshot |
+| WASD | Move camera |
+| QE | Up/Down |
+| Right Click + Drag | Look around |
+| Scroll | Zoom (FOV) |
+| R | Reset filters |
+
 ## Development
 
 ### Python MVP
 
-The `mvp/` folder contains a standalone Python previewer for rapid iteration:
+The `mvp/` folder contains a standalone Python previewer:
 
 ```bash
 cd mvp
@@ -108,8 +124,8 @@ uv run python -m mvp.main --download  # Download real DEM
 2. Add components:
    - Terrain → TerrainGenerator
    - River → RiverController
-   - Terrain → VegetationGenerator (optional)
-   - (empty) → DayNightCycle
+   - Terrain → VegetationGenerator
+   - (empty) → DayNightCycle, PhotoMode
    - CameraRig → RiverCamera
    - PlayerBoat → BoatController + Rigidbody
    - (empty) → GameManager, AudioManager, SaveManager
@@ -128,31 +144,23 @@ uv run python -m mvp.main --download  # Download real DEM
 
 ### Implemented ✅
 
-| Feature | Description | Issue |
-|---------|-------------|-------|
-| Terrain Generation | Synthetic valley or real DEM import | - |
-| River Flow | Gradient-based path with realistic current | - |
-| Camera System | Auto-follow with orbit controls | - |
-| Boat Physics | Buoyancy, paddling, capsize/recovery | #1 |
-| Soundscape | Layered river/forest ambience, birds | #2 |
-| Save/Load | JSON persistence, auto-save, stats | #3 |
-| Vegetation | GPU-instanced trees and rocks | #5 |
-| Day/Night Cycle | Dynamic lighting and atmosphere | #6 |
+| Feature | Description |
+|---------|-------------|
+| Terrain Generation | Synthetic valley or real DEM import |
+| River Flow | Gradient-based path with realistic current |
+| Camera System | Auto-follow with orbit controls |
+| Boat Physics | Buoyancy, paddling, capsize/recovery |
+| Soundscape | Layered river/forest ambience, birds |
+| Save/Load | JSON persistence, auto-save, stats |
+| Vegetation | GPU-instanced trees and rocks |
+| Day/Night Cycle | Dynamic lighting and atmosphere |
+| Photo Mode | Freeze time, filters, screenshot capture |
 
 ### In Progress 🔄
 
 | Feature | Issue |
 |---------|-------|
 | Real DEM Import | #4 |
-| Photo Mode | #7 |
-
-### Planned ⬜
-
-| Feature | Priority | Issue |
-|---------|----------|-------|
-| Wildlife (Ambient) | Medium | - |
-| Weather Effects | Medium | - |
-| Steam Integration | High | - |
 
 ## Data Sources
 
@@ -167,18 +175,17 @@ uv run python -m mvp.main --download  # Download real DEM
 
 See [ROADMAP.md](ROADMAP.md) for detailed development status.
 
-### Current: Phase 1 Content Complete ✅
-- ✅ MVP Complete (terrain, river, boat, audio, save)
-- ✅ Vegetation System (#5)
-- ✅ Day/Night Cycle (#6)
+### Current: Phase 2 Polish
+- ✅ MVP Complete
+- ✅ Phase 1 Content (vegetation, day/night)
+- ✅ Phase 2 Features (photo mode)
 - 🔄 Real DEM Import (#4)
-- ⬜ Photo Mode (#7)
 
 ## Contributing
 
 1. Check [ROADMAP.md](ROADMAP.md) for open tasks
 2. See [GitHub Issues](https://github.com/egkristi/Nidelven-river-adventure/issues)
-3. Follow existing code style (UV + ruff + black)
+3. Follow existing code style
 4. Submit PR with clear description
 
 ## License

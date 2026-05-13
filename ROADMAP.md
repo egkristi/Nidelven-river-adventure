@@ -1,93 +1,56 @@
 # Roadmap: Nidelven River Adventure
 
-This document tracks development progress and planned features.
-
 Last updated: 2026-05-13
 
 ## Build Status
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-## Current Status: Phase 1 Content Complete ✅
+## Current Status: Phase 2 Features Complete ✅
 
 | Phase | Status | Description |
 |-------|--------|-------------|
-| MVP | ✅ Complete | Core gameplay loop |
+| MVP | ✅ Complete | Core gameplay |
 | Phase 1 | ✅ Complete | Content (vegetation, day/night) |
-| Phase 2 | 🔄 In Progress | Polish (photo mode, DEM, Steam) |
+| Phase 2 | ✅ Complete | Polish (photo mode) |
+| Phase 3 | 🔄 In Progress | Data Integration (DEM import) |
 
-## Completed Milestones
+## Completed Features
 
-### MVP: Core Gameplay ✅
-All MVP features implemented and tested.
+### MVP ✅
+- Terrain Generation
+- River Flow
+- Camera Following
+- Boat Physics (#1)
+- Soundscape (#2)
+- Save/Load (#3)
 
-| Feature | Status | Issue |
-|---------|--------|-------|
-| Terrain Generation | ✅ | - |
-| River Flow | ✅ | - |
-| Camera Following | ✅ | - |
-| Boat Physics | ✅ | #1 |
-| Soundscape | ✅ | #2 |
-| Save/Load System | ✅ | #3 |
-| CI/CD Pipeline | ✅ | - |
+### Phase 1 ✅
+- Vegetation System (#5)
+- Day/Night Cycle (#6)
 
-### Phase 1: Content ✅
-| Feature | Status | Issue |
-|---------|--------|-------|
-| Vegetation System | ✅ Complete | #5 |
-| Day/Night Cycle | ✅ Complete | #6 |
-
-## In Progress
-
-### Phase 2: Polish 🔄
-
-| Feature | Priority | Status | Issue |
-|---------|----------|--------|-------|
-| Real DEM Import | High | 🔄 In Progress | #4 |
-| Photo Mode | High | ⬜ Open | #7 |
+### Phase 2 ✅
+- Photo Mode (#7)
 
 ## Open Issues
 
-| # | Title | Phase | Labels |
-|---|-------|-------|--------|
-| 4 | Import real DEM data from Kartverket | Phase 2 | `mvp`, `data` |
-| 7 | Photo Mode with Share | Phase 2 | `phase-2`, `feature` |
+| # | Title | Phase |
+|---|-------|-------|
+| 4 | Import real DEM data from Kartverket | Phase 3 |
 
-## Closed Issues ✅
+## CI/CD
 
-| # | Title | Closed |
-|---|-------|--------|
-| 1 | Boat Physics | ✅ |
-| 2 | Soundscape | ✅ |
-| 3 | Save/Load | ✅ |
-| 5 | Vegetation System | ✅ |
-| 6 | Day/Night Cycle | ✅ |
-
-## CI/CD Status
-
-| Pipeline | Status | Notes |
-|----------|--------|-------|
-| Python MVP | ✅ Passing | ruff, black, tests |
-| Unity Test | ⏸️ Skipped | Needs UNITY_LICENSE secret |
-| Unity Build | ⏸️ Skipped | Needs UNITY_LICENSE secret |
-
-## Definition of Done
-
-For each milestone:
-1. Code complete and tested
-2. Documentation updated
-3. CI passes
-4. GitHub issue closed with summary
-5. Demo video/screenshots (if applicable)
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow.
+| Pipeline | Status |
+|----------|--------|
+| Python MVP | ✅ Passing |
+| Unity Test | ⏸️ Needs license secret |
+| Unity Build | ⏸️ Needs license secret |
 
 ## Recent Commits
 
-- feat: DayNightCycle with dynamic lighting (closes #6)
-- feat: VegetationGenerator with GPU instancing (closes #5)
+- feat: PhotoMode with filters and capture
+- feat: DayNightCycle with dynamic lighting
+- feat: VegetationGenerator with GPU instancing
+- feat: BoatController, AudioManager, SaveManager
 - docs: Updated README and ROADMAP
 - CI: Fixed Python workflow
-- feat: BoatController, AudioManager, SaveManager
