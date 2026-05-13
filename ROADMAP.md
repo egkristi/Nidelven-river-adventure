@@ -8,13 +8,13 @@ Last updated: 2026-05-13
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-## Current Status: Phase 1 Content
+## Current Status: Phase 1 Content Complete ✅
 
 | Phase | Status | Description |
 |-------|--------|-------------|
 | MVP | ✅ Complete | Core gameplay loop |
-| Phase 1 | 🔄 In Progress | Content (vegetation, day/night, DEM) |
-| Phase 2 | ⬜ Planned | Polish (photo mode, Steam) |
+| Phase 1 | ✅ Complete | Content (vegetation, day/night) |
+| Phase 2 | 🔄 In Progress | Polish (photo mode, DEM, Steam) |
 
 ## Completed Milestones
 
@@ -31,34 +31,37 @@ All MVP features implemented and tested.
 | Save/Load System | ✅ | #3 |
 | CI/CD Pipeline | ✅ | - |
 
+### Phase 1: Content ✅
+| Feature | Status | Issue |
+|---------|--------|-------|
+| Vegetation System | ✅ Complete | #5 |
+| Day/Night Cycle | ✅ Complete | #6 |
+
 ## In Progress
 
-### Phase 1: Content 🔄
+### Phase 2: Polish 🔄
 
 | Feature | Priority | Status | Issue |
 |---------|----------|--------|-------|
-| Vegetation System | High | ✅ Implemented | #5 |
-| Day/Night Cycle | High | ⬜ Open | #6 |
-| Real DEM Import | High | ⬜ Open | #4 |
+| Real DEM Import | High | 🔄 In Progress | #4 |
+| Photo Mode | High | ⬜ Open | #7 |
 
 ## Open Issues
 
 | # | Title | Phase | Labels |
 |---|-------|-------|--------|
-| 4 | Import real DEM data from Kartverket | Phase 1 | `mvp`, `data` |
-| 5 | Vegetation System | Phase 1 | `phase-1`, `graphics` |
-| 6 | Day/Night Cycle | Phase 1 | `phase-1`, `lighting` |
-| 7 | Photo Mode | Phase 2 | `phase-2`, `feature` |
+| 4 | Import real DEM data from Kartverket | Phase 2 | `mvp`, `data` |
+| 7 | Photo Mode with Share | Phase 2 | `phase-2`, `feature` |
 
-## Upcoming Milestones
+## Closed Issues ✅
 
-### Phase 2: Polish
-| Feature | Priority | Status | Issue |
-|---------|----------|--------|-------|
-| Photo Mode | High | ⬜ Open | #7 |
-| Wildlife (Ambient) | Medium | ⬜ | - |
-| Weather Effects | Medium | ⬜ | - |
-| Steam Integration | High | ⬜ | - |
+| # | Title | Closed |
+|---|-------|--------|
+| 1 | Boat Physics | ✅ |
+| 2 | Soundscape | ✅ |
+| 3 | Save/Load | ✅ |
+| 5 | Vegetation System | ✅ |
+| 6 | Day/Night Cycle | ✅ |
 
 ## CI/CD Status
 
@@ -83,7 +86,8 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow.
 
 ## Recent Commits
 
-- feat: VegetationGenerator with GPU instancing
-- docs: Updated README and ROADMAP - MVP Complete
-- CI: Fixed Python workflow (pip instead of uv)
+- feat: DayNightCycle with dynamic lighting (closes #6)
+- feat: VegetationGenerator with GPU instancing (closes #5)
+- docs: Updated README and ROADMAP
+- CI: Fixed Python workflow
 - feat: BoatController, AudioManager, SaveManager

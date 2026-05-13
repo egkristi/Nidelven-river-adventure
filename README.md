@@ -51,7 +51,7 @@ Nidelven-river-adventure/
 ├── Assets/                 # Unity project
 │   ├── Scripts/
 │   │   ├── Core/          # GameManager, AudioManager, SaveManager
-│   │   ├── Environment/     # TerrainGenerator, RiverController, VegetationGenerator
+│   │   ├── Environment/     # TerrainGenerator, RiverController, VegetationGenerator, DayNightCycle
 │   │   ├── Player/          # BoatController, RiverCamera
 │   │   └── UI/
 │   ├── Shaders/           # Water shader
@@ -109,6 +109,7 @@ uv run python -m mvp.main --download  # Download real DEM
    - Terrain → TerrainGenerator
    - River → RiverController
    - Terrain → VegetationGenerator (optional)
+   - (empty) → DayNightCycle
    - CameraRig → RiverCamera
    - PlayerBoat → BoatController + Rigidbody
    - (empty) → GameManager, AudioManager, SaveManager
@@ -117,12 +118,11 @@ uv run python -m mvp.main --download  # Download real DEM
 
 ### CI/CD
 
-GitHub Actions runs:
+[![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
+
 - ✅ Python MVP linting (ruff, black)
 - ✅ Minimal MVP execution test
 - ⏸️ Unity tests (requires Unity license secrets)
-
-**Latest Build Status:** [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
 ## Features
 
@@ -137,19 +137,19 @@ GitHub Actions runs:
 | Soundscape | Layered river/forest ambience, birds | #2 |
 | Save/Load | JSON persistence, auto-save, stats | #3 |
 | Vegetation | GPU-instanced trees and rocks | #5 |
+| Day/Night Cycle | Dynamic lighting and atmosphere | #6 |
 
 ### In Progress 🔄
 
 | Feature | Issue |
 |---------|-------|
 | Real DEM Import | #4 |
-| Day/Night Cycle | #6 |
+| Photo Mode | #7 |
 
 ### Planned ⬜
 
 | Feature | Priority | Issue |
 |---------|----------|-------|
-| Photo Mode | High | #7 |
 | Wildlife (Ambient) | Medium | - |
 | Weather Effects | Medium | - |
 | Steam Integration | High | - |
@@ -167,11 +167,12 @@ GitHub Actions runs:
 
 See [ROADMAP.md](ROADMAP.md) for detailed development status.
 
-### Current: Phase 1 Content
+### Current: Phase 1 Content Complete ✅
 - ✅ MVP Complete (terrain, river, boat, audio, save)
-- 🔄 Vegetation System (#5)
-- 🔄 Day/Night Cycle (#6)
-- ⬜ Real DEM Import (#4)
+- ✅ Vegetation System (#5)
+- ✅ Day/Night Cycle (#6)
+- 🔄 Real DEM Import (#4)
+- ⬜ Photo Mode (#7)
 
 ## Contributing
 
