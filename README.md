@@ -51,7 +51,7 @@ Nidelven-river-adventure/
 ├── Assets/                 # Unity project
 │   ├── Scripts/
 │   │   ├── Core/          # GameManager, AudioManager, SaveManager
-│   │   ├── Environment/     # TerrainGenerator, RiverController
+│   │   ├── Environment/     # TerrainGenerator, RiverController, VegetationGenerator
 │   │   ├── Player/          # BoatController, RiverCamera
 │   │   └── UI/
 │   ├── Shaders/           # Water shader
@@ -108,6 +108,7 @@ uv run python -m mvp.main --download  # Download real DEM
 2. Add components:
    - Terrain → TerrainGenerator
    - River → RiverController
+   - Terrain → VegetationGenerator (optional)
    - CameraRig → RiverCamera
    - PlayerBoat → BoatController + Rigidbody
    - (empty) → GameManager, AudioManager, SaveManager
@@ -121,34 +122,37 @@ GitHub Actions runs:
 - ✅ Minimal MVP execution test
 - ⏸️ Unity tests (requires Unity license secrets)
 
+**Latest Build Status:** [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
+
 ## Features
 
 ### Implemented ✅
 
-| Feature | Description |
-|---------|-------------|
-| Terrain Generation | Synthetic valley or real DEM import |
-| River Flow | Gradient-based path with realistic current |
-| Camera System | Auto-follow with orbit controls |
-| Boat Physics | Buoyancy, paddling, capsize/recovery |
-| Soundscape | Layered river/forest ambience, birds |
-| Save/Load | JSON persistence, auto-save, stats |
+| Feature | Description | Issue |
+|---------|-------------|-------|
+| Terrain Generation | Synthetic valley or real DEM import | - |
+| River Flow | Gradient-based path with realistic current | - |
+| Camera System | Auto-follow with orbit controls | - |
+| Boat Physics | Buoyancy, paddling, capsize/recovery | #1 |
+| Soundscape | Layered river/forest ambience, birds | #2 |
+| Save/Load | JSON persistence, auto-save, stats | #3 |
+| Vegetation | GPU-instanced trees and rocks | #5 |
 
 ### In Progress 🔄
 
 | Feature | Issue |
 |---------|-------|
 | Real DEM Import | #4 |
+| Day/Night Cycle | #6 |
 
 ### Planned ⬜
 
-| Feature | Priority |
-|---------|----------|
-| Vegetation System | High |
-| Wildlife (Ambient) | Medium |
-| Day/Night Cycle | Medium |
-| Photo Mode | High |
-| Steam Integration | High |
+| Feature | Priority | Issue |
+|---------|----------|-------|
+| Photo Mode | High | #7 |
+| Wildlife (Ambient) | Medium | - |
+| Weather Effects | Medium | - |
+| Steam Integration | High | - |
 
 ## Data Sources
 
@@ -163,13 +167,11 @@ GitHub Actions runs:
 
 See [ROADMAP.md](ROADMAP.md) for detailed development status.
 
-### Current: MVP Complete
-- ✅ Terrain generation
-- ✅ River flow visualization
-- ✅ Camera following
-- ✅ Boat physics (Issue #1)
-- ✅ Soundscape (Issue #2)
-- ✅ Save/load (Issue #3)
+### Current: Phase 1 Content
+- ✅ MVP Complete (terrain, river, boat, audio, save)
+- 🔄 Vegetation System (#5)
+- 🔄 Day/Night Cycle (#6)
+- ⬜ Real DEM Import (#4)
 
 ## Contributing
 

@@ -4,69 +4,32 @@ This document tracks development progress and planned features.
 
 Last updated: 2026-05-13
 
-## Current Status: ✅ MVP COMPLETE
+## Build Status
 
-All MVP features have been implemented:
+[![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-| Feature | Status | Issue |
-|---------|--------|-------|
-| Terrain Generation | ✅ Complete | - |
-| River Flow | ✅ Complete | - |
-| Camera Following | ✅ Complete | - |
-| Boat Physics | ✅ Complete | #1 |
-| Soundscape | ✅ Complete | #2 |
-| Save/Load System | ✅ Complete | #3 |
-| CI/CD Pipeline | ✅ Complete | - |
+## Current Status: Phase 1 Content
+
+| Phase | Status | Description |
+|-------|--------|-------------|
+| MVP | ✅ Complete | Core gameplay loop |
+| Phase 1 | 🔄 In Progress | Content (vegetation, day/night, DEM) |
+| Phase 2 | ⬜ Planned | Polish (photo mode, Steam) |
 
 ## Completed Milestones
 
-### MVP-1: Core Infrastructure ✅
-- [x] Project structure with Unity + Python MVP
-- [x] DEM downloader (Kartverket WCS)
-- [x] Terrain mesh generator
-- [x] UV package manager setup
-- [x] GitHub Actions CI (Python MVP)
+### MVP: Core Gameplay ✅
+All MVP features implemented and tested.
 
-### MVP-2: River System ✅
-- [x] Gradient-following river path
-- [x] Flow properties (velocity, width)
-- [x] Spline smoothing
-- [x] River mesh generation
-
-### MVP-3: Camera & Rendering ✅
-- [x] River-following camera
-- [x] Manual orbit controls
-- [x] Headless renderer (matplotlib)
-- [x] OpenGL renderer (moderngl)
-
-### MVP-4: Unity Scripts ✅
-- [x] TerrainGenerator.cs (DEM import)
-- [x] RiverController.cs
-- [x] RiverCamera.cs
-- [x] GameManager.cs
-- [x] SimpleWater.shader
-
-### MVP-5: Boat Physics ✅
-- [x] BoatController.cs with buoyancy
-- [x] Paddle mechanics (WASD)
-- [x] River current drift
-- [x] Capsize/recovery system
-- [x] Three vessel types (kayak/canoe/raft)
-- [x] Stamina system
-
-### MVP-6: Soundscape ✅
-- [x] AudioManager.cs
-- [x] Layered river ambience (calm/rapids)
-- [x] Forest ambience
-- [x] Bird sounds (random intervals)
-- [x] Paddle sound hooks
-
-### MVP-7: Save/Load ✅
-- [x] SaveManager.cs
-- [x] JSON serialization
-- [x] Auto-save every 60s
-- [x] Multiple save slots
-- [x] Progress persistence
+| Feature | Status | Issue |
+|---------|--------|-------|
+| Terrain Generation | ✅ | - |
+| River Flow | ✅ | - |
+| Camera Following | ✅ | - |
+| Boat Physics | ✅ | #1 |
+| Soundscape | ✅ | #2 |
+| Save/Load System | ✅ | #3 |
+| CI/CD Pipeline | ✅ | - |
 
 ## In Progress
 
@@ -74,21 +37,28 @@ All MVP features have been implemented:
 
 | Feature | Priority | Status | Issue |
 |---------|----------|--------|-------|
-| Real DEM Import | High | 🔄 In Progress | #4 |
-| Vegetation System | High | ⬜ Open | - |
-| Wildlife (Ambient) | Medium | ⬜ Open | - |
-| Day/Night Cycle | Medium | ⬜ Open | - |
+| Vegetation System | High | ✅ Implemented | #5 |
+| Day/Night Cycle | High | ⬜ Open | #6 |
+| Real DEM Import | High | ⬜ Open | #4 |
+
+## Open Issues
+
+| # | Title | Phase | Labels |
+|---|-------|-------|--------|
+| 4 | Import real DEM data from Kartverket | Phase 1 | `mvp`, `data` |
+| 5 | Vegetation System | Phase 1 | `phase-1`, `graphics` |
+| 6 | Day/Night Cycle | Phase 1 | `phase-1`, `lighting` |
+| 7 | Photo Mode | Phase 2 | `phase-2`, `feature` |
 
 ## Upcoming Milestones
 
 ### Phase 2: Polish
-| Feature | Priority | Status |
-|---------|----------|--------|
-| Weather Effects | Medium | ⬜ |
-| Photo Mode | High | ⬜ |
-| VR Support | Low | ⬜ |
-| Multiplayer | Low | ⬜ |
-| Steam Integration | High | ⬜ |
+| Feature | Priority | Status | Issue |
+|---------|----------|--------|-------|
+| Photo Mode | High | ⬜ Open | #7 |
+| Wildlife (Ambient) | Medium | ⬜ | - |
+| Weather Effects | Medium | ⬜ | - |
+| Steam Integration | High | ⬜ | - |
 
 ## CI/CD Status
 
@@ -113,9 +83,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow.
 
 ## Recent Commits
 
+- feat: VegetationGenerator with GPU instancing
+- docs: Updated README and ROADMAP - MVP Complete
 - CI: Fixed Python workflow (pip instead of uv)
-- feat: Implemented SaveManager with JSON serialization
-- feat: Implemented AudioManager with layered soundscape
-- feat: Implemented BoatController with physics
-- docs: Updated README.md with UV instructions
-- docs: Created ROADMAP.md with milestone tracking
+- feat: BoatController, AudioManager, SaveManager
