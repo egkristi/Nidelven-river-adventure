@@ -186,7 +186,7 @@ namespace Nidelven.Core
             #if !DISABLESTEAMWORKS
             int fileCount = Steamworks.SteamRemoteStorage.GetFileCount();
             string[] files = new string[fileCount];
-            for (int i = 0; i < fileCount; i++))
+            for (int i = 0; i < fileCount; i++)
             {
                 files[i] = Steamworks.SteamRemoteStorage.GetFileNameAndSize(i, out int _);
             }
