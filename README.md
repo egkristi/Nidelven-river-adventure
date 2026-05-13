@@ -6,19 +6,19 @@ A relaxing river exploration game set on the real Nidelven river in Agder, Norwa
 
 ## Features
 
-### Complete ✅
-- Terrain Generation (synthetic + Kartverket DEM)
-- River Flow with realistic current
-- Boat Physics (buoyancy, paddling, capsize)
-- Vegetation System (GPU-instanced trees/rocks)
-- Day/Night Cycle with dynamic lighting
-- Audio (river ambience, birds, forest)
-- Photo Mode with filters
-- Save/Load with JSON persistence
-
-### In Development 🔄
-- Steam Integration (#8)
-- Wildlife System (#9)
+- ✅ **Terrain Generation**: Synthetic or real DEM from Kartverket
+- ✅ **River Flow**: Realistic current based on elevation gradient
+- ✅ **Boat Physics**: Buoyancy, paddling, capsize/recovery
+- ✅ **Vegetation System**: GPU-instanced trees and rocks
+- ✅ **Day/Night Cycle**: Dynamic lighting and atmosphere
+- ✅ **Audio**: River ambience, birds, forest sounds
+- ✅ **Photo Mode**: Freeze time, filters, screenshot capture
+- ✅ **Save/Load**: JSON persistence with auto-save
+- ✅ **Settings Menu**: Graphics, audio, controls
+- ✅ **Tutorial System**: First-time player guidance
+- ✅ **Steam Integration**: Achievements, cloud saves
+- ✅ **Wildlife System**: Birds, deer with AI behavior
+- ✅ **CI/CD**: GitHub Actions for CI, CodeQL, releases
 
 ## Quick Start
 
@@ -39,19 +39,19 @@ cd mvp && uv sync && uv run mvp
 | F12 | Photo Mode |
 | WASD | Paddle boat |
 | Shift | Sprint |
-| Space | Brake/Recover |
+| Escape | Settings Menu |
 
 ## Documentation
 
 - [ROADMAP.md](ROADMAP.md) - Development status
 - [CI_SETUP.md](CI_SETUP.md) - CI/CD configuration
-- [Issues](https://github.com/egkristi/Nidelven-river-adventure/issues)
 
 ## Tech Stack
 
 - Unity 6000 LTS with URP
 - Python 3.11 + UV
 - Kartverket DEM data
+- GitHub Actions CI/CD
 
 ## License
 
