@@ -4,14 +4,12 @@
 
 A relaxing river exploration game set on the real Nidelven river in Agder, Norway. Built with Unity using real-world elevation data from Kartverket.
 
-## Release: v0.0.1 🎉
+## Current Status
 
-**[Download v0.0.1](https://github.com/egkristi/Nidelven-river-adventure/releases/tag/v0.0.1)** - PC Release Ready
-
-### Recent Updates
-- ✅ Fixed CI workflows (Issue #11)
-- ✅ CodeQL now analyzes Python only
-- ✅ Release workflow creates source + conditional builds
+- ✅ Python MVP pipeline (terrain generation, river flow, preview images)
+- ✅ CI/CD (Python linting, tests, Unity test runner)
+- ✅ Unity scripts (boat physics, camera, audio, etc.)
+- ⏸️ Unity build (disabled until scenes are committed)
 
 ## Features
 
@@ -38,7 +36,22 @@ git clone https://github.com/egkristi/Nidelven-river-adventure.git
 # Run Python MVP
 cd mvp && uv sync && uv run mvp
 
+# Run tests
+cd mvp && uv run pytest tests/ -v
+
 # Or open Assets/ in Unity 6000 LTS
+```
+
+## Project Structure
+
+```
+Assets/Scripts/    Unity C# scripts (boat, camera, terrain, audio, etc.)
+mvp/               Python MVP pipeline
+  src/mvp/         Source code (terrain mesh, river flow, renderer)
+  tests/           Pytest test suite
+  output/          Generated files (gitignored)
+Packages/          Unity package manifest
+.github/workflows/ CI/CD configuration
 ```
 
 ## Controls
@@ -52,13 +65,14 @@ cd mvp && uv sync && uv run mvp
 
 ## Documentation
 
-- [ROADMAP.md](ROADMAP.md) - Development status & open issues
+- [ROADMAP.md](ROADMAP.md) - Development status & next steps
 - [CI_SETUP.md](CI_SETUP.md) - CI/CD configuration
+- [mvp/README.md](mvp/README.md) - Python MVP details
 
 ## Tech Stack
 
 - Unity 6000 LTS with URP
-- Python 3.11 + UV
+- Python 3.11 + UV + pytest
 - Kartverket DEM data
 - GitHub Actions CI/CD
 

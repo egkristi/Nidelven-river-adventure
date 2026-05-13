@@ -53,7 +53,8 @@ def main():
     
     # Determine output directory
     if args.output_dir is None:
-        output_dir = Path(__file__).parent / "output"
+        # Use project-level output directory (mvp/output/)
+        output_dir = Path(__file__).parent.parent.parent / "output"
     else:
         output_dir = args.output_dir
     
@@ -72,7 +73,7 @@ def main():
     print("STEP 1: DEM Data")
     print("-" * 40)
     
-    data_dir = Path(__file__).parent / "data"
+    data_dir = Path(__file__).parent.parent.parent / "data"
     prefer_real = args.download and not args.sample
     
     dem_path = get_dem_path(data_dir, prefer_real=prefer_real)

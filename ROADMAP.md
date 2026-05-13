@@ -6,9 +6,7 @@ Last updated: 2026-05-13
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-## Current Status: RELEASED ✅ v0.0.1
-
-**[Download Release](https://github.com/egkristi/Nidelven-river-adventure/releases/tag/v0.0.1)**
+## Current Status: MVP Complete, Unity Scene Needed
 
 ---
 
@@ -16,69 +14,71 @@ Last updated: 2026-05-13
 
 | Pipeline | Status | Purpose |
 |----------|--------|---------|
-| CI (Python) | ✅ Passing | Linting, tests |
-| CodeQL | 🔄 Fixed | Python security scanning only |
-| Releases | 🔄 Fixed | Source + builds (if secrets configured) |
-| Unity CI | ⏸️ Optional | Needs UNITY_LICENSE secret |
-
-**Recent Fixes (Issue #11):**
-- CodeQL: Removed C# analysis (requires Unity), Python only
-- Release: Conditional Unity builds, always creates source archive
+| CI (Python) | ✅ Passing | Lint (ruff/black), tests (pytest), MVP pipeline |
+| CI (Unity Test) | ✅ Passing | Unity compile + test (requires UNITY_LICENSE secret) |
+| CI (Unity Build) | ⏸️ Disabled | Needs committed Unity scene (#12) |
+| CodeQL | ✅ Passing | Python security scanning |
 
 ---
 
-## v0.0.1 Release - Complete ✅
+## Completed Work
 
-### All 10 Issues Resolved
+### Python MVP Pipeline
+- ✅ DEM generation (synthetic Nidelven valley)
+- ✅ Terrain mesh generation (OBJ export)
+- ✅ River flow tracing (gradient descent)
+- ✅ Preview image rendering (topdown, 3D, river profile)
+- ✅ Test suite (7 tests, pytest)
+- ✅ Proper `src/` layout with `uv` package manager
 
-| Issue | Feature | Status |
-|-------|---------|--------|
-| #1 | Boat Physics | ✅ |
-| #2 | Soundscape | ✅ |
-| #3 | Save/Load | ✅ |
-| #4 | Kartverket DEM Import | ✅ |
-| #5 | Vegetation System | ✅ |
-| #6 | Day/Night Cycle | ✅ |
-| #7 | Photo Mode | ✅ |
-| #8 | Steam Integration | ✅ |
-| #9 | Wildlife System | ✅ |
-| #10 | Settings Menu | ✅ |
+### Unity Scripts (Assets/Scripts/)
+- ✅ BoatController (physics, paddling, capsize)
+- ✅ RiverCamera (orbit, auto-follow)
+- ✅ TerrainGenerator, VegetationGenerator
+- ✅ DayNightCycle, WildlifeSpawner
+- ✅ AudioManager, RiverController
+- ✅ SaveManager, SettingsMenu, TutorialSystem
+- ✅ PhotoMode, SteamManager, GameQuitter
 
-### Open Issues
+### CI/CD
+- ✅ Python linting + formatting checks
+- ✅ Pytest test suite in CI
+- ✅ Unity test runner (game-ci)
+- ✅ CodeQL security scanning
+- ✅ Proper permissions and CI workarounds
 
-| Issue | Title | Status |
-|-------|-------|--------|
-| #11 | Fix GitHub Actions workflows | 🔄 In Progress |
+---
 
-### Features Complete
+## Open Issues
 
-#### Core Gameplay
-- ✅ Terrain Generation (synthetic + Kartverket DEM) - #4
-- ✅ River Flow with realistic current
-- ✅ Boat Physics (buoyancy, paddling, capsize) - #1
-- ✅ Camera System (auto-follow, orbit)
+| Issue | Title | Priority |
+|-------|-------|----------|
+| #12 | Add Unity scene to enable builds | High |
+| #13 | Remove large terrain.obj from git history | Medium |
+| #14 | Download real Kartverket DEM data | Medium |
+| #15 | Add interactive 3D renderer | Low |
 
-#### Content
-- ✅ Vegetation System (GPU-instanced trees/rocks) - #5
-- ✅ Day/Night Cycle (dynamic lighting) - #6
-- ✅ Wildlife System (birds, deer AI) - #9
-- ✅ Audio (river ambience, forest, birds) - #2
+---
 
-#### Systems
-- ✅ Save/Load (JSON persistence) - #3
-- ✅ Photo Mode (filters, capture) - #7
-- ✅ Settings Menu (graphics, audio) - #10
-- ✅ Tutorial System
-- ✅ Game Quitter
+## Next Steps (v0.1.0)
 
-#### Platform
-- ✅ Steam Manager (achievements, cloud saves) - #8
-- ✅ Steam Achievements (8 defined)
+### Phase 1: Playable Scene
+- [ ] Create main Unity scene with terrain
+- [ ] Import generated terrain mesh into Unity
+- [ ] Set up boat + camera in scene
+- [ ] Enable Unity build in CI
+- [ ] First playable build
 
-#### DevOps
-- ✅ Python CI (ruff, black)
-- ✅ CodeQL configured (Python only)
-- ✅ Release automation (tag-based, conditional Unity)
+### Phase 2: Real Data
+- [ ] Download real DEM from Kartverket hoydedata.no
+- [ ] Implement proper river path from OSM/NVE data
+- [ ] Texture terrain from Sentinel-2 satellite imagery
+
+### Phase 3: Polish
+- [ ] Water shader (river surface rendering)
+- [ ] Particle effects (splash, foam)
+- [ ] LOD system for terrain
+- [ ] Performance optimization
 
 ---
 

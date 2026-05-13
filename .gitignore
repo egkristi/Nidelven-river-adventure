@@ -81,12 +81,19 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
 ENV/
 build/
 dist/
 *.egg-info/
 .pytest_cache/
 .ipynb_checkpoints/
+
+# MVP output (generated files)
+mvp/output/
+mvp/data/
+mvp/src/mvp/output/
+mvp/src/mvp/data/
 
 # OS
 .DS_Store
