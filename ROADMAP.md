@@ -6,59 +6,31 @@ Last updated: 2026-05-13
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-## Current Status: COMPLETE ✅
+## Current Status: RELEASED ✅ v0.0.1
 
-All planned features implemented.
+**[Download Release](https://github.com/egkristi/Nidelven-river-adventure/releases/tag/v0.0.1)**
 
 ---
 
-## GitHub Actions Pipeline ✅ COMPLETE
+## GitHub Actions Pipeline
 
 | Pipeline | Status | Purpose |
 |----------|--------|---------|
 | CI (Python) | ✅ Passing | Linting, tests |
-| CodeQL | ✅ Configured | Security scanning |
-| Releases | ✅ Configured | Automated builds on tags |
+| CodeQL | ⬜ Skipped | Security scanning (needs C# build) |
+| Releases | ⚠️ Needs UNITY_LICENSE | Automated builds on tags |
 | Unity CI | ⏸️ Waiting | Needs UNITY_LICENSE secret |
 
----
-
-## Features Complete ✅
-
-### Core Gameplay
-- ✅ Terrain Generation (synthetic + Kartverket DEM) - #4
-- ✅ River Flow with realistic current
-- ✅ Boat Physics (buoyancy, paddling, capsize) - #1
-- ✅ Camera System (auto-follow, orbit)
-
-### Content
-- ✅ Vegetation System (GPU-instanced trees/rocks) - #5
-- ✅ Day/Night Cycle (dynamic lighting) - #6
-- ✅ Wildlife System (birds, deer AI) - #9
-- ✅ Audio (river ambience, forest, birds) - #2
-
-### Systems
-- ✅ Save/Load (JSON persistence) - #3
-- ✅ Photo Mode (filters, capture) - #7
-- ✅ Settings Menu (graphics, audio) - #10
-- ✅ Tutorial System
-- ✅ Game Quitter
-
-### Platform
-- ✅ Steam Manager (achievements, cloud saves) - #8
-- ✅ Steam Achievements (8 defined)
-
-### DevOps
-- ✅ Python CI (ruff, black)
-- ✅ CodeQL (C#, Python)
-- ✅ Release automation
+**Note**: Unity builds require `UNITY_LICENSE` secret configured manually via GitHub UI.
 
 ---
 
-## All Issues Closed ✅
+## v0.0.1 Release - Complete ✅
 
-| Issue | Title | Status |
-|-------|-------|--------|
+### All 10 Issues Resolved
+
+| Issue | Feature | Status |
+|-------|---------|--------|
 | #1 | Boat Physics | ✅ |
 | #2 | Soundscape | ✅ |
 | #3 | Save/Load | ✅ |
@@ -69,6 +41,36 @@ All planned features implemented.
 | #8 | Steam Integration | ✅ |
 | #9 | Wildlife System | ✅ |
 | #10 | Settings Menu | ✅ |
+
+### Features Complete
+
+#### Core Gameplay
+- ✅ Terrain Generation (synthetic + Kartverket DEM) - #4
+- ✅ River Flow with realistic current
+- ✅ Boat Physics (buoyancy, paddling, capsize) - #1
+- ✅ Camera System (auto-follow, orbit)
+
+#### Content
+- ✅ Vegetation System (GPU-instanced trees/rocks) - #5
+- ✅ Day/Night Cycle (dynamic lighting) - #6
+- ✅ Wildlife System (birds, deer AI) - #9
+- ✅ Audio (river ambience, forest, birds) - #2
+
+#### Systems
+- ✅ Save/Load (JSON persistence) - #3
+- ✅ Photo Mode (filters, capture) - #7
+- ✅ Settings Menu (graphics, audio) - #10
+- ✅ Tutorial System
+- ✅ Game Quitter
+
+#### Platform
+- ✅ Steam Manager (achievements, cloud saves) - #8
+- ✅ Steam Achievements (8 defined)
+
+#### DevOps
+- ✅ Python CI (ruff, black)
+- ✅ CodeQL configured (C#, Python)
+- ✅ Release automation (tag-based)
 
 ---
 
