@@ -86,6 +86,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          unityVersion: 6000.4.5f1
           githubToken: ${{ secrets.GITHUB_TOKEN }}
 
   unity-build:
@@ -121,6 +122,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
+          unityVersion: 6000.4.5f1
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: NidelvenRiverAdventure
 
