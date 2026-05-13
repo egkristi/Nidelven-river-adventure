@@ -157,6 +157,8 @@ jobs:
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: NidelvenRiverAdventure
           customParameters: -nographics
+          versioning: None
+          allowDirtyBuild: true
 
       - name: Upload Build
         uses: actions/upload-artifact@v4
