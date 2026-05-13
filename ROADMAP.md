@@ -17,11 +17,13 @@ Last updated: 2026-05-13
 | Pipeline | Status | Purpose |
 |----------|--------|---------|
 | CI (Python) | ✅ Passing | Linting, tests |
-| CodeQL | ⬜ Skipped | Security scanning (needs C# build) |
-| Releases | ⚠️ Needs UNITY_LICENSE | Automated builds on tags |
-| Unity CI | ⏸️ Waiting | Needs UNITY_LICENSE secret |
+| CodeQL | 🔄 Fixed | Python security scanning only |
+| Releases | 🔄 Fixed | Source + builds (if secrets configured) |
+| Unity CI | ⏸️ Optional | Needs UNITY_LICENSE secret |
 
-**Note**: Unity builds require `UNITY_LICENSE` secret configured manually via GitHub UI.
+**Recent Fixes (Issue #11):**
+- CodeQL: Removed C# analysis (requires Unity), Python only
+- Release: Conditional Unity builds, always creates source archive
 
 ---
 
@@ -41,6 +43,12 @@ Last updated: 2026-05-13
 | #8 | Steam Integration | ✅ |
 | #9 | Wildlife System | ✅ |
 | #10 | Settings Menu | ✅ |
+
+### Open Issues
+
+| Issue | Title | Status |
+|-------|-------|--------|
+| #11 | Fix GitHub Actions workflows | 🔄 In Progress |
 
 ### Features Complete
 
@@ -69,8 +77,8 @@ Last updated: 2026-05-13
 
 #### DevOps
 - ✅ Python CI (ruff, black)
-- ✅ CodeQL configured (C#, Python)
-- ✅ Release automation (tag-based)
+- ✅ CodeQL configured (Python only)
+- ✅ Release automation (tag-based, conditional Unity)
 
 ---
 
@@ -95,6 +103,7 @@ cd Nidelven-river-adventure
 
 ## Next Steps (Optional)
 
+- Fix CI workflows (#11)
 - Weather effects (rain, fog)
 - Multiplayer co-op
 - VR support

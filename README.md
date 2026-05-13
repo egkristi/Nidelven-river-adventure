@@ -8,6 +8,11 @@ A relaxing river exploration game set on the real Nidelven river in Agder, Norwa
 
 **[Download v0.0.1](https://github.com/egkristi/Nidelven-river-adventure/releases/tag/v0.0.1)** - PC Release Ready
 
+### Recent Updates
+- ✅ Fixed CI workflows (Issue #11)
+- ✅ CodeQL now analyzes Python only
+- ✅ Release workflow creates source + conditional builds
+
 ## Features
 
 - ✅ **Terrain Generation**: Synthetic or real DEM from Kartverket
@@ -47,7 +52,7 @@ cd mvp && uv sync && uv run mvp
 
 ## Documentation
 
-- [ROADMAP.md](ROADMAP.md) - Development status
+- [ROADMAP.md](ROADMAP.md) - Development status & open issues
 - [CI_SETUP.md](CI_SETUP.md) - CI/CD configuration
 
 ## Tech Stack
