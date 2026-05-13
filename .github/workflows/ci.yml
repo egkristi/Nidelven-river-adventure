@@ -71,6 +71,20 @@ jobs:
         with:
           lfs: true
 
+      - name: Prepare for CI (workaround ShaderGraph GUID issue)
+        run: |
+          # Remove URP to avoid ShaderGraph package GUID compilation error in Docker
+          python3 -c "
+          import json
+          with open('Packages/manifest.json', 'r') as f:
+              m = json.load(f)
+          m['dependencies'].pop('com.unity.render-pipelines.universal', None)
+          with open('Packages/manifest.json', 'w') as f:
+              json.dump(m, f, indent=2)
+          "
+          # Add CI-specific scripting defines
+          printf '%s\n' '-define:DISABLESTEAMWORKS' '-define:DISABLE_URP' > Assets/csc.rsp
+
       - name: Cache Library
         uses: actions/cache@v4
         with:
@@ -106,6 +120,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           lfs: true
+
+      - name: Prepare for CI (workaround ShaderGraph GUID issue)
+        run: |
+          python3 -c "
+          import json
+          with open('Packages/manifest.json', 'r') as f:
+              m = json.load(f)
+          m['dependencies'].pop('com.unity.render-pipelines.universal', None)
+          with open('Packages/manifest.json', 'w') as f:
+              json.dump(m, f, indent=2)
+          "
+          printf '%s\n' '-define:DISABLESTEAMWORKS' '-define:DISABLE_URP' > Assets/csc.rsp
 
       - name: Cache Library
         uses: actions/cache@v4

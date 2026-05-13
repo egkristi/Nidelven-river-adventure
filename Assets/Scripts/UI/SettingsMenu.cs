@@ -171,7 +171,7 @@ namespace Nidelven.UI
             renderScaleText.text = $"{percentage}%";
             
             // Update URP render scale
-            #if UNITY_6000_0_OR_NEWER
+            #if UNITY_6000_0_OR_NEWER && !DISABLE_URP
             UnityEngine.Rendering.Universal.UniversalRenderPipeline.asset.renderScale = value;
             #endif
             

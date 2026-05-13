@@ -1,1 +1,1 @@
--define:DISABLESTEAMWORKS
+# CI-specific defines are added at build time (see .github/workflows/ci.yml)

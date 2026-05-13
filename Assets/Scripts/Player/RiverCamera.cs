@@ -70,7 +70,7 @@ namespace Nidelven.Player
         public float maxHeight = 50f;
         
         // Internal state
-        private float orbitAngle = 0f;
+        public float orbitAngle = 0f;
         private Vector3 currentPosition;
         private Vector3 currentLookTarget;
         private Vector3 targetPosition;

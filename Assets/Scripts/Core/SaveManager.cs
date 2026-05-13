@@ -235,8 +235,8 @@ namespace Nidelven.Core
                 data.riverProgress = riverCamera.GetProgress();
                 data.cameraHeight = riverCamera.heightOffset;
                 data.cameraDistance = riverCamera.distanceOffset;
-                data.cameraOrbitAngle = riverCamera.camera_angle;
-                data.autoFollow = riverCamera.auto_follow;
+                data.cameraOrbitAngle = riverCamera.orbitAngle;
+                data.autoFollow = riverCamera.autoFollow;
                 data.followSpeed = riverCamera.followSpeed;
             }
             
@@ -271,8 +271,8 @@ namespace Nidelven.Core
                 riverCamera.SetProgress(data.riverProgress);
                 riverCamera.heightOffset = data.cameraHeight;
                 riverCamera.distanceOffset = data.cameraDistance;
-                riverCamera.camera_angle = data.cameraOrbitAngle;
-                riverCamera.auto_follow = data.autoFollow;
+                riverCamera.orbitAngle = data.cameraOrbitAngle;
+                riverCamera.autoFollow = data.autoFollow;
                 riverCamera.followSpeed = data.followSpeed;
             }
             
