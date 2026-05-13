@@ -4,23 +4,28 @@ This document tracks development progress and planned features.
 
 Last updated: 2026-05-13
 
-## Current Status: MVP Phase
+## Current Status: ✅ MVP COMPLETE
 
-The MVP focuses on:
-1. ✅ Terrain generation (synthetic + real DEM support)
-2. ✅ River flow visualization
-3. ✅ Camera following river trajectory
-4. 🔄 Boat physics (Issue #1)
-5. ⬜ Soundscape (Issue #2)
-6. ⬜ Save/load system (Issue #3)
+All MVP features have been implemented:
 
-## Completed Features
+| Feature | Status | Issue |
+|---------|--------|-------|
+| Terrain Generation | ✅ Complete | - |
+| River Flow | ✅ Complete | - |
+| Camera Following | ✅ Complete | - |
+| Boat Physics | ✅ Complete | #1 |
+| Soundscape | ✅ Complete | #2 |
+| Save/Load System | ✅ Complete | #3 |
+| CI/CD Pipeline | ✅ Complete | - |
+
+## Completed Milestones
 
 ### MVP-1: Core Infrastructure ✅
 - [x] Project structure with Unity + Python MVP
 - [x] DEM downloader (Kartverket WCS)
 - [x] Terrain mesh generator
 - [x] UV package manager setup
+- [x] GitHub Actions CI (Python MVP)
 
 ### MVP-2: River System ✅
 - [x] Gradient-following river path
@@ -41,48 +46,57 @@ The MVP focuses on:
 - [x] GameManager.cs
 - [x] SimpleWater.shader
 
+### MVP-5: Boat Physics ✅
+- [x] BoatController.cs with buoyancy
+- [x] Paddle mechanics (WASD)
+- [x] River current drift
+- [x] Capsize/recovery system
+- [x] Three vessel types (kayak/canoe/raft)
+- [x] Stamina system
+
+### MVP-6: Soundscape ✅
+- [x] AudioManager.cs
+- [x] Layered river ambience (calm/rapids)
+- [x] Forest ambience
+- [x] Bird sounds (random intervals)
+- [x] Paddle sound hooks
+
+### MVP-7: Save/Load ✅
+- [x] SaveManager.cs
+- [x] JSON serialization
+- [x] Auto-save every 60s
+- [x] Multiple save slots
+- [x] Progress persistence
+
 ## In Progress
 
-### MVP-5: Boat Physics 🔄
-Issue: #1
-- [ ] Boat prefab with buoyancy
-- [ ] Paddle mechanics
-- [ ] River current drift
-- [ ] Collision with terrain
+### Phase 1: Content 🔄
+
+| Feature | Priority | Status | Issue |
+|---------|----------|--------|-------|
+| Real DEM Import | High | 🔄 In Progress | #4 |
+| Vegetation System | High | ⬜ Open | - |
+| Wildlife (Ambient) | Medium | ⬜ Open | - |
+| Day/Night Cycle | Medium | ⬜ Open | - |
 
 ## Upcoming Milestones
 
-### MVP-6: Soundscape
-Issue: #2
-- River ambience (speed-based)
-- Forest ambience
-- Bird sounds
-- Paddle/water interaction
-
-### MVP-7: Save/Load
-Issue: #3
-- JSON save format
-- Progress persistence
-- Settings save
-
-### MVP-8: Real DEM Import
-Issue: #4
-- Kartverket DTM download
-- GeoTIFF importer
-- Coordinate conversion
-
-## Post-MVP Features
-
+### Phase 2: Polish
 | Feature | Priority | Status |
 |---------|----------|--------|
-| Vegetation system | High | ⬜ |
-| Wildlife (ambient) | Medium | ⬜ |
-| Day/night cycle | Medium | ⬜ |
-| Weather effects | Medium | ⬜ |
-| Photo mode | High | ⬜ |
-| VR support | Low | ⬜ |
+| Weather Effects | Medium | ⬜ |
+| Photo Mode | High | ⬜ |
+| VR Support | Low | ⬜ |
 | Multiplayer | Low | ⬜ |
-| Steam integration | High | ⬜ |
+| Steam Integration | High | ⬜ |
+
+## CI/CD Status
+
+| Pipeline | Status | Notes |
+|----------|--------|-------|
+| Python MVP | ✅ Passing | ruff, black, tests |
+| Unity Test | ⏸️ Skipped | Needs UNITY_LICENSE secret |
+| Unity Build | ⏸️ Skipped | Needs UNITY_LICENSE secret |
 
 ## Definition of Done
 
@@ -96,3 +110,12 @@ For each milestone:
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for development workflow.
+
+## Recent Commits
+
+- CI: Fixed Python workflow (pip instead of uv)
+- feat: Implemented SaveManager with JSON serialization
+- feat: Implemented AudioManager with layered soundscape
+- feat: Implemented BoatController with physics
+- docs: Updated README.md with UV instructions
+- docs: Created ROADMAP.md with milestone tracking
