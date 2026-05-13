@@ -12,6 +12,29 @@ Last updated: 2026-05-13
 
 ---
 
+## GitHub Actions Pipeline Tasks
+
+### CI/CD Infrastructure (Priority: High)
+
+| Task | Status | Notes |
+|------|--------|-------|
+| 1. Set up GitHub Actions pipeline for CI | ✅ | Python MVP linting and tests |
+| 2. Set up GitHub Actions pipeline for CodeQL | ⬜ | Security scanning |
+| 3. Set up GitHub Actions pipeline for releases | ⬜ | Automated builds on tags |
+| 4. Set up GitHub Actions pipeline as required | ⬜ | Unity builds, dependency checks |
+
+#### Required Pipelines:
+
+| Pipeline | Purpose | Trigger |
+|----------|---------|---------|
+| `ci.yml` | Python linting/tests | Push/PR |
+| `codeql.yml` | Security analysis | Push to main, weekly |
+| `release.yml` | Build and publish | Tag push (v*) |
+| `unity.yml` | Unity builds | Push/PR (if secrets configured) |
+| `dependabot.yml` | Dependency updates | Daily checks |
+
+---
+
 ## Task Priority Matrix
 
 ### Must Do (Required for PC Release) ✅ COMPLETE
@@ -114,6 +137,8 @@ git clone https://github.com/egkristi/Nidelven-river-adventure.git
 | Pipeline | Status |
 |----------|--------|
 | Python MVP | ✅ Passing |
+| CodeQL | ⬜ Not configured |
+| Releases | ⬜ Not configured |
 | Unity Test | ⏸️ Needs UNITY_LICENSE secret |
 | Unity Build | ⏸️ Needs UNITY_LICENSE secret |
 
@@ -121,10 +146,10 @@ git clone https://github.com/egkristi/Nidelven-river-adventure.git
 
 ## Next Actions
 
-1. **Add Steam App ID** to SteamManager.cs
-2. **Build Windows executable** for testing
-3. **Performance profiling** on target hardware
-4. **Wildlife system** implementation (#9)
+1. **Set up CodeQL workflow** for security scanning
+2. **Set up release workflow** for automated builds
+3. **Add Steam App ID** to SteamManager.cs
+4. **Build Windows executable** for testing
 
 ---
 
