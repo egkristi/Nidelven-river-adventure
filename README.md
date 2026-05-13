@@ -50,9 +50,9 @@ uv run mvp
 Nidelven-river-adventure/
 ├── Assets/                 # Unity project
 │   ├── Scripts/
-│   │   ├── Core/          # GameManager
-│   │   ├── Environment/     # Terrain, River
-│   │   ├── Player/          # Boat, Camera
+│   │   ├── Core/          # GameManager, AudioManager, SaveManager
+│   │   ├── Environment/     # TerrainGenerator, RiverController
+│   │   ├── Player/          # BoatController, RiverCamera
 │   │   └── UI/
 │   ├── Shaders/           # Water shader
 │   └── Scenes/
@@ -70,6 +70,7 @@ Nidelven-river-adventure/
 
 ## Controls
 
+### Camera (Auto-Follow Mode)
 | Key | Action |
 |-----|--------|
 | Space | Pause/Resume auto-follow |
@@ -77,6 +78,16 @@ Nidelven-river-adventure/
 | Scroll | Zoom in/out |
 | Up/Down | Speed up/slow down |
 | R | Reset to start |
+
+### Boat (Player Mode)
+| Key | Action |
+|-----|--------|
+| W / Up | Paddle forward |
+| S / Down | Paddle backward |
+| A / Left | Turn left (paddle right) |
+| D / Right | Turn right (paddle left) |
+| Shift | Sprint (uses stamina) |
+| Space | Brake / Recover from capsize |
 
 ## Development
 
@@ -93,21 +104,51 @@ uv run python -m mvp.main --download  # Download real DEM
 
 ### Unity Setup
 
-1. Create GameObjects: GameManager, Terrain, River, CameraRig
+1. Create GameObjects: GameManager, Terrain, River, CameraRig, PlayerBoat
 2. Add components:
    - Terrain → TerrainGenerator
    - River → RiverController
    - CameraRig → RiverCamera
-   - (empty) → GameManager
+   - PlayerBoat → BoatController + Rigidbody
+   - (empty) → GameManager, AudioManager, SaveManager
 3. Link references (see Scripts/README.md)
 4. Press Play
 
 ### CI/CD
 
 GitHub Actions runs:
-- ✅ Python MVP linting (ruff, black, mypy)
+- ✅ Python MVP linting (ruff, black)
 - ✅ Minimal MVP execution test
 - ⏸️ Unity tests (requires Unity license secrets)
+
+## Features
+
+### Implemented ✅
+
+| Feature | Description |
+|---------|-------------|
+| Terrain Generation | Synthetic valley or real DEM import |
+| River Flow | Gradient-based path with realistic current |
+| Camera System | Auto-follow with orbit controls |
+| Boat Physics | Buoyancy, paddling, capsize/recovery |
+| Soundscape | Layered river/forest ambience, birds |
+| Save/Load | JSON persistence, auto-save, stats |
+
+### In Progress 🔄
+
+| Feature | Issue |
+|---------|-------|
+| Real DEM Import | #4 |
+
+### Planned ⬜
+
+| Feature | Priority |
+|---------|----------|
+| Vegetation System | High |
+| Wildlife (Ambient) | Medium |
+| Day/Night Cycle | Medium |
+| Photo Mode | High |
+| Steam Integration | High |
 
 ## Data Sources
 
@@ -122,13 +163,13 @@ GitHub Actions runs:
 
 See [ROADMAP.md](ROADMAP.md) for detailed development status.
 
-### Current: MVP Phase
+### Current: MVP Complete
 - ✅ Terrain generation
-- ✅ River flow
+- ✅ River flow visualization
 - ✅ Camera following
-- 🔄 Boat physics (Issue #1)
-- ⬜ Soundscape (Issue #2)
-- ⬜ Save/load (Issue #3)
+- ✅ Boat physics (Issue #1)
+- ✅ Soundscape (Issue #2)
+- ✅ Save/load (Issue #3)
 
 ## Contributing
 
