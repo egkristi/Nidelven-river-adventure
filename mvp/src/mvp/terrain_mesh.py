@@ -190,6 +190,10 @@ def calculate_normals(
     """Calculate per-vertex normals using cross product."""
     normals = np.zeros_like(vertices)
     
+    # Flatten if 2D
+    if indices.ndim == 2:
+        indices = indices.flatten()
+
     # For each triangle
     for i in range(0, len(indices), 3):
         i0, i1, i2 = indices[i], indices[i + 1], indices[i + 2]

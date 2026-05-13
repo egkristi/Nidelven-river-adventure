@@ -70,8 +70,7 @@ def render_terrain_topdown(
     
     # Convert to numpy array
     fig.canvas.draw()
-    img = np.frombuffer(fig.canvas.tostring_rgb(), dtype=np.uint8)
-    img = img.reshape(fig.canvas.get_width_height()[::-1] + (3,))
+    img = np.asarray(fig.canvas.buffer_rgba())[..., :3].copy()
     
     plt.close(fig)
     
