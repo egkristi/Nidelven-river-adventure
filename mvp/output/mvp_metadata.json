@@ -1,0 +1,12 @@
+{
+  "type": "minimal_mvp",
+  "dem_size": 64,
+  "path_length": 64,
+  "elevation_range": {
+    "min": 50.541674433406925,
+    "max": 132.3894120595072
+  },
+  "files_generated": [
+    "preview_minimal.html"
+  ]
+}
