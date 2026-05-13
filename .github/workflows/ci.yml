@@ -112,7 +112,8 @@ jobs:
     name: Unity Build
     runs-on: ubuntu-latest
     needs: [check-unity-secrets, unity-test]
-    if: needs.check-unity-secrets.outputs.has_secrets == 'true' && github.ref == 'refs/heads/main'
+    # Disabled until scenes are added to the project (build requires at least one scene)
+    if: false && needs.check-unity-secrets.outputs.has_secrets == 'true' && github.ref == 'refs/heads/main'
     strategy:
       fail-fast: false
       matrix:
