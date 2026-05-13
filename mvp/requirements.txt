@@ -1,7 +1,0 @@
-numpy>=1.24.0
-rasterio>=1.3.0
-moderngl>=5.8.0
-pyglm>=2.7.0
-pillow>=10.0.0
-requests>=2.31.0
-scipy>=1.11.0
