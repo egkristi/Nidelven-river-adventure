@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 7: Norge i bilder orthophoto COMPLETE, all issues resolved, 0 open issues)
+Last updated: 2026-05-14 (Phase 8: Tech debt resolved, 3 open issues for future work)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -10,7 +10,7 @@ Last updated: 2026-05-15 (Phase 7: Norge i bilder orthophoto COMPLETE, all issue
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 5 phases complete.** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 8 phases complete.** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -20,6 +20,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` �
 > ✅ **Phase 5** — Tutorial, localization, achievements, physics, sound design
 > ✅ **Phase 6** — Stabilization: all audit Critical/High issues fixed
 > ✅ **Phase 7** — Norge i bilder aerial orthophoto terrain textures
+> ✅ **Phase 8** — Tech debt: FixedUpdate physics, timeScale, auto-save, CI fix
 
 ### Full Audit (2026-05-15)
 
@@ -47,7 +48,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
 | Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
-| Audit status | ✅ All Critical/High fixed | Issues #25-#32 all resolved |
+| Audit status | ✅ All Critical/High/Medium fixed | 3 open issues: #43, #44, #45 (low priority) |
 
 ---
 
@@ -152,6 +153,7 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
 | `nve_river.py` | `extract_river_path`, `_merge_segments`, `save/load_river_path` | `fetch_river_geometry` (network), `get_nidelva_path` |
 | `norgeibilder.py` | `wgs84_to_tile`, `tile_to_wgs84`, `get_tile_bounds`, `download_tile`, `download_orthophoto`, `export_terrain_texture` | — (all core functions tested) |
+| `qgis_export.py` | `export_dem_geotiff`, `export_river_geojson`, `generate_qgis_project`, `export_for_qgis` | `export_flow_accumulation_geotiff` (partial) |
 | `headless_renderer.py` | ❌ | All (rendering, hard to unit test) |
 | `renderer.py` | ❌ | All (OpenGL, hard to unit test) |
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
@@ -278,6 +280,20 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 - [x] Add 7 tests for WMTS client (coordinate conversion, bounds, safety) ✔️ (cfdd637)
 - [x] Close issue #25 ✔️
 
+### Phase 8: Tech Debt & Quality ✅ COMPLETE
+
+- [x] Move Sprint/Brake to FixedUpdate (frame-rate-independent physics) ✔️ (006cdcd)
+- [x] Resolve Space key conflict (RiverCamera vs BoatController) ✔️ (006cdcd)
+- [x] Centralize Time.timeScale via RequestPause/ReleasePause API ✔️ (42141f0)
+- [x] Fix SaveManager auto-save slot collision ✔️ (3272722)
+- [x] Fix terrain_mesh.py __main__ wrong data path ✔️ (e6f1e57)
+- [x] Deduplicate dev deps in pyproject.toml ✔️ (e6f1e57)
+- [x] Add pytest-cov to dev dependencies ✔️ (e6f1e57)
+- [x] Fix CI pipeline `|| echo` swallowing errors ✔️ (d2d472c)
+- [x] Fix `--interactive` renderer sys.argv conflict ✔️ (56fa2a4)
+- [x] Add QGIS export module + `--qgis` CLI flag ✔️ (08fc616)
+- [x] Create issues for remaining work (#43, #44, #45) ✔️
+
 ---
 
 ## Geolocated Data Sources
@@ -329,18 +345,28 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 
 ## Technical Debt Register
 
-### Active (remaining from audit 2026-05-15)
+### Active (remaining)
 
 | Item | Severity | Effort | GitHub |
 |------|----------|--------|--------|
-| Time.timeScale competition (multiple systems) | Medium | 1 hr | — |
-| `compute_flow_accumulation` O(n) Python loop | Medium | 2 hr | — |
-| SaveManager auto-save overwrites last user slot | Medium | 30 min | — |
-| Space key conflict (RiverCamera vs BoatController) | Medium | 15 min | — |
-| Sprint in Update() not FixedUpdate() | Medium | 10 min | — |
-| Duplicate dev deps in pyproject.toml | Medium | 10 min | — |
-| `terrain_mesh.py` `__main__` wrong data path | Medium | 5 min | — |
-| CI pipeline failure hidden by `\|\| echo` | Medium | 10 min | — |
+| `compute_flow_accumulation` O(n) Python loop | Medium | 2 hr | #43 |
+| Add CodeQL for C# (extend existing workflow) | Low | 30 min | #44 |
+| Add CLI tests (main.py entry point) | Low | 1 hr | #45 |
+| Legacy UI (UnityEngine.UI) → TMPro | Low | 2 hr | — |
+| `softprops/action-gh-release@v1` outdated (v2 exists) | Low | 10 min | — |
+| Duplicated CI workaround code (3x) | Low | 1 hr | — |
+
+### Resolved (Phase 8 tech debt - 2026-05-14)
+
+| Item | Resolution | Commit |
+|------|-----------|--------|
+| Time.timeScale competition (multiple systems) | RequestPause/ReleasePause API | 42141f0 |
+| SaveManager auto-save overwrites last user slot | Dedicated slot beyond user range | 3272722 |
+| Space key conflict (RiverCamera vs BoatController) | Gate behind followTarget == null | 006cdcd |
+| Sprint in Update() not FixedUpdate() | Input flags + FixedUpdate forces | 006cdcd |
+| Duplicate dev deps in pyproject.toml | Removed [project.optional-dependencies] dev | e6f1e57 |
+| `terrain_mesh.py` `__main__` wrong data path | Resolve relative to mvp/ root | e6f1e57 |
+| CI pipeline failure hidden by `|| echo` | Only ignore timeout (exit 124) | d2d472c |
 
 ### Resolved (Phase 6 stabilization - 2026-05-15)
 
@@ -443,22 +469,22 @@ cd Nidelven-river-adventure
 
 ## Next Steps — Phase 8: Tech Debt & Quality
 
-### Priority 1: Quick fixes (< 15 min each)
-- [ ] Sprint in `Update()` not `FixedUpdate()` (physics jitter at low FPS)
-- [ ] Space key conflict (RiverCamera vs BoatController)
-- [ ] `terrain_mesh.py` `__main__` wrong data path
-- [ ] Duplicate dev deps in pyproject.toml
-- [ ] CI pipeline failure hidden by `|| echo`
+### Priority 1: Quick fixes (< 15 min each) ✅ ALL DONE
+- [x] Sprint in `Update()` not `FixedUpdate()` (physics jitter at low FPS) ✔️ (006cdcd)
+- [x] Space key conflict (RiverCamera vs BoatController) ✔️ (006cdcd)
+- [x] `terrain_mesh.py` `__main__` wrong data path ✔️ (e6f1e57)
+- [x] Duplicate dev deps in pyproject.toml ✔️ (e6f1e57)
+- [x] CI pipeline failure hidden by `|| echo` ✔️ (d2d472c)
 
 ### Priority 2: Medium effort (30 min — 2 hr)
-- [ ] Time.timeScale competition (multiple systems)
-- [ ] SaveManager auto-save overwrites last user slot
-- [ ] `compute_flow_accumulation` O(n) Python loop → vectorize
-- [ ] Add `pytest-cov` to dev deps + coverage gate in CI
-- [ ] Add CLI tests (main.py entry point)
+- [x] Time.timeScale competition (multiple systems) ✔️ (42141f0)
+- [x] SaveManager auto-save overwrites last user slot ✔️ (3272722)
+- [ ] `compute_flow_accumulation` O(n) Python loop → vectorize (#43)
+- [x] Add `pytest-cov` to dev deps ✔️ (e6f1e57)
+- [ ] Add CLI tests (main.py entry point) (#45)
 
 ### Priority 3: Low priority (post v1.0.0)
-- [ ] CodeQL for C# (extend existing workflow)
+- [ ] CodeQL for C# (extend existing workflow) (#44)
 - [ ] Legacy UI (UnityEngine.UI) → TMPro migration
 - [ ] `softprops/action-gh-release@v1` → v2
 - [ ] Extract CI workaround into composite action
