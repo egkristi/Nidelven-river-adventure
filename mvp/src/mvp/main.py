@@ -74,7 +74,7 @@ def main():
     print("-" * 40)
     
     data_dir = Path(__file__).parent.parent.parent / "data"
-    prefer_real = args.download and not args.sample
+    prefer_real = not args.sample
     
     dem_path = get_dem_path(data_dir, prefer_real=prefer_real)
     print()

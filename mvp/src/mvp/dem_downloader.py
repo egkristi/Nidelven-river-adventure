@@ -1,12 +1,13 @@
 """
-DEM downloader for Kartverket Høydedata.
-Downloads simplified 10m DEM for the Nidelven river area.
+DEM downloader for Nidelven River Adventure.
+Downloads real elevation data from Copernicus GLO-30 DEM (30m resolution).
+Falls back to synthetic DEM if download fails.
 """
 
 import requests
 import os
+import math
 from pathlib import Path
-import json
 from typing import Tuple, Optional
 import time
 
@@ -14,90 +15,135 @@ import time
 # Format: (min_lon, min_lat, max_lon, max_lat)
 NIDELVEN_BBOX = (8.2, 58.3, 8.9, 58.9)
 
-# Kartverket WCS endpoint for DTM 10m
-KARTVERKET_WCS_URL = "https://wcs.geonorge.no/skwms1/wcs.hoyde-dtm10"
+# Copernicus GLO-30 DEM on AWS (free, no auth required)
+COPERNICUS_BASE_URL = "https://copernicus-dem-30m.s3.amazonaws.com"
 
-def download_dem_geonorge(
+
+def _copernicus_tile_url(lat: int, lon: int) -> str:
+    """Get the URL for a Copernicus GLO-30 DEM tile by its SW corner."""
+    lat_prefix = "N" if lat >= 0 else "S"
+    lon_prefix = "E" if lon >= 0 else "W"
+    lat_str = f"{lat_prefix}{abs(lat):02d}"
+    lon_str = f"{lon_prefix}{abs(lon):03d}"
+    tile_name = f"Copernicus_DSM_COG_10_{lat_str}_00_{lon_str}_00_DEM"
+    return f"{COPERNICUS_BASE_URL}/{tile_name}/{tile_name}.tif"
+
+
+def download_dem_copernicus(
     bbox: Tuple[float, float, float, float],
     output_path: Path,
-    resolution: int = 10,
-    max_retries: int = 3
+    max_retries: int = 3,
 ) -> Optional[Path]:
     """
-    Download DEM from Kartverket using WCS GetCoverage.
-    
+    Download DEM from Copernicus GLO-30 (30m resolution) and crop to bbox.
+
     Args:
         bbox: (min_lon, min_lat, max_lon, max_lat) in WGS84
-        output_path: Where to save the GeoTIFF
-        resolution: Resolution in meters (10 for DTM10)
+        output_path: Where to save the cropped GeoTIFF
         max_retries: Number of retries on failure
-    
+
     Returns:
         Path to downloaded file, or None if failed
     """
+    import numpy as np
+
     min_lon, min_lat, max_lon, max_lat = bbox
-    
-    # Calculate grid size based on resolution
-    # At this latitude (~58.6°N), 1 degree lon ≈ 32km, 1 degree lat ≈ 111km
-    width_m = (max_lon - min_lon) * 32000  # approximate
-    height_m = (max_lat - min_lat) * 111000
-    
-    width_px = int(width_m / resolution)
-    height_px = int(height_m / resolution)
-    
-    # Cap at reasonable size for MVP
-    max_size = 2048
-    if width_px > max_size or height_px > max_size:
-        scale = max(width_px, height_px) / max_size
-        width_px = int(width_px / scale)
-        height_px = int(height_px / scale)
-        print(f"  Resizing to {width_px}x{height_px} for MVP preview")
-    
-    # WCS GetCoverage request
-    params = {
-        "SERVICE": "WCS",
-        "REQUEST": "GetCoverage",
-        "VERSION": "2.0.1",
-        "COVERAGEID": f"dtm{resolution}",
-        "SUBSET": [
-            f"x({min_lon},{max_lon})",
-            f"y({min_lat},{max_lat})"
-        ],
-        "FORMAT": "image/tiff",
-        "OUTSIZE": f"{width_px},{height_px}"
-    }
-    
+
+    # Determine which 1x1 degree tiles we need
+    lat_start = int(math.floor(min_lat))
+    lat_end = int(math.floor(max_lat))
+    lon_start = int(math.floor(min_lon))
+    lon_end = int(math.floor(max_lon))
+
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    
-    for attempt in range(max_retries):
-        try:
-            print(f"  Downloading DEM (attempt {attempt + 1}/{max_retries})...")
-            response = requests.get(
-                KARTVERKET_WCS_URL,
-                params=params,
-                timeout=120,
-                stream=True
-            )
-            
-            if response.status_code == 200:
-                with open(output_path, "wb") as f:
-                    for chunk in response.iter_content(chunk_size=8192):
-                        f.write(chunk)
-                
-                file_size = output_path.stat().st_size
-                print(f"  ✓ Downloaded: {file_size / 1024 / 1024:.1f} MB")
-                return output_path
+    tile_dir = output_path.parent / "tiles"
+    tile_dir.mkdir(exist_ok=True)
+
+    tile_paths = []
+    for lat in range(lat_start, lat_end + 1):
+        for lon in range(lon_start, lon_end + 1):
+            tile_url = _copernicus_tile_url(lat, lon)
+            tile_file = tile_dir / f"copernicus_n{lat}_e{lon}.tif"
+
+            if tile_file.exists():
+                print(f"  Using cached tile: N{lat} E{lon}")
+                tile_paths.append(tile_file)
+                continue
+
+            for attempt in range(max_retries):
+                try:
+                    print(f"  Downloading Copernicus GLO-30 tile N{lat} E{lon}"
+                          f" (attempt {attempt + 1}/{max_retries})...")
+                    response = requests.get(tile_url, timeout=120, stream=True)
+
+                    if response.status_code == 200:
+                        with open(tile_file, "wb") as f:
+                            for chunk in response.iter_content(chunk_size=65536):
+                                f.write(chunk)
+                        file_size = tile_file.stat().st_size
+                        print(f"  ✓ Downloaded: {file_size / 1024 / 1024:.1f} MB")
+                        tile_paths.append(tile_file)
+                        break
+                    else:
+                        print(f"  ✗ HTTP {response.status_code}")
+                        if attempt < max_retries - 1:
+                            time.sleep(2 ** attempt)
+                except Exception as e:
+                    print(f"  ✗ Error: {e}")
+                    if attempt < max_retries - 1:
+                        time.sleep(2 ** attempt)
             else:
-                print(f"  ✗ HTTP {response.status_code}: {response.text[:200]}")
-                if attempt < max_retries - 1:
-                    time.sleep(2 ** attempt)  # exponential backoff
-        
-        except Exception as e:
-            print(f"  ✗ Error: {e}")
-            if attempt < max_retries - 1:
-                time.sleep(2 ** attempt)
-    
-    return None
+                print(f"  ✗ Failed to download tile N{lat} E{lon}")
+                return None
+
+    if not tile_paths:
+        return None
+
+    # Crop to bbox and save
+    try:
+        import rasterio
+        from rasterio.windows import from_bounds
+        from rasterio.transform import from_bounds as transform_from_bounds
+
+        # For single tile (most common case for Nidelven)
+        if len(tile_paths) == 1:
+            with rasterio.open(tile_paths[0]) as src:
+                window = from_bounds(min_lon, min_lat, max_lon, max_lat, src.transform)
+                data = src.read(1, window=window)
+                transform = src.window_transform(window)
+        else:
+            # Multiple tiles: merge then crop
+            from rasterio.merge import merge
+            datasets = [rasterio.open(p) for p in tile_paths]
+            merged, merged_transform = merge(datasets)
+            for ds in datasets:
+                ds.close()
+            # Crop merged result
+            from rasterio.transform import rowcol
+            row_start, col_start = rowcol(merged_transform, min_lon, max_lat)
+            row_end, col_end = rowcol(merged_transform, max_lon, min_lat)
+            data = merged[0, row_start:row_end, col_start:col_end]
+            transform = transform_from_bounds(
+                min_lon, min_lat, max_lon, max_lat, data.shape[1], data.shape[0]
+            )
+
+        # Save cropped DEM
+        with rasterio.open(
+            output_path, 'w', driver='GTiff',
+            height=data.shape[0], width=data.shape[1],
+            count=1, dtype=data.dtype,
+            crs='EPSG:4326', transform=transform,
+        ) as dst:
+            dst.write(data, 1)
+
+        print(f"  ✓ Cropped DEM: {data.shape[1]}x{data.shape[0]} px")
+        print(f"  ✓ Elevation range: {data.min():.1f} - {data.max():.1f} m")
+        print(f"  ✓ Saved: {output_path}")
+        return output_path
+
+    except Exception as e:
+        print(f"  ✗ Error processing tiles: {e}")
+        return None
 
 
 def create_sample_dem(output_path: Path, size: int = 512) -> Path:
@@ -183,11 +229,11 @@ def get_dem_path(data_dir: Path, prefer_real: bool = True) -> Path:
         return dem_path
     
     if prefer_real:
-        print("  Attempting to download real DEM from Kartverket...")
-        result = download_dem_geonorge(NIDELVEN_BBOX, dem_path)
+        print("  Attempting to download real DEM from Copernicus GLO-30...")
+        result = download_dem_copernicus(NIDELVEN_BBOX, dem_path)
         if result:
             return result
-        print("  Falling back to synthetic DEM...")
+        print("  Download failed. Falling back to synthetic DEM...")
     
     return create_sample_dem(dem_path)
 
