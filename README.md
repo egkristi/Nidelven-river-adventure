@@ -18,7 +18,7 @@ A relaxing river exploration game set on the **Nidelven river in Agder, Norway**
 3. Download **Build-StandaloneWindows64** (or **Build-StandaloneLinux64**)
 4. Extract the zip and run `NidelvenRiverAdventure.exe`
 
-> Builds are produced automatically on every push to `main` (Windows + Linux).
+> Builds are produced automatically on every push to `main` (Windows + Linux + macOS).
 
 ### From Source (Unity Editor)
 
@@ -113,7 +113,7 @@ Packages/              Unity package manifest (URP, Input System, Cinemachine, T
 | Elevation Data | Copernicus GLO-30 DEM — 30m resolution, free, AWS S3 |
 | Package Manager | UV / hatchling (Python), Unity Package Manager |
 | CI/CD | GitHub Actions — game-ci/unity-builder, CodeQL |
-| Build Targets | Windows x64, Linux x64 |
+| Build Targets | Windows x64, Linux x64, macOS |
 
 ---
 
@@ -125,7 +125,7 @@ All pipelines run on every push and PR to `main`:
 |----------|-------------|
 | **Python MVP** | Ruff lint, Black format check, pytest (27 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
-| **Unity Build** | Win64 + Linux64 artifacts (on `main` push only) |
+| **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
 
 ---
