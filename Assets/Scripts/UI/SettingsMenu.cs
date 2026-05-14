@@ -55,8 +55,9 @@ namespace Nidelven.UI
         
         void Update()
         {
-            // Toggle settings with Escape
-            if (Input.GetKeyDown(KeyCode.Escape))
+            // Only handle Escape in SettingsMenu when settings panel is already open
+            // GameManager handles the initial Escape press to pause
+            if (Input.GetKeyDown(KeyCode.Escape) && settingsPanel.activeSelf)
             {
                 ToggleSettings();
             }
