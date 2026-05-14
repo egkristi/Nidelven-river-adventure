@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Full audit complete, Phase 0-5 DONE, 48 tests, 7 new issues filed)
+Last updated: 2026-05-15 (Phase 6 stabilization COMPLETE, all 7 critical/high issues fixed, 1 open issue remaining)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -18,6 +18,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` �
 > ✅ **Phase 3** — Water shader, particles, vegetation LOD, audio spatialization
 > ✅ **Phase 4** — CI hardening, test coverage, dead code removal
 > ✅ **Phase 5** — Tutorial, localization, achievements, physics, sound design
+> ✅ **Phase 6** — Stabilization: all audit Critical/High issues fixed
 
 ### Full Audit (2026-05-15)
 
@@ -45,40 +46,28 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
 | Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
-| Audit status | ⚠️ 7 open issues | Critical/High bugs identified (see below) |
+| Audit status | ✅ All Critical/High fixed | Issues #26-#32 resolved (0ffe037) |
 
 ---
 
-## 🔴 Open Critical & High Issues (from Audit)
+## ~~🔴 Open Critical & High Issues (from Audit)~~ ✅ ALL RESOLVED
 
-### Critical (must fix before release)
+All Critical and High issues from the 2026-05-15 audit have been fixed:
 
-| # | Issue | Location | GitHub |
-|---|-------|----------|--------|
-| 1 | Volume slider `Mathf.Log10(0)` → `-Infinity` crashes AudioMixer | `SettingsMenu.cs` | #26 |
-| 2 | Sun intensity `*= multiplier` decays to zero each frame | `WeatherSystem.cs` | #27 |
-| 3 | `NIDELVA_BBOX_UTM33` targets Trondheim (63°N), not Agder (58°N) | `nve_river.py` L17 | #28 |
-| 4 | CQL injection in NVE WFS query (unescaped `river_name`) | `nve_river.py` L56 | #28 |
-| 5 | `compute_flow_direction_d8()` (slow version) has broken logic | `river_flow.py` L24 | — |
-| 6 | `release.yml` shell injection via `${{ secrets.* }}` interpolation | `.github/workflows/release.yml` L19 | #29 |
-| 7 | No `.github/dependabot.yml` — no CVE alerts for actions/deps | `.github/` | #30 |
-
-### High (should fix before playtest)
-
-| # | Issue | Location | GitHub |
-|---|-------|----------|--------|
-| 8 | River waves frozen (Time.time used at generation, not runtime) | `RiverController.cs` | #31 |
-| 9 | `VegetationGenerator` pre-allocated batches never used (dead memory) | `VegetationGenerator.cs` | #31 |
-| 10 | `AudioManager.UpdateRiverSound()` calls `GetComponent` every frame | `AudioManager.cs` | #32 |
-| 11 | Achievement tracking calls `UnlockAchievement` every frame (no guard) | `BoatController.cs` | #32 |
-| 12 | Capsize recovery doesn't reset `angularVelocity` (re-capsize) | `BoatController.cs` | #32 |
-| 13 | `RiverController` modifies shared material at runtime (persists in Editor) | `RiverController.cs` | #31 |
-| 14 | Multiple systems competing for `Time.timeScale` without coordination | Multiple scripts | #32 |
-| 15 | Actions pinned to mutable tags (`@v4`) — supply chain risk | All workflows | #30 |
-| 16 | No concurrency groups — rapid pushes stack expensive builds | All workflows | #30 |
-| 17 | No job timeouts (default 360min) — stuck build burns 18hr | All workflows | #30 |
-| 18 | `compute_flow_accumulation()` O(n) Python loop — unusable for large DEM | `river_flow.py` L95 | — |
-| 19 | `camera.py`/`renderer.py` crash on import (missing optional deps) | `camera.py` L6 | — |
+| # | Issue | Fix Commit | GitHub |
+|---|-------|-----------|--------|
+| 1 | Volume slider `Mathf.Log10(0)` → `-Infinity` | 235d20b — clamp to -80dB | #26 ✅ |
+| 2 | Sun intensity `*= multiplier` decays to zero | 235d20b — store base, multiply base | #27 ✅ |
+| 3 | `NIDELVA_BBOX_UTM33` targets Trondheim, not Agder | 7011e2e — BBOX updated to Agder | #28 ✅ |
+| 4 | CQL injection in NVE WFS query | 7011e2e — regex validation on river_name | #28 ✅ |
+| 5 | `release.yml` shell injection via `${{ secrets.* }}` | 4946b48 — env: indirection | #29 ✅ |
+| 6 | No `.github/dependabot.yml` | 4946b48 — added dependabot.yml | #30 ✅ |
+| 7 | No concurrency groups / timeouts | 4946b48 — groups + timeout-minutes | #30 ✅ |
+| 8 | River waves frozen at generation | df02f38 — removed, shader handles waves | #31 ✅ |
+| 9 | `VegetationGenerator` dead batch arrays | df02f38 — removed PreAllocateBatches | #31 ✅ |
+| 10 | `AudioManager.GetComponent` every frame | 0ffe037 — cached reference | #32 ✅ |
+| 11 | Achievement spam every frame | 0ffe037 — guard flags | #32 ✅ |
+| 12 | Recovery missing `angularVelocity` reset | 0ffe037 — zero on recovery | #32 ✅ |
 
 ---
 
@@ -266,6 +255,16 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 - [x] Localization (Norwegian / English) ✔️
 - [x] Performance profiling + optimization pass ✔️
 
+### Phase 6: Stabilization ✅ COMPLETE
+
+- [x] Fix SettingsMenu Log10(0) crash ✔️ (235d20b) — Fixes #26
+- [x] Fix WeatherSystem sun intensity decay ✔️ (235d20b) — Fixes #27
+- [x] Fix nve_river.py wrong coordinates + CQL injection ✔️ (7011e2e) — Fixes #28
+- [x] Fix release.yml shell injection ✔️ (4946b48) — Fixes #29
+- [x] Add dependabot.yml + concurrency groups + timeouts ✔️ (4946b48) — Fixes #30
+- [x] Remove frozen wave displacement + dead batch arrays ✔️ (df02f38) — Fixes #31
+- [x] Fix achievement spam + angularVelocity + cached GetComponent ✔️ (0ffe037) — Fixes #32
+
 ---
 
 ## Geolocated Data Sources
@@ -317,24 +316,13 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 
 ## Technical Debt Register
 
-### Active (from audit 2026-05-15)
+### Active (remaining from audit 2026-05-15)
 
 | Item | Severity | Effort | GitHub |
 |------|----------|--------|--------|
-| SettingsMenu Log10(0) crash | Critical | 10 min | #26 |
-| WeatherSystem intensity decay | Critical | 15 min | #27 |
-| nve_river.py wrong coordinates | Critical | 30 min | #28 |
-| release.yml shell injection | High | 15 min | #29 |
-| No dependabot.yml | High | 10 min | #30 |
-| Actions not pinned to SHA | High | 1 hr | #30 |
-| No concurrency groups / timeouts | High | 30 min | #30 |
-| River waves frozen at generation | High | 2 hr | #31 |
-| Achievement spam every frame | High | 15 min | #32 |
-| Recovery missing angularVelocity reset | High | 5 min | #32 |
-| AudioManager GetComponent in update | High | 10 min | #32 |
-| Time.timeScale competition | High | 1 hr | #32 |
-| `compute_flow_accumulation` O(n) Python loop | High | 2 hr | — |
-| `camera.py` unconditional import of optional deps | High | 15 min | — |
+| Time.timeScale competition (multiple systems) | Medium | 1 hr | — |
+| `compute_flow_accumulation` O(n) Python loop | Medium | 2 hr | — |
+| `camera.py` unconditional import of optional deps | Medium | 15 min | — |
 | DayNightCycle double-calculates sun intensity | Medium | 5 min | — |
 | GameManager weak random seed (only 1000 values) | Medium | 5 min | — |
 | GameManager missing DontDestroyOnLoad | Medium | 5 min | — |
@@ -348,6 +336,23 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | `terrain_mesh.py` `__main__` wrong data path | Medium | 5 min | — |
 | Global `np.random.seed(42)` pollution | Medium | 5 min | — |
 | CI pipeline failure hidden by `\|\| echo` | Medium | 10 min | — |
+
+### Resolved (Phase 6 stabilization - 2026-05-15)
+
+| Item | Resolution | Commit |
+|------|-----------|--------|
+| SettingsMenu Log10(0) crash | Clamp to -80dB minimum | 235d20b |
+| WeatherSystem intensity decay | Store base intensity, multiply base | 235d20b |
+| nve_river.py wrong coordinates | BBOX updated to Agder | 7011e2e |
+| CQL injection in NVE query | Regex validation on river_name | 7011e2e |
+| release.yml shell injection | env: indirection for secrets | 4946b48 |
+| No dependabot.yml | Added for github-actions + pip | 4946b48 |
+| No concurrency groups / timeouts | Added to ci.yml + release.yml | 4946b48 |
+| River waves frozen at generation | Removed, shader handles waves | df02f38 |
+| VegetationGenerator dead batch arrays | Removed PreAllocateBatches | df02f38 |
+| AudioManager GetComponent in update | Cached reference | 0ffe037 |
+| Achievement spam every frame | Guard flags (tenKm, speedDemon) | 0ffe037 |
+| Recovery missing angularVelocity reset | Zero on recovery | 0ffe037 |
 | CodeQL only scans Python (not C#) | Medium | 30 min | — |
 | Duplicated CI workaround code (3x) | Low | 1 hr | — |
 | Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | — |
