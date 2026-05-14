@@ -167,14 +167,14 @@ namespace Nidelven.Player
             if (transform.position.y < waterLevel + 0.5f)
             {
                 // Linear drag
-                rb.AddForce(-rb.velocity * waterDrag * rb.mass);
+                rb.AddForce(-rb.linearVelocity * waterDrag * rb.mass);
                 
                 // Angular drag
-                rb.angularDrag = waterAngularDrag;
+                rb.angularDamping = waterAngularDrag;
             }
             else
             {
-                rb.angularDrag = 0.05f;
+                rb.angularDamping = 0.05f;
             }
         }
         
@@ -310,7 +310,7 @@ namespace Nidelven.Player
         
         void Brake()
         {
-            rb.AddForce(-rb.velocity * rb.mass * 2f * Time.deltaTime, ForceMode.Force);
+            rb.AddForce(-rb.linearVelocity * rb.mass * 2f * Time.deltaTime, ForceMode.Force);
         }
         
         void RecoverStamina()
@@ -393,7 +393,7 @@ namespace Nidelven.Player
         
         public float GetSpeed()
         {
-            return rb.velocity.magnitude;
+            return rb.linearVelocity.magnitude;
         }
         
         public float GetStamina()
