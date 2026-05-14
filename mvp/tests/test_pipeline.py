@@ -1,11 +1,13 @@
 """Tests for the MVP terrain pipeline."""
-import numpy as np
-import pytest
 
-from mvp.minimal import create_sample_dem_ascii
-from mvp.terrain_mesh import generate_mesh, calculate_normals
-from mvp.river_flow import trace_river_path, find_start_point
+import json
+
+import numpy as np
+
 from mvp.dem_downloader import create_sample_dem
+from mvp.minimal import create_sample_dem_ascii
+from mvp.river_flow import find_start_point, trace_river_path
+from mvp.terrain_mesh import calculate_normals, export_unity_raw, generate_mesh
 
 
 class TestMinimal:
@@ -71,3 +73,30 @@ class TestDemDownloader:
         dem_path = create_sample_dem(output_file, size=32)
         assert dem_path.exists()
         assert dem_path.suffix == ".tif"
+
+
+class TestUnityExport:
+    def test_export_unity_raw(self, tmp_path):
+        """Test that export_unity_raw produces valid RAW + metadata."""
+        # Create a sample DEM first
+        dem_path = tmp_path / "test_dem.tif"
+        create_sample_dem(dem_path, size=32)
+
+        # Export as Unity RAW
+        output_dir = tmp_path / "output"
+        raw_path = export_unity_raw(dem_path, output_dir, resolution=33)
+
+        # Check files exist
+        assert raw_path.exists()
+        assert (output_dir / "terrain_metadata.json").exists()
+
+        # Check RAW file size (33*33 pixels * 2 bytes)
+        assert raw_path.stat().st_size == 33 * 33 * 2
+
+        # Check metadata contents
+        with open(output_dir / "terrain_metadata.json") as f:
+            meta = json.load(f)
+        assert meta["format"] == "raw16_little_endian"
+        assert meta["resolution"] == 33
+        assert meta["min_elevation_m"] < meta["max_elevation_m"]
+        assert len(meta["unity_terrain_size"]) == 3

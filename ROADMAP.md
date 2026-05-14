@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (post-fix)
+Last updated: 2025-05-14
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -26,7 +26,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
 | CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64, 7-day retention |
 | CodeQL | ✅ Passing | Python security scanning |
-| Integration (Python→Unity) | ❌ Not connected | Manual file copy required |
+| Integration (Python→Unity) | ✅ RAW export pipeline | `export_unity_raw()` → StreamingAssets auto-load |
 | Playable experience | ⚠️ Partial | Synthetic terrain only; no real DEM in Unity |
 
 ---
@@ -73,7 +73,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 |---|-------|--------|
 | A1 | Two unconnected terrain importers (`TerrainGenerator` + `KartverketDemImporter`) | Confusing; unclear which to use |
 | A2 | `TerrainGenerator.LoadGeoTiff()` doesn't parse TIFF headers — reads raw bytes | Will produce garbage with real GeoTIFF files |
-| A3 | Legacy Input API everywhere but New Input System package installed | Silent input failure if project settings misconfigured |
+| A3 | ~~Legacy Input API + New Input System~~ | ✅ Fixed — `activeInputHandler` set to 2 (Both) |
 | A4 | Escape key handled by both `GameManager` and `SettingsMenu` | Race condition / double-toggle |
 | A5 | Python `kartverket_dem.py` is dead code (WCS returns all-zero data) | Clutters codebase |
 | A6 | `scripts/` directory appears orphaned (pre-MVP approach) | Should be removed or integrated |
@@ -104,7 +104,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | Module | Covered | Not Covered |
 |--------|---------|-------------|
 | `minimal.py` | `create_sample_dem_ascii` | `trace_river_path`, `render_ascii`, `render_html` |
-| `terrain_mesh.py` | `generate_mesh`, `calculate_normals` | `load_dem`, `save_mesh_obj`, `create_terrain_from_dem` |
+| `terrain_mesh.py` | `generate_mesh`, `calculate_normals`, `export_unity_raw` | `load_dem`, `save_mesh_obj`, `create_terrain_from_dem` |
 | `river_flow.py` | `find_start_point`, `trace_river_path` | `smooth_path`, `calculate_flow_properties`, `generate_river_mesh` |
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
 | `headless_renderer.py` | ❌ | All |
@@ -155,10 +155,11 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Create main Unity scene
 - [x] Enable Unity build in CI
 - [x] Fix remaining Unity bugs (U3, U4)
-- [ ] Fix `TerrainGenerator.LoadGeoTiff()` to parse real TIFF (or use RAW format)
-- [ ] Build pipeline: Python DEM → Unity StreamingAssets (automated copy or build step)
+- [x] Fix `TerrainGenerator.LoadGeoTiff()` — replaced with RAW format auto-load from StreamingAssets
+- [x] Build pipeline: Python `export_unity_raw()` → Unity StreamingAssets auto-load
+- [x] Fix Input System configuration (set to "Both")
+- [x] Add test for `export_unity_raw` (8 tests passing)
 - [ ] Wire up boat + camera with real terrain in scene
-- [ ] Fix Input System configuration (set to "Both")
 - [ ] First playable build with real terrain
 
 ### Phase 2: Data Quality (v0.2.0)
