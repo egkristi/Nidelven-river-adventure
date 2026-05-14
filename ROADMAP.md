@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 2/3 nearly complete, Phase 4 complete)
+Last updated: 2026-05-14 (Phase 3 complete, Phase 4 complete)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -178,7 +178,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Import river geometry from NVE Elvenett / ELVIS ✔️
 - [x] Auto-generate terrain.raw + river_path.json in CI builds ✔️
 
-### Phase 3: Polish (v0.3.0)
+### Phase 3: Polish (v0.3.0) ✅ COMPLETE
 
 - [x] Fix water shader flow animation (_FlowOffset)
 - [x] Add `DepthOnly` pass to water shader ✔️
@@ -210,7 +210,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [ ] Steam achievements for river milestones
 - [ ] Settings menu with URP quality presets
 - [ ] Localization (Norwegian / English)
-- [ ] Performance profiling + optimization pass
+- [x] Performance profiling + optimization pass ✔️
 
 ---
 
