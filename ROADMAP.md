@@ -39,7 +39,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (55 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto — all lint clean |
+| Python MVP pipeline | ✅ Functional (61 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -157,7 +157,7 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 55 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 61 tests passing. Integration test included.
 
 ---
 
@@ -441,32 +441,29 @@ cd Nidelven-river-adventure
 
 ---
 
-## Next Steps — Phase 6: Stabilization & Release (v1.0.0)
+## Next Steps — Phase 8: Tech Debt & Quality
 
-### Priority 1: Critical fixes (same-day)
-- [ ] Fix SettingsMenu Log10(0) → clamp to 0.0001 (#26)
-- [ ] Fix WeatherSystem intensity decay → store base value (#27)
-- [ ] Fix nve_river.py coordinates → Agder bbox (#28)
-- [ ] Fix release.yml shell injection → use env: indirection (#29)
+### Priority 1: Quick fixes (< 15 min each)
+- [ ] Sprint in `Update()` not `FixedUpdate()` (physics jitter at low FPS)
+- [ ] Space key conflict (RiverCamera vs BoatController)
+- [ ] `terrain_mesh.py` `__main__` wrong data path
+- [ ] Duplicate dev deps in pyproject.toml
+- [ ] CI pipeline failure hidden by `|| echo`
 
-### Priority 2: High fixes (this week)
-- [ ] Add dependabot.yml + pin critical actions to SHA (#30)
-- [ ] Add concurrency groups + timeouts to all workflows (#30)
-- [ ] Fix frozen river waves → shader-based animation (#31)
-- [ ] Fix achievement spam + angularVelocity reset + GetComponent caching (#32)
-- [ ] Add Time.timeScale coordination (central pause manager) (#32)
-- [ ] Guard `camera.py`/`renderer.py` imports behind try/except
-
-### Priority 3: Quality (before v1.0.0 tag)
-- [ ] Add CLI tests (main.py entry point)
-- [ ] Add `export_river_path_json()` test
-- [ ] Pin pip deps in CI terrain generation step
-- [ ] Extract CI workaround into composite action
-- [ ] Add CodeQL for C# (extend existing workflow)
+### Priority 2: Medium effort (30 min — 2 hr)
+- [ ] Time.timeScale competition (multiple systems)
+- [ ] SaveManager auto-save overwrites last user slot
+- [ ] `compute_flow_accumulation` O(n) Python loop → vectorize
 - [ ] Add `pytest-cov` to dev deps + coverage gate in CI
+- [ ] Add CLI tests (main.py entry point)
 
-### Future (post-release)
-- Norge i bilder satellite textures (#25)
+### Priority 3: Low priority (post v1.0.0)
+- [ ] CodeQL for C# (extend existing workflow)
+- [ ] Legacy UI (UnityEngine.UI) → TMPro migration
+- [ ] `softprops/action-gh-release@v1` → v2
+- [ ] Extract CI workaround into composite action
+
+### Future features
 - Weather effects (rain, fog particles)
 - Multiplayer co-op
 - VR support

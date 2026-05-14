@@ -40,8 +40,9 @@ uv run nidelven                  # download real DEM + generate terrain + previe
 uv run nidelven --sample         # use synthetic terrain (no download)
 uv run nidelven --kartverket     # use Kartverket 1m LiDAR DEM (high-res)
 uv run nidelven --orthophoto     # download aerial orthophoto as terrain texture
+uv run nidelven --qgis           # export GeoTIFF + GeoJSON for QGIS browsing
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite
+uv run pytest tests/ -v          # run test suite (61 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -52,7 +53,7 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 
 | Category | Details | Status |
 |----------|---------|--------|
-| **Terrain** | 30m DEM (Copernicus GLO-30) + 1m LiDAR (Kartverket) + aerial orthophoto (Norge i bilder) | ✅ Pipeline + Unity |
+| **Terrain** | 30m DEM (Copernicus GLO-30) + 1m LiDAR (Kartverket) + aerial orthophoto (Norge i bilder) + QGIS export | ✅ Pipeline + Unity |
 | **River** | D8 flow accumulation + NVE ELVIS real geometry + Leopold-Maddock widths | ✅ Works |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
@@ -91,11 +92,12 @@ mvp/
     nve_river.py       NVE ELVIS WFS river geometry import
     terrain_textures.py Procedural splatmap (slope/elevation/flow-based)
     norgeibilder.py    Norge i bilder WMTS orthophoto client
+    qgis_export.py     QGIS project export (GeoTIFF, GeoJSON, .qgs)
     kartverket_dem.py  Kartverket 1m LiDAR DEM importer (WCS 2.0.1)
     weather.py         MET Norway weather integration (live/seasonal)
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               55 pytest tests (core modules: 46-69% coverage)
+  tests/               61 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml
 ```
@@ -133,7 +135,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (55 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (61 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
