@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 6 stabilization COMPLETE, all 7 critical/high issues fixed, 1 open issue remaining)
+Last updated: 2026-05-15 (Phase 7: Norge i bilder orthophoto COMPLETE, all issues resolved, 0 open issues)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -19,6 +19,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` �
 > ✅ **Phase 4** — CI hardening, test coverage, dead code removal
 > ✅ **Phase 5** — Tutorial, localization, achievements, physics, sound design
 > ✅ **Phase 6** — Stabilization: all audit Critical/High issues fixed
+> ✅ **Phase 7** — Norge i bilder aerial orthophoto terrain textures
 
 ### Full Audit (2026-05-15)
 
@@ -38,7 +39,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (48 tests) | DEM, mesh, D8 flow, river, splatmap, weather — all lint clean |
+| Python MVP pipeline | ✅ Functional (55 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -46,7 +47,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
 | Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
-| Audit status | ✅ All Critical/High fixed | Issues #26-#32 resolved (0ffe037) |
+| Audit status | ✅ All Critical/High fixed | Issues #25-#32 all resolved |
 
 ---
 
@@ -150,12 +151,13 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `weather.py` | `get_seasonal_weather`, `build_weather_data`, `export_weather_json`, `unity_params` | `fetch_live_weather`, `fetch_historical_weather` (network) |
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
 | `nve_river.py` | `extract_river_path`, `_merge_segments`, `save/load_river_path` | `fetch_river_geometry` (network), `get_nidelva_path` |
+| `norgeibilder.py` | `wgs84_to_tile`, `tile_to_wgs84`, `get_tile_bounds`, `download_tile`, `download_orthophoto`, `export_terrain_texture` | — (all core functions tested) |
 | `headless_renderer.py` | ❌ | All (rendering, hard to unit test) |
 | `renderer.py` | ❌ | All (OpenGL, hard to unit test) |
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 48 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 55 tests passing. Integration test included.
 
 ---
 
@@ -264,6 +266,17 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 - [x] Add dependabot.yml + concurrency groups + timeouts ✔️ (4946b48) — Fixes #30
 - [x] Remove frozen wave displacement + dead batch arrays ✔️ (df02f38) — Fixes #31
 - [x] Fix achievement spam + angularVelocity + cached GetComponent ✔️ (0ffe037) — Fixes #32
+
+### Phase 7: Norge i bilder Orthophoto ✅ COMPLETE
+
+- [x] Implement WMTS client for Norge i bilder (opencache.statkart.no) ✔️ (cfdd637)
+- [x] Download and stitch aerial orthophoto tiles for Nidelven area ✔️ (cfdd637)
+- [x] Export terrain texture (1024x1024 PNG) for Unity TerrainLayer ✔️ (cfdd637)
+- [x] Add `--orthophoto` CLI flag to Python pipeline ✔️ (cfdd637)
+- [x] Unity TerrainGenerator loads orthophoto as terrain texture ✔️ (cfdd637)
+- [x] Fallback to procedural splatmap if imagery unavailable ✔️ (cfdd637)
+- [x] Add 7 tests for WMTS client (coordinate conversion, bounds, safety) ✔️ (cfdd637)
+- [x] Close issue #25 ✔️
 
 ---
 
