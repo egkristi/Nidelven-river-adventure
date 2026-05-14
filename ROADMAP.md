@@ -83,7 +83,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 | # | Issue | Impact |
 |---|-------|--------|
-| PF1 | `terrain_mesh.py` vertex generation uses Python for-loops (262k iterations) | Extremely slow mesh generation |
+| PF1 | ~~`terrain_mesh.py` vertex generation uses Python for-loops (262k iterations)~~ | ✅ Vectorized with numpy |
 | PF2 | `VegetationGenerator.RenderInstanced()` allocates arrays every frame | GC pressure, frame drops |
 | PF3 | `PhotoMode.ApplyFilters()` iterates every pixel on CPU | Multi-second freeze on capture at 2x resolution |
 | PF4 | `AudioManager` moves its own transform to player position | Breaks 3D audio spatialization for non-river sources |
@@ -108,12 +108,13 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | `terrain_mesh.py` | `generate_mesh`, `calculate_normals`, `export_unity_raw`, NaN handling, multi-size | `load_dem` (partial), `save_mesh_obj` |
 | `river_flow.py` | `find_start_point` (all sides), `trace_river_path`, `smooth_path`, `calculate_flow_properties` | `generate_river_mesh` |
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
+| `nve_river.py` | `extract_river_path`, `_merge_segments`, `save/load_river_path` | `fetch_river_geometry` (network), `get_nidelva_path` |
 | `headless_renderer.py` | ❌ | All (rendering, hard to unit test) |
 | `renderer.py` | ❌ | All (OpenGL, hard to unit test) |
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%.** 18 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%.** 23 tests passing. Integration test included.
 
 ---
 
@@ -171,9 +172,9 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [ ] Implement proper river path from OSM or NVE data
 - [ ] Texture terrain from geolocated imagery (see Geolocated Data Sources below)
 - [ ] Add DEM integrity verification (checksum)
-- [ ] Vectorize terrain mesh generation (eliminate Python for-loops)
+- [x] Vectorize terrain mesh generation (eliminate Python for-loops) ✔️
 - [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
-- [ ] Import river geometry from NVE Elvenett / ELVIS
+- [x] Import river geometry from NVE Elvenett / ELVIS ✔️
 
 ### Phase 3: Polish (v0.3.0)
 
@@ -194,7 +195,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Fix release workflow deadlock (needs: with proper `if:`)
 - [ ] Pin Unity version in release.yml
 - [x] Add integration test (full pipeline end-to-end)
-- [x] Increase test coverage — 18 tests, core modules 46-69%
+- [x] Increase test coverage — 23 tests, core modules 46-69%
 - [x] Remove dead code (kartverket_dem.py, scripts/, KartverketDemImporter.cs)
 - [x] Fix architecture warnings (A1, A4, A5, A6)
 
@@ -265,9 +266,9 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | ~~Dead code: `kartverket_dem.py`~~ | ~~Low~~ | — | ✅ Removed |
 | ~~Dead code: `scripts/` directory~~ | ~~Low~~ | — | ✅ Removed |
 | ~~Duplicate dev deps in pyproject.toml~~ | ~~Low~~ | — | ✅ Fixed (ruff+black added to dependency-groups) |
-| `--size` and `--download` CLI args unused | Low | 10 min | Remove or implement |
-| `camera.py` coordinate mismatch | Medium | 30 min | Row/col → X/Z mapping inconsistent with terrain_mesh |
-| Python for-loop mesh generation | Medium | 1-2 hr | Rewrite with numpy vectorization |
+| ~~`--size` and `--download` CLI args unused~~ | ~~Low~~ | — | ✅ Removed |
+| ~~`camera.py` coordinate mismatch~~ | ~~Medium~~ | — | ✅ Fixed (col→X, row→Z) |
+| ~~Python for-loop mesh generation~~ | ~~Medium~~ | — | ✅ Vectorized with numpy |
 | Frame-rate-dependent camera smoothing | Low | 15 min | Use `SmoothDamp` instead of `Lerp` |
 | Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | Migrate to TextMeshPro when ready |
 | Cinemachine 2.x → 3.x | Low | 2 hr | Optional; 2.x still works in Unity 6 |
