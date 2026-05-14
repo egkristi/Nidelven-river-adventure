@@ -112,7 +112,6 @@ def generate_mesh(
             indices = distance_transform_edt(mask, return_distances=False, return_indices=True)
             dem_data[mask] = dem_data[indices[0][mask], indices[1][mask]]
 
-    # Generate vertices
     # Scale to reasonable world coordinates
     bbox = metadata["bbox"]
     world_width = bbox[2] - bbox[0]
@@ -130,36 +129,41 @@ def generate_mesh(
     x_offset = -width * x_scale / 2
     z_offset = -height * z_scale / 2
 
-    vertices = []
-    uvs = []
+    # Generate vertices (vectorized)
+    x_coords = np.arange(width, dtype=np.float32) * x_scale + x_offset
+    z_coords = np.arange(height, dtype=np.float32) * z_scale + z_offset
 
-    for y in range(height):
-        for x in range(width):
-            px = x * x_scale + x_offset
-            py = dem_data[y, x] * height_scale
-            pz = y * z_scale + z_offset
-            vertices.append([px, py, pz])
-            uvs.append([x / (width - 1), y / (height - 1)])
+    # Create 2D grids
+    xx, zz = np.meshgrid(x_coords, z_coords)
+    yy = dem_data * height_scale
 
-    vertices = np.array(vertices, dtype=np.float32)
-    uvs = np.array(uvs, dtype=np.float32)
+    # Flatten to Nx3 vertices
+    vertices = np.column_stack([xx.ravel(), yy.ravel(), zz.ravel()]).astype(np.float32)
 
-    # Generate triangle indices
-    indices = []
-    for y in range(height - 1):
-        for x in range(width - 1):
-            # Two triangles per quad
-            i0 = y * width + x
-            i1 = y * width + (x + 1)
-            i2 = (y + 1) * width + x
-            i3 = (y + 1) * width + (x + 1)
+    # UVs
+    u = np.linspace(0, 1, width, dtype=np.float32)
+    v = np.linspace(0, 1, height, dtype=np.float32)
+    uu, vv = np.meshgrid(u, v)
+    uvs = np.column_stack([uu.ravel(), vv.ravel()]).astype(np.float32)
 
-            # Triangle 1: top-left, top-right, bottom-left
-            indices.append([i0, i1, i2])
-            # Triangle 2: top-right, bottom-right, bottom-left
-            indices.append([i1, i3, i2])
+    # Generate triangle indices (vectorized)
+    rows = np.arange(height - 1)
+    cols = np.arange(width - 1)
+    rr, cc = np.meshgrid(rows, cols, indexing="ij")
+    rr = rr.ravel()
+    cc = cc.ravel()
 
-    indices = np.array(indices, dtype=np.uint32)
+    i0 = rr * width + cc
+    i1 = rr * width + (cc + 1)
+    i2 = (rr + 1) * width + cc
+    i3 = (rr + 1) * width + (cc + 1)
+
+    # Two triangles per quad
+    tri1 = np.column_stack([i0, i1, i2])
+    tri2 = np.column_stack([i1, i3, i2])
+    indices = np.empty((len(i0) * 2, 3), dtype=np.uint32)
+    indices[0::2] = tri1
+    indices[1::2] = tri2
 
     # Calculate normals
     normals = calculate_normals(vertices, indices, width, height)
@@ -186,42 +190,42 @@ def generate_mesh(
 def calculate_normals(
     vertices: np.ndarray, indices: np.ndarray, width: int, height: int
 ) -> np.ndarray:
-    """Calculate per-vertex normals using cross product."""
+    """Calculate per-vertex normals using cross product (vectorized)."""
     normals = np.zeros_like(vertices)
 
     # Flatten if 2D
     if indices.ndim == 2:
-        indices = indices.flatten()
+        flat_indices = indices.flatten()
+    else:
+        flat_indices = indices
 
-    # For each triangle
-    for i in range(0, len(indices), 3):
-        i0, i1, i2 = indices[i], indices[i + 1], indices[i + 2]
+    # Reshape to Nx3 triangles
+    tri_idx = flat_indices.reshape(-1, 3)
 
-        v0 = vertices[i0]
-        v1 = vertices[i1]
-        v2 = vertices[i2]
+    # Get triangle vertices
+    v0 = vertices[tri_idx[:, 0]]
+    v1 = vertices[tri_idx[:, 1]]
+    v2 = vertices[tri_idx[:, 2]]
 
-        # Edge vectors
-        e1 = v1 - v0
-        e2 = v2 - v0
+    # Edge vectors and cross products
+    e1 = v1 - v0
+    e2 = v2 - v0
+    face_normals = np.cross(e1, e2)
 
-        # Cross product
-        normal = np.cross(e1, e2)
+    # Normalize face normals
+    lengths = np.linalg.norm(face_normals, axis=1, keepdims=True)
+    lengths[lengths == 0] = 1
+    face_normals = face_normals / lengths
 
-        # Normalize
-        length = np.linalg.norm(normal)
-        if length > 0:
-            normal = normal / length
-
-        # Add to all three vertices
-        normals[i0] += normal
-        normals[i1] += normal
-        normals[i2] += normal
+    # Accumulate face normals to vertices
+    np.add.at(normals, tri_idx[:, 0], face_normals)
+    np.add.at(normals, tri_idx[:, 1], face_normals)
+    np.add.at(normals, tri_idx[:, 2], face_normals)
 
     # Normalize per-vertex normals
-    lengths = np.linalg.norm(normals, axis=1, keepdims=True)
-    lengths[lengths == 0] = 1  # Avoid division by zero
-    normals = normals / lengths
+    vert_lengths = np.linalg.norm(normals, axis=1, keepdims=True)
+    vert_lengths[vert_lengths == 0] = 1
+    normals = normals / vert_lengths
 
     return normals.astype(np.float32)
 
