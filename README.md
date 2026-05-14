@@ -155,7 +155,6 @@ See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
 - Real DEM not yet streaming into Unity builds (procedural terrain used at runtime)
 - PhotoMode pixel filter is CPU-bound (PF3 — use GPU post-processing)
-- Particle effects (splash, foam, mist) not yet implemented
 
 ---
 

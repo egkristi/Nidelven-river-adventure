@@ -186,7 +186,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Fix AudioManager 3D spatialization (child objects for sources) ✔️
 - [x] Remove debug OnGUI overlays (gated behind `#if UNITY_EDITOR`) ✔️
 - [x] Add proper water depth/transparency (depth texture sampling) ✔️
-- [ ] Particle effects (splash, foam, mist)
+- [x] Particle effects (splash, foam, mist) ✔️
 - [x] LOD system for vegetation (distance-based culling) ✔️
 
 ### Phase 4: CI/CD Hardening ✅ COMPLETE
