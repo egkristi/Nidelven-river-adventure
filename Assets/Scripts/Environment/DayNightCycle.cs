@@ -79,10 +79,14 @@ namespace Nidelven.Environment
                 AdvanceTime();
             }
             
+            cachedSunIntensity = CalculateSunIntensity();
             UpdateLighting();
             UpdateSkybox();
             UpdateFog();
         }
+        
+        // Cached per-frame to avoid redundant trig
+        private float cachedSunIntensity;
         
         void AdvanceTime()
         {
@@ -110,7 +114,7 @@ namespace Nidelven.Environment
                 sunLight.transform.rotation = Quaternion.Euler(sunAngle, 0f, 0f);
                 
                 // Sun intensity based on time
-                float sunIntensity = CalculateSunIntensity();
+                float sunIntensity = cachedSunIntensity;
                 sunLight.intensity = sunIntensity;
                 
                 // Sun color
@@ -127,13 +131,13 @@ namespace Nidelven.Environment
                 moonLight.transform.rotation = Quaternion.Euler(moonAngle, 0f, 0f);
                 
                 // Moon visible when sun is down
-                float moonIntensity = 1f - CalculateSunIntensity();
+                float moonIntensity = 1f - cachedSunIntensity;
                 moonLight.intensity = moonIntensity * 0.3f;
                 moonLight.enabled = moonIntensity > 0.1f;
             }
             
             // Update ambient light
-            RenderSettings.ambientIntensity = baseAmbientIntensity * (0.2f + CalculateSunIntensity() * 0.8f);
+            RenderSettings.ambientIntensity = baseAmbientIntensity * (0.2f + cachedSunIntensity * 0.8f);
             RenderSettings.ambientLight = skyColorGradient.Evaluate(normalizedTime) * 0.5f;
         }
         

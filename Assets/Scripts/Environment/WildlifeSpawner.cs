@@ -129,6 +129,8 @@ namespace Nidelven.Environment
         {
             if (player == null) return;
             
+            float despawnDistSqr = despawnDistance * despawnDistance;
+            
             for (int i = activeWildlife.Count - 1; i >= 0; i--)
             {
                 if (activeWildlife[i] == null)
@@ -137,8 +139,8 @@ namespace Nidelven.Environment
                     continue;
                 }
                 
-                float distance = Vector3.Distance(player.position, activeWildlife[i].transform.position);
-                if (distance > despawnDistance)
+                float distSqr = (player.position - activeWildlife[i].transform.position).sqrMagnitude;
+                if (distSqr > despawnDistSqr)
                 {
                     Destroy(activeWildlife[i]);
                     activeWildlife.RemoveAt(i);
@@ -219,10 +221,10 @@ namespace Nidelven.Environment
         {
             if (player == null) return;
             
-            float distanceToPlayer = Vector3.Distance(transform.position, player.position);
+            float distSqr = (transform.position - player.position).sqrMagnitude;
             
-            // Flee if player too close
-            if (distanceToPlayer < 30f)
+            // Flee if player too close (30m)
+            if (distSqr < 900f)
             {
                 Vector3 fleeDir = (transform.position - player.position).normalized;
                 transform.position += fleeDir * 5f * Time.deltaTime;

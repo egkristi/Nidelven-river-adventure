@@ -403,25 +403,51 @@ namespace Nidelven.Environment
             return Mathf.Lerp(flowSpeeds[index], flowSpeeds[index + 1], t);
         }
         
+        // Cache last search index for O(1) amortized closest-point lookup
+        private int lastClosestIndex = 0;
+        
         /// <summary>
         /// Get closest point on river to world position.
+        /// Uses local search around last known position for O(1) amortized performance.
         /// </summary>
         public float GetClosestProgress(Vector3 worldPos)
         {
-            float closestDist = float.MaxValue;
-            float closestProgress = 0f;
+            if (riverPath.Count == 0) return 0f;
             
-            for (int i = 0; i < riverPath.Count; i++)
+            float closestDistSqr = float.MaxValue;
+            int closestIdx = lastClosestIndex;
+            
+            // Search locally first (±10 indices from last position)
+            int searchRadius = 10;
+            int start = Mathf.Max(0, lastClosestIndex - searchRadius);
+            int end = Mathf.Min(riverPath.Count, lastClosestIndex + searchRadius);
+            
+            for (int i = start; i < end; i++)
             {
-                float dist = Vector3.Distance(worldPos, riverPath[i]);
-                if (dist < closestDist)
+                float distSqr = (worldPos - riverPath[i]).sqrMagnitude;
+                if (distSqr < closestDistSqr)
                 {
-                    closestDist = dist;
-                    closestProgress = i / (float)(riverPath.Count - 1);
+                    closestDistSqr = distSqr;
+                    closestIdx = i;
                 }
             }
             
-            return closestProgress;
+            // If best is at boundary of local search, do full search
+            if (closestIdx == start || closestIdx == end - 1)
+            {
+                for (int i = 0; i < riverPath.Count; i++)
+                {
+                    float distSqr = (worldPos - riverPath[i]).sqrMagnitude;
+                    if (distSqr < closestDistSqr)
+                    {
+                        closestDistSqr = distSqr;
+                        closestIdx = i;
+                    }
+                }
+            }
+            
+            lastClosestIndex = closestIdx;
+            return closestIdx / (float)(riverPath.Count - 1);
         }
         
         void OnDrawGizmos()
