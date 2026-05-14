@@ -33,11 +33,24 @@ namespace Nidelven.Core
         [Tooltip("Forest ambience (wind, leaves)")]
         public AudioClip forestAmbience;
         
+        [Tooltip("Wind ambience")]
+        public AudioClip windAmbience;
+        
         [Tooltip("Bird sounds (various birds)")]
         public AudioClip[] birdSounds;
         
         [Tooltip("Bird call interval min/max")]
         public Vector2 birdInterval = new Vector2(5f, 15f);
+        
+        [Header("SFX")]
+        [Tooltip("Paddle splash sounds (water impact)")]
+        public AudioClip[] splashSounds;
+        
+        [Tooltip("Capsize/water immersion sound")]
+        public AudioClip capsizeSound;
+        
+        [Tooltip("Recovery sound")]
+        public AudioClip recoverySound;
         
         [Header("Music")]
         [Tooltip("Ambient background music")]
@@ -55,6 +68,7 @@ namespace Nidelven.Core
         private AudioSource riverSource;
         private AudioSource rapidsSource;
         private AudioSource forestSource;
+        private AudioSource windSource;
         private AudioSource musicSource;
         
         // Child objects for spatial audio (PF4 fix)
@@ -64,6 +78,9 @@ namespace Nidelven.Core
         // State
         private float nextBirdTime = 0f;
         private float currentRiverSpeed = 0f;
+        private float targetRiverVolume = 1f;
+        private float targetRapidsVolume = 0f;
+        private float targetWindVolume = 0.3f;
         
         void Awake()
         {
@@ -122,6 +139,14 @@ namespace Nidelven.Core
             forestSource.loop = true;
             forestSource.playOnAwake = false;
             
+            // Wind ambience (on forest child — 2D, subtle layer)
+            windSource = forestObj.AddComponent<AudioSource>();
+            windSource.outputAudioMixerGroup = ambienceGroup;
+            windSource.spatialBlend = 0f; // 2D wind (envelops player)
+            windSource.loop = true;
+            windSource.volume = 0.3f;
+            windSource.playOnAwake = false;
+            
             // Music (on manager itself — 2D, no spatial)
             if (ambientMusic != null)
             {
@@ -158,6 +183,13 @@ namespace Nidelven.Core
                 forestSource.Play();
             }
             
+            // Start wind layer
+            if (windAmbience != null && windSource != null)
+            {
+                windSource.clip = windAmbience;
+                windSource.Play();
+            }
+            
             // Start music
             if (ambientMusic != null && musicSource != null)
             {
@@ -174,18 +206,38 @@ namespace Nidelven.Core
             float progress = river.GetClosestProgress(playerTransform.position);
             currentRiverSpeed = river.GetFlowSpeedAt(progress);
             
-            // Move river audio child to player (not the manager itself)
-            riverAudioTransform.position = playerTransform.position;
+            // Distance-based volume attenuation (quieter when far from river)
+            Vector3 riverPos = river.GetPositionOnRiver(progress);
+            float distToRiver = Vector3.Distance(playerTransform.position, riverPos);
+            float distanceFactor = 1f - Mathf.Clamp01(distToRiver / 50f); // Full volume within 50m
+            
+            // Move river audio child to nearest river point (not player)
+            riverAudioTransform.position = riverPos;
             forestAudioTransform.position = playerTransform.position;
             
             // Blend between calm and rapids based on speed
             float normalizedSpeed = Mathf.InverseLerp(0.5f, 3f, currentRiverSpeed);
             
-            riverSource.volume = Mathf.Lerp(1f, 0.3f, normalizedSpeed);
-            rapidsSource.volume = Mathf.Lerp(0f, 1f, normalizedSpeed);
+            targetRiverVolume = Mathf.Lerp(0.8f, 0.2f, normalizedSpeed) * distanceFactor;
+            targetRapidsVolume = Mathf.Lerp(0f, 0.9f, normalizedSpeed) * distanceFactor;
+            
+            // Smooth volume transitions (avoid popping)
+            riverSource.volume = Mathf.Lerp(riverSource.volume, targetRiverVolume, Time.deltaTime * 3f);
+            rapidsSource.volume = Mathf.Lerp(rapidsSource.volume, targetRapidsVolume, Time.deltaTime * 3f);
+            
+            // Wind volume increases with boat speed
+            if (windSource != null)
+            {
+                float boatSpeed = 0f;
+                var boat = playerTransform.GetComponent<Nidelven.Player.BoatController>();
+                if (boat != null) boatSpeed = boat.GetSpeed();
+                targetWindVolume = Mathf.Lerp(0.15f, 0.5f, Mathf.Clamp01(boatSpeed / 5f));
+                windSource.volume = Mathf.Lerp(windSource.volume, targetWindVolume, Time.deltaTime * 2f);
+            }
             
             // Pitch modulation for variety
-            riverSource.pitch = 0.95f + Mathf.PerlinNoise(Time.time * 0.5f, 0f) * 0.1f;
+            riverSource.pitch = 0.95f + Mathf.PerlinNoise(Time.time * 0.3f, 0f) * 0.1f;
+            rapidsSource.pitch = 0.9f + Mathf.PerlinNoise(Time.time * 0.2f, 5f) * 0.15f;
         }
         
         void UpdateBirdSounds()
@@ -222,11 +274,58 @@ namespace Nidelven.Core
             
             AudioClip clip = paddleSounds[Random.Range(0, paddleSounds.Length)];
             
-            // Play at player position
+            // Play at player position with slight pitch variation
             if (playerTransform != null)
             {
-                AudioSource.PlayClipAtPoint(clip, playerTransform.position, 0.7f);
+                GameObject tempAudio = new GameObject("PaddleSFX");
+                tempAudio.transform.position = playerTransform.position;
+                AudioSource src = tempAudio.AddComponent<AudioSource>();
+                src.clip = clip;
+                src.outputAudioMixerGroup = sfxGroup;
+                src.spatialBlend = 1f;
+                src.volume = 0.7f;
+                src.pitch = Random.Range(0.9f, 1.1f);
+                src.Play();
+                Destroy(tempAudio, clip.length + 0.1f);
             }
+        }
+        
+        /// <summary>
+        /// Play paddle splash (water impact) at a world position.
+        /// </summary>
+        public void PlaySplashSound(Vector3 position, float intensity = 1f)
+        {
+            if (splashSounds == null || splashSounds.Length == 0) return;
+            
+            AudioClip clip = splashSounds[Random.Range(0, splashSounds.Length)];
+            GameObject tempAudio = new GameObject("SplashSFX");
+            tempAudio.transform.position = position;
+            AudioSource src = tempAudio.AddComponent<AudioSource>();
+            src.clip = clip;
+            src.outputAudioMixerGroup = sfxGroup;
+            src.spatialBlend = 1f;
+            src.volume = 0.5f * intensity;
+            src.pitch = Random.Range(0.85f, 1.15f);
+            src.Play();
+            Destroy(tempAudio, clip.length + 0.1f);
+        }
+        
+        /// <summary>
+        /// Play capsize sound.
+        /// </summary>
+        public void PlayCapsizeSound()
+        {
+            if (capsizeSound == null || playerTransform == null) return;
+            AudioSource.PlayClipAtPoint(capsizeSound, playerTransform.position, 0.8f);
+        }
+        
+        /// <summary>
+        /// Play recovery sound.
+        /// </summary>
+        public void PlayRecoverySound()
+        {
+            if (recoverySound == null || playerTransform == null) return;
+            AudioSource.PlayClipAtPoint(recoverySound, playerTransform.position, 0.6f);
         }
         
         /// <summary>

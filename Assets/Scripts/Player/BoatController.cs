@@ -30,20 +30,32 @@ namespace Nidelven.Player
         public float waterAngularDrag = 1f;
         
         [Header("Paddle Mechanics")]
-        [Tooltip("Force per paddle stroke")]
-        public float paddleForce = 150f;
+        [Tooltip("Force per paddle stroke (Newtons)")]
+        public float paddleForce = 40f;
         
         [Tooltip("Turning torque per stroke")]
-        public float turnTorque = 50f;
+        public float turnTorque = 15f;
+        
+        [Tooltip("Minimum seconds between paddle strokes")]
+        public float strokeCooldown = 0.4f;
+        
+        [Tooltip("Maximum boat speed (m/s) from paddling alone")]
+        public float maxPaddleSpeed = 5f;
+        
+        [Tooltip("Sprint speed multiplier")]
+        public float sprintMultiplier = 1.6f;
         
         [Tooltip("Stamina for sprinting")]
         public float maxStamina = 100f;
         
-        [Tooltip("Stamina drain rate")]
-        public float staminaDrain = 20f;
+        [Tooltip("Stamina drain rate while sprinting")]
+        public float staminaDrain = 25f;
         
-        [Tooltip("Stamina recovery rate")]
-        public float staminaRecover = 10f;
+        [Tooltip("Stamina recovery rate when resting")]
+        public float staminaRecover = 15f;
+        
+        [Tooltip("Recovery delay after stamina depletion (seconds)")]
+        public float staminaRecoveryDelay = 2f;
         
         [Header("Vessel Types")]
         public VesselType vesselType = VesselType.Kayak;
@@ -60,6 +72,8 @@ namespace Nidelven.Player
         private float currentStamina;
         private bool isCapsized = false;
         private float timeSinceLastStroke = 0f;
+        private float staminaDepletedTimer = 0f;
+        private bool staminaDepleted = false;
         
         // Water level at current position
         private float waterLevel = 0f;
@@ -98,24 +112,30 @@ namespace Nidelven.Player
             switch (vesselType)
             {
                 case VesselType.Kayak:
-                    paddleForce = 200f;
-                    turnTorque = 80f;
+                    paddleForce = 50f;
+                    turnTorque = 20f;
                     stabilityTorque = 3f;
                     waterDrag = 1.5f;
+                    maxPaddleSpeed = 6f;
+                    strokeCooldown = 0.35f;
                     break;
                     
                 case VesselType.Canoe:
-                    paddleForce = 150f;
-                    turnTorque = 50f;
+                    paddleForce = 40f;
+                    turnTorque = 15f;
                     stabilityTorque = 5f;
                     waterDrag = 2f;
+                    maxPaddleSpeed = 5f;
+                    strokeCooldown = 0.45f;
                     break;
                     
                 case VesselType.Raft:
-                    paddleForce = 100f;
-                    turnTorque = 30f;
+                    paddleForce = 25f;
+                    turnTorque = 8f;
                     stabilityTorque = 10f;
                     waterDrag = 3f;
+                    maxPaddleSpeed = 3f;
+                    strokeCooldown = 0.6f;
                     break;
             }
         }
@@ -295,7 +315,11 @@ namespace Nidelven.Player
         
         void PaddleForward()
         {
-            Vector3 force = transform.forward * paddleForce;
+            if (timeSinceLastStroke < strokeCooldown) return;
+            
+            // Scale force down if already near max speed
+            float speedFactor = 1f - Mathf.Clamp01(rb.linearVelocity.magnitude / maxPaddleSpeed);
+            Vector3 force = transform.forward * paddleForce * (0.3f + 0.7f * speedFactor);
             rb.AddForce(force, ForceMode.Impulse);
             timeSinceLastStroke = 0f;
             PlayPaddleSound();
@@ -304,7 +328,9 @@ namespace Nidelven.Player
         
         void PaddleBackward()
         {
-            Vector3 force = -transform.forward * paddleForce * 0.5f;
+            if (timeSinceLastStroke < strokeCooldown) return;
+            
+            Vector3 force = -transform.forward * paddleForce * 0.4f;
             rb.AddForce(force, ForceMode.Impulse);
             timeSinceLastStroke = 0f;
             PlayPaddleSound();
@@ -313,8 +339,10 @@ namespace Nidelven.Player
         
         void PaddleLeft()
         {
-            // Paddle on right side = turn left
-            Vector3 force = transform.forward * paddleForce * 0.3f;
+            if (timeSinceLastStroke < strokeCooldown) return;
+            
+            // Paddle on right side = turn left + slight forward
+            Vector3 force = transform.forward * paddleForce * 0.2f;
             Vector3 torque = Vector3.up * -turnTorque;
             
             rb.AddForce(force, ForceMode.Impulse);
@@ -325,8 +353,10 @@ namespace Nidelven.Player
         
         void PaddleRight()
         {
-            // Paddle on left side = turn right
-            Vector3 force = transform.forward * paddleForce * 0.3f;
+            if (timeSinceLastStroke < strokeCooldown) return;
+            
+            // Paddle on left side = turn right + slight forward
+            Vector3 force = transform.forward * paddleForce * 0.2f;
             Vector3 torque = Vector3.up * turnTorque;
             
             rb.AddForce(force, ForceMode.Impulse);
@@ -337,11 +367,19 @@ namespace Nidelven.Player
         
         void Sprint()
         {
-            if (currentStamina > 0)
+            if (currentStamina > 0 && !staminaDepleted)
             {
-                Vector3 force = transform.forward * paddleForce * 0.5f;
+                float speedFactor = 1f - Mathf.Clamp01(rb.linearVelocity.magnitude / (maxPaddleSpeed * sprintMultiplier));
+                Vector3 force = transform.forward * paddleForce * sprintMultiplier * speedFactor;
                 rb.AddForce(force * Time.deltaTime, ForceMode.Force);
                 currentStamina -= staminaDrain * Time.deltaTime;
+                
+                if (currentStamina <= 0)
+                {
+                    currentStamina = 0;
+                    staminaDepleted = true;
+                    staminaDepletedTimer = staminaRecoveryDelay;
+                }
             }
         }
         
@@ -352,7 +390,15 @@ namespace Nidelven.Player
         
         void RecoverStamina()
         {
-            if (!Input.GetKey(KeyCode.LeftShift) && timeSinceLastStroke > 1f)
+            if (staminaDepleted)
+            {
+                staminaDepletedTimer -= Time.deltaTime;
+                if (staminaDepletedTimer <= 0f)
+                    staminaDepleted = false;
+                return;
+            }
+            
+            if (!Input.GetKey(KeyCode.LeftShift) && timeSinceLastStroke > 0.8f)
             {
                 currentStamina = Mathf.Min(currentStamina + staminaRecover * Time.deltaTime, maxStamina);
             }
@@ -372,9 +418,7 @@ namespace Nidelven.Player
         {
             isCapsized = true;
             Debug.Log("Boat capsized! Press SPACE to recover.");
-            
-            // Visual feedback
-            // Could trigger animation, sound, etc.
+            AudioManager.Instance?.PlayCapsizeSound();
         }
         
         void AttemptRecovery()
@@ -386,6 +430,8 @@ namespace Nidelven.Player
             // Add small penalty
             currentStamina *= 0.5f;
             
+            AudioManager.Instance?.PlayRecoverySound();
+            
             // Achievement: recover from capsize
             if (SteamManager.Instance != null)
                 SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.CAPSIZE_RECOVERY);
@@ -395,18 +441,20 @@ namespace Nidelven.Player
         
         void PlayPaddleSound()
         {
-            // TODO: Trigger paddle sound
-            // AudioManager.Instance?.PlayPaddleSound();
+            AudioManager.Instance?.PlayPaddleSound();
         }
         
         void EmitPaddleSplash()
         {
+            Vector3 splashPos = transform.position;
+            splashPos.y = waterLevel;
+            
             if (riverParticles != null)
             {
-                Vector3 splashPos = transform.position;
-                splashPos.y = waterLevel;
                 riverParticles.EmitSplash(splashPos, 1f);
             }
+            
+            AudioManager.Instance?.PlaySplashSound(splashPos, 0.5f);
         }
         
         void OnDrawGizmos()
