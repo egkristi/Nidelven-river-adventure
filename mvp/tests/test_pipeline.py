@@ -256,3 +256,101 @@ class TestIntegration:
         start_elev = dem_data[path[0][0], path[0][1]]
         end_elev = dem_data[path[-1][0], path[-1][1]]
         assert end_elev <= start_elev
+
+
+class TestNveRiver:
+    """Tests for NVE ELVIS river import module."""
+
+    def test_extract_river_path_single_linestring(self):
+        """Test extracting path from single LineString feature."""
+        from mvp.nve_river import extract_river_path
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [
+                            [570000, 7035000, 0],
+                            [570100, 7035100, 0],
+                            [570200, 7035200, 0],
+                        ],
+                    },
+                    "properties": {"elvenavn": "Nidelva"},
+                }
+            ],
+        }
+
+        path = extract_river_path(geojson)
+        assert path.shape == (3, 2)
+        assert path[0, 0] == 570000
+        assert path[2, 1] == 7035200
+
+    def test_extract_river_path_multi_segments(self):
+        """Test merging multiple segments into continuous path."""
+        from mvp.nve_river import extract_river_path
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[100, 0], [200, 0], [300, 0]],
+                    },
+                    "properties": {},
+                },
+                {
+                    "type": "Feature",
+                    "geometry": {
+                        "type": "LineString",
+                        "coordinates": [[300, 0], [400, 0], [500, 0]],
+                    },
+                    "properties": {},
+                },
+            ],
+        }
+
+        path = extract_river_path(geojson)
+        assert len(path) == 6
+        # Should be continuous (ordered)
+        assert path[0, 0] == 100 or path[-1, 0] == 100
+
+    def test_extract_river_path_empty(self):
+        """Test handling empty feature collection."""
+        from mvp.nve_river import extract_river_path
+
+        geojson = {"type": "FeatureCollection", "features": []}
+        path = extract_river_path(geojson)
+        assert path.shape == (0, 2)
+
+    def test_save_and_load_river_path(self, tmp_path):
+        """Test saving and loading river path."""
+        from mvp.nve_river import load_river_path, save_river_path
+
+        original = np.array([[570000, 7035000], [570100, 7035100]], dtype=np.float64)
+        path_file = tmp_path / "test_path.npy"
+
+        save_river_path(original, path_file)
+        loaded = load_river_path(path_file)
+
+        np.testing.assert_array_equal(original, loaded)
+
+    def test_merge_segments_reversal(self):
+        """Test that segment merging handles reversed segments."""
+        from mvp.nve_river import _merge_segments
+
+        # Second segment is reversed relative to first
+        segments = [
+            np.array([[0, 0], [10, 0], [20, 0]]),
+            np.array([[50, 0], [40, 0], [30, 0]]),  # reversed
+        ]
+
+        path = _merge_segments(segments)
+        assert len(path) == 6
+        # Should form continuous line from 0 to 50 (or 50 to 0)
+        diffs = np.abs(np.diff(path[:, 0]))
+        assert np.all(diffs == 10)  # all steps are 10
