@@ -282,10 +282,10 @@ namespace Nidelven.Core
         
         void AutoSave()
         {
-            // Save to auto-save slot (last slot)
-            int autoSaveSlot = saveSlotCount - 1;
+            // Use a dedicated auto-save slot separate from user slots
+            int autoSaveSlot = saveSlotCount;
             SaveGame(autoSaveSlot);
-            Debug.Log("Auto-saved game");
+            Debug.Log("Auto-saved game (slot: auto)");
         }
         
         SaveData CreateSaveData()
