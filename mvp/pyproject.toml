@@ -42,7 +42,7 @@ dev = [
 ]
 
 [project.scripts]
-mvp = "mvp.main:main"
+nidelven = "mvp.main:main"
 
 [build-system]
 requires = ["hatchling"]

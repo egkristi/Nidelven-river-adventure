@@ -15,7 +15,7 @@ uv sync
 uv run python -m mvp.main
 
 # Or use the script entry point
-uv run mvp
+uv run nidelven
 ```
 
 ## Available Commands

@@ -51,7 +51,7 @@ jobs:
       - name: Run MVP pipeline
         working-directory: ./mvp
         run: |
-          timeout 60 uv run mvp --sample --skip-render || echo "MVP pipeline timed out (non-blocking)"
+          timeout 60 uv run nidelven --sample --skip-render || echo "MVP pipeline timed out (non-blocking)"
 
       - name: Run tests
         working-directory: ./mvp

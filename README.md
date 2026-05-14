@@ -36,9 +36,9 @@ git clone https://github.com/egkristi/Nidelven-river-adventure.git
 ```bash
 cd mvp
 uv sync                          # install dependencies
-uv run mvp                       # download real DEM + generate terrain + previews
-uv run mvp --sample              # use synthetic terrain (no download)
-uv run mvp --interactive         # 3D terrain viewer (requires OpenGL)
+uv run nidelven                  # download real DEM + generate terrain + previews
+uv run nidelven --sample         # use synthetic terrain (no download)
+uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
 uv run pytest tests/ -v          # run test suite
 ```
 
@@ -144,10 +144,10 @@ cd mvp && uv run ruff check src/
 cd mvp && uv run black src/
 
 # Full pipeline with real DEM
-cd mvp && uv run mvp --skip-render
+cd mvp && uv run nidelven --skip-render
 
 # Interactive 3D viewer (requires moderngl)
-cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
+cd mvp && uv pip install -e '.[interactive]' && uv run nidelven --interactive
 ```
 
 ---

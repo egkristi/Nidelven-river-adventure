@@ -8,7 +8,7 @@ namespace Nidelven.Environment
     /// Supports GeoTIFF import, RAW heightmap, and synthetic terrain generation.
     /// 
     /// Integration with Python pipeline:
-    ///   1. Run `uv run mvp` to generate terrain.raw + terrain_metadata.json
+    ///   1. Run `uv run nidelven` to generate terrain.raw + terrain_metadata.json
     ///   2. Copy both files to Assets/StreamingAssets/
     ///   3. Leave demFilePath empty — auto-loads from StreamingAssets
     /// </summary>

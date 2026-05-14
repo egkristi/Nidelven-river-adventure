@@ -217,7 +217,7 @@ All are CC BY 4.0 or NLOD licensed.
 cd mvp && uv run pytest tests/ -v                    # Run tests
 cd mvp && uv run ruff check src/                     # Lint
 cd mvp && uv run black src/                          # Format
-cd mvp && uv run mvp --sample --skip-render          # Pipeline smoke test
+cd mvp && uv run nidelven --sample --skip-render      # Pipeline smoke test
 
 # Unity (local)
 # Tests:
