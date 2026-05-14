@@ -68,6 +68,7 @@ namespace Nidelven.Core
         private float sessionStartTime = 0f;
         private float totalDistanceTraveled = 0f;
         private Vector3 lastPosition;
+        private Texture2D[] screenshotCache;
         
         // Save path
         private string SaveDirectory => Path.Combine(Application.persistentDataPath, "Saves");
@@ -86,6 +87,7 @@ namespace Nidelven.Core
             Directory.CreateDirectory(SaveDirectory);
             
             sessionStartTime = Time.time;
+            screenshotCache = new Texture2D[saveSlotCount];
             
             // Initialize lastPosition to boat position to avoid bogus distance on first frame
             if (boatController != null)
@@ -173,12 +175,18 @@ namespace Nidelven.Core
         /// </summary>
         public Texture2D GetSlotScreenshot(int slot)
         {
+            if (slot < 0 || slot >= saveSlotCount) return null;
+            
+            // Return cached texture if available
+            if (screenshotCache[slot] != null) return screenshotCache[slot];
+            
             string path = GetScreenshotPath(slot);
             if (!File.Exists(path)) return null;
             
             byte[] bytes = File.ReadAllBytes(path);
             Texture2D tex = new Texture2D(2, 2);
             tex.LoadImage(bytes);
+            screenshotCache[slot] = tex;
             return tex;
         }
         

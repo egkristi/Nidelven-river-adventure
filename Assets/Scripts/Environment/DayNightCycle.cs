@@ -160,8 +160,7 @@ namespace Nidelven.Environment
             RenderSettings.fogColor = fogColor;
             
             // Fog density (thicker at night)
-            float sunIntensity = CalculateSunIntensity();
-            RenderSettings.fogDensity = Mathf.Lerp(nightFogDensity, dayFogDensity, sunIntensity);
+            RenderSettings.fogDensity = Mathf.Lerp(nightFogDensity, dayFogDensity, cachedSunIntensity);
         }
         
         float CalculateSunIntensity()

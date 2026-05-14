@@ -405,7 +405,7 @@ namespace Nidelven.Environment
         /// </summary>
         public float GetClosestProgress(Vector3 worldPos)
         {
-            if (riverPath.Count == 0) return 0f;
+            if (riverPath.Count <= 1) return 0f;
             
             float closestDistSqr = float.MaxValue;
             int closestIdx = lastClosestIndex;

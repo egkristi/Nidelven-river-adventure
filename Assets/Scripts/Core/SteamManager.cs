@@ -236,6 +236,7 @@ namespace Nidelven.Core
             }
         }
         
+#if UNITY_EDITOR
         void OnGUI()
         {
             if (!debugMode) return;
@@ -249,5 +250,6 @@ namespace Nidelven.Core
             }
             GUILayout.EndArea();
         }
+#endif
     }
 }

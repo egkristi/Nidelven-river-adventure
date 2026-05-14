@@ -234,8 +234,8 @@ def create_sample_dem(output_path: Path, size: int = 512) -> Path:
     height += hill_height * (distance_from_river**2)
 
     # Add some noise
-    np.random.seed(42)
-    height += np.random.normal(0, 2, height.shape)
+    rng = np.random.default_rng(42)
+    height += rng.normal(0, 2, height.shape)
 
     # Add a waterfall feature
     waterfall_y = int(size * 0.6)

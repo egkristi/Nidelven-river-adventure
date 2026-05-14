@@ -37,6 +37,7 @@ namespace Nidelven.Core
                 return;
             }
             Instance = this;
+            DontDestroyOnLoad(gameObject);
         }
         
         void Start()
@@ -111,8 +112,8 @@ namespace Nidelven.Core
         {
             IsGenerated = false;
             
-            // Reseed random
-            Random.InitState(System.DateTime.Now.Millisecond);
+            // Reseed random with better entropy
+            Random.InitState(System.Environment.TickCount);
             
             GenerateWorld();
         }

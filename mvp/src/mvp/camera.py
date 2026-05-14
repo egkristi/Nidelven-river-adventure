@@ -3,8 +3,12 @@ Camera controller for following the river trajectory.
 Provides smooth camera movement along the river path with orbit capabilities.
 """
 
-import glm
 import numpy as np
+
+try:
+    import glm
+except ImportError:
+    glm = None
 
 
 class RiverCamera:
