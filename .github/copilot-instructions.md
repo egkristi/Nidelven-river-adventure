@@ -23,7 +23,7 @@ NVE ELVIS river import             Camera, Audio, UI, Wildlife
 Export: terrain.raw + metadata     Shaders (URP), Vegetation
 ```
 
-**Data flow:** Python exports `terrain.raw` + `terrain_metadata.json` → copied to `Assets/StreamingAssets/` → Unity `TerrainGenerator` auto-loads at runtime.
+**Data flow:** Python exports `terrain.raw` + `terrain_metadata.json` + `river_path.json` → copied to `Assets/StreamingAssets/` → Unity `TerrainGenerator` + `RiverController` auto-load at runtime.
 
 ### Directory Structure
 
@@ -83,7 +83,7 @@ docs/                  Data pipeline docs, Jira issues
 - **Singleton pattern:** GameManager, AudioManager, SaveManager use `Instance` static property
 - **csc.rsp:** Contains `-define:DISABLESTEAMWORKS` (Steamworks.NET not installed)
 - **CI workaround:** CI strips URP from manifest.json and adds `-define:DISABLE_URP` to avoid ShaderGraph GUID errors in Docker
-- **Build targets:** Windows x64, Linux x64 (CI); macOS (local dev)
+- **Build targets:** Windows x64, Linux x64, macOS (CI + local)
 - **Local build test:** `/Applications/Unity/Hub/Editor/6000.4.6f1/Unity.app/Contents/MacOS/Unity -batchmode -nographics -projectPath "$(pwd)" -buildTarget StandaloneOSX -buildOSXUniversalPlayer ./build/NidelvenRiverAdventure.app -logFile ./unity-build.log`
 
 ### CI/CD
@@ -133,18 +133,33 @@ docs/                  Data pipeline docs, Jira issues
 
 ### Water Shader (SimpleWater.shader)
 - URP `UniversalForward` + `DepthOnly` passes
-- Properties: `_BaseColor`, `_FoamColor`, `_WaveHeight`, `_WaveSpeed`, `_FlowOffset`, `_Smoothness`
+- Properties: `_BaseColor`, `_ShallowColor`, `_FoamColor`, `_WaveHeight`, `_WaveSpeed`, `_FlowOffset`, `_Smoothness`, `_DepthFadeDistance`, `_ShoreBlend`
+- Depth-based transparency: samples `SampleSceneDepth()` → `LinearEyeDepth` → blends shallow/deep color
+- Shore foam at shallow edges, alpha fades to 0 at shore line
 - Transparent blend, ZWrite Off (ForwardLit), ZWrite On (DepthOnly)
 - DepthOnly pass includes wave displacement for correct depth buffer
+- Includes `Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl`
+
+### Vegetation LOD (VegetationGenerator.cs)
+- Distance-based culling: trees at 200m, rocks at 100m
+- Uses squared distance (`sqrMagnitude`) — no sqrt per frame
+- Pre-allocated `lodBuffer[]` for zero GC in render loop
+- `RenderWithLOD()` fills buffer, `FlushBatch()` at 1023 items
+
+### River Path Loading (RiverController.cs)
+- `loadFromFile` toggle (default: true)
+- Reads `StreamingAssets/river_path.json` via `JsonUtility`
+- JSON format: `{"points": [{"x":..,"y":..,"z":..},...], "widths": [...], "speeds": [...]}`
+- Falls back to synthetic generation if file missing
 
 ---
 
 ## Known Issues & Tech Debt
 
 ### Open GitHub Issues
-- **#20** Phase 2: Data Quality — real river path + 1m DEM
-- **#21** Phase 3: Water shader DepthOnly + vegetation instancing (PF2)
-- **#22** Phase 3: Audio spatialization (PF4) + LOD system
+- **#20** Phase 2: Data Quality — D8 flow accumulation, river widths, terrain texturing, Kartverket 1m
+- **#21** Phase 3: Particle effects (splash, foam, mist) — only remaining task
+- **#22** Phase 3: Performance profiling pass — only remaining task
 
 ### Performance Issues (Still Open)
 - **PF3:** `PhotoMode.ApplyFilters()` iterates every pixel on CPU
