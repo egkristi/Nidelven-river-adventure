@@ -73,6 +73,7 @@ jobs:
   release:
     name: Create Release
     needs: [check-secrets, build-unity]
+    if: always() && !cancelled() && needs.check-secrets.result == 'success'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
