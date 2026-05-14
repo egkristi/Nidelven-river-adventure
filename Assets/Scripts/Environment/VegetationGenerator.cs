@@ -52,12 +52,6 @@ namespace Nidelven.Environment
         private Vector3[] rockPositions;
         private MaterialPropertyBlock propertyBlock;
         
-        // Pre-allocated batch arrays to avoid GC pressure (PF2 fix)
-        private Matrix4x4[][] treeBatches;
-        private int[] treeBatchCounts;
-        private Matrix4x4[][] rockBatches;
-        private int[] rockBatchCounts;
-        
         // LOD working buffers (pre-allocated)
         private Matrix4x4[] lodBuffer;
         private Camera mainCamera;
@@ -104,8 +98,6 @@ namespace Nidelven.Environment
             // Pre-allocate LOD working buffer (max possible batch)
             int maxCount = Mathf.Max(treeMatrices.Count, rockMatrices.Count);
             lodBuffer = new Matrix4x4[Mathf.Min(maxCount, 1023)];
-            
-            PreAllocateBatches();
             
             Debug.Log($"Generated {treeMatrices.Count} trees and {rockMatrices.Count} rocks (LOD: trees {treeLODDistance}m, rocks {rockLODDistance}m)");
         }
@@ -284,33 +276,6 @@ namespace Nidelven.Environment
                     Graphics.DrawMeshInstanced(mesh, 0, mat, batch, count, propertyBlock);
                 }
             }
-        }
-        
-        void PreAllocateBatches()
-        {
-            treeBatches = BuildBatches(treeMatrices, out treeBatchCounts);
-            rockBatches = BuildBatches(rockMatrices, out rockBatchCounts);
-        }
-        
-        static Matrix4x4[][] BuildBatches(List<Matrix4x4> matrices, out int[] batchCounts)
-        {
-            int totalBatches = (matrices.Count + 1022) / 1023;
-            var batches = new Matrix4x4[totalBatches][];
-            batchCounts = new int[totalBatches];
-            
-            for (int b = 0; b < totalBatches; b++)
-            {
-                int start = b * 1023;
-                int count = Mathf.Min(1023, matrices.Count - start);
-                batches[b] = new Matrix4x4[1023];
-                batchCounts[b] = count;
-                for (int i = 0; i < count; i++)
-                {
-                    batches[b][i] = matrices[start + i];
-                }
-            }
-            
-            return batches;
         }
         
         void OnDrawGizmosSelected()

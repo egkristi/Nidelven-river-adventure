@@ -274,13 +274,6 @@ namespace Nidelven.Environment
                 Vector3 leftBank = point - perpendicular * width * 0.5f;
                 Vector3 rightBank = point + perpendicular * width * 0.5f;
                 
-                // Add wave displacement
-                float wavePhase = i * 0.5f + Time.time * waveSpeed;
-                float waveOffset = Mathf.Sin(wavePhase) * waveHeight;
-                
-                leftBank.y += waveOffset;
-                rightBank.y += waveOffset;
-                
                 vertices.Add(leftBank);
                 vertices.Add(rightBank);
                 
