@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2025-05-15 (Phase 1 complete, Phase 4 in progress)
+Last updated: 2026-05-14 (Phase 3 in progress, Phase 4 complete)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -84,9 +84,9 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | # | Issue | Impact |
 |---|-------|--------|
 | PF1 | ~~`terrain_mesh.py` vertex generation uses Python for-loops (262k iterations)~~ | ✅ Vectorized with numpy |
-| PF2 | `VegetationGenerator.RenderInstanced()` allocates arrays every frame | GC pressure, frame drops |
+| PF2 | ~~`VegetationGenerator.RenderInstanced()` allocates arrays every frame~~ | ✅ Fixed — pre-allocated batches |
 | PF3 | `PhotoMode.ApplyFilters()` iterates every pixel on CPU | Multi-second freeze on capture at 2x resolution |
-| PF4 | `AudioManager` moves its own transform to player position | Breaks 3D audio spatialization for non-river sources |
+| PF4 | ~~`AudioManager` moves its own transform to player position~~ | ✅ Fixed — uses child objects |
 
 ### CI/CD
 
@@ -114,7 +114,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%.** 23 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 27 tests passing. Integration test included.
 
 ---
 
@@ -171,7 +171,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [ ] Fix river tracer for real DEM (use flow accumulation / D8 algorithm)
 - [ ] Implement proper river path from OSM or NVE data
 - [ ] Texture terrain from geolocated imagery (see Geolocated Data Sources below)
-- [ ] Add DEM integrity verification (checksum)
+- [x] Add DEM integrity verification (checksum) ✔️
 - [x] Vectorize terrain mesh generation (eliminate Python for-loops) ✔️
 - [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
 - [x] Import river geometry from NVE Elvenett / ELVIS ✔️
@@ -179,21 +179,21 @@ However, the two halves are **not connected** — the Python pipeline output is 
 ### Phase 3: Polish (v0.3.0)
 
 - [x] Fix water shader flow animation (_FlowOffset)
-- [ ] Add `DepthOnly` pass to water shader
-- [ ] Fix vegetation GPU instancing (pre-allocate batches)
-- [ ] Fix AudioManager 3D spatialization (child objects for sources)
-- [ ] Remove debug OnGUI overlays (or gate behind `#if UNITY_EDITOR`)
+- [x] Add `DepthOnly` pass to water shader ✔️
+- [x] Fix vegetation GPU instancing (pre-allocate batches) ✔️
+- [x] Fix AudioManager 3D spatialization (child objects for sources) ✔️
+- [x] Remove debug OnGUI overlays (gated behind `#if UNITY_EDITOR`) ✔️
 - [ ] Add proper water depth/transparency
 - [ ] Particle effects (splash, foam, mist)
 - [ ] LOD system for terrain + vegetation
 
-### Phase 4: CI/CD Hardening
+### Phase 4: CI/CD Hardening ✅ COMPLETE
 
 - [x] Remove `|| true` from lint/format CI steps
 - [x] Add uv caching to Python job
 - [x] Configure artifact retention (7 days CI)
 - [x] Fix release workflow deadlock (needs: with proper `if:`)
-- [ ] Pin Unity version in release.yml
+- [x] Pin Unity version in release.yml ✔️
 - [x] Add integration test (full pipeline end-to-end)
 - [x] Increase test coverage — 23 tests, core modules 46-69%
 - [x] Remove dead code (kartverket_dem.py, scripts/, KartverketDemImporter.cs)
@@ -288,8 +288,9 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 │       ↓                    ↓               ↓       │
 │  headless_renderer.py (preview images)              │
 │  renderer.py (interactive 3D viewer, optional)      │
+│  export_unity_raw() → terrain.raw + metadata.json   │
 └────────────────────────┬────────────────────────────┘
-                         │ ← NOT YET CONNECTED
+                         │ ← StreamingAssets/terrain.raw
 ┌────────────────────────▼────────────────────────────┐
 │ Unity Game (Assets/)                                 │
 │                                                     │
@@ -301,11 +302,7 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 └─────────────────────────────────────────────────────┘
 ```
 
-The critical integration gap is getting the Python pipeline's real DEM output into Unity's `TerrainGenerator`. Options:
-1. Export RAW 16-bit heightmap from Python → Unity `StreamingAssets/` → `TerrainData.SetHeights()`
-2. Use Unity's `Terrain` API to import GeoTIFF directly (requires GDAL or custom parser)
-3. Export OBJ mesh from Python → Unity mesh import (loses Terrain features like splatmaps)
-- [ ] Performance optimization
+**Integration: CONNECTED** — Python `export_unity_raw()` exports RAW 16-bit heightmap + JSON metadata → Unity `StreamingAssets/` → `TerrainGenerator` auto-loads at runtime via `LoadRawDem()`. Pipeline tested end-to-end.
 
 ---
 

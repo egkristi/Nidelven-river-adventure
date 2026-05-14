@@ -86,7 +86,7 @@ mvp/
     nve_river.py       NVE ELVIS WFS river geometry import
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               23 pytest tests (core modules: 46-69% coverage)
+  tests/               27 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml
 ```
@@ -123,7 +123,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (23 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (27 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
@@ -154,7 +154,8 @@ cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
 - Real DEM not yet streaming into Unity builds (procedural terrain used at runtime)
-- UI/rendering modules have low test coverage (core pipeline at 46-69%)
+- Water shader needs depth-based transparency (DepthOnly pass added, depth sampling TBD)
+- PhotoMode pixel filter is CPU-bound (PF3 — use GPU post-processing)
 
 ---
 
