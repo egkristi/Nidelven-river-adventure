@@ -284,9 +284,181 @@ cd Nidelven-river-adventure
 
 ---
 
+## Real-World Data Sources — Evaluation & Integration Plan
+
+This section catalogs all identified real-life data sources relevant to building an authentic Nidelva river experience. Each source is rated for relevance, accessibility, and integration effort.
+
+**Rating scale**: ★★★★★ Essential | ★★★★ High | ★★★ Medium | ★★ Low | ★ Skip
+
+### Category 1: Terrain & Elevation
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Kartverket DTM 10** (10m DEM) | ★★★★★ | NLOD/CC-BY | GeoTIFF | 3× better resolution than current Copernicus 30m. Available via Geonorge download |
+| **Kartverket DTM 1** (1m LiDAR) | ★★★★★ | NLOD/CC-BY | GeoTIFF/LAZ | Best available terrain. LiDAR point cloud for Agder. Massive but incredible detail |
+| **Copernicus GLO-30** (30m) | ★★★★ | Free | GeoTIFF | ✅ Already integrated. Adequate for MVP, upgrade to DTM 10 later |
+| **Kartverket Dybdedata** (river/sea depth) | ★★★★★ | NLOD | GeoTIFF/S-57 | Critical for realistic river depth simulation and underwater terrain |
+
+**API/Download**: https://kartkatalog.geonorge.no/ → Search "DTM 10" or "Dybdedata"
+
+### Category 2: Hydrology & River Data
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **NVE HydAPI** (water discharge/level) | ★★★★★ | NLOD | REST JSON | Real-time & historical water flow for Nidelva stations. Drives realistic current speed |
+| **NVE ELVIS Elvenett** (river network) | ★★★★★ | NLOD | GeoJSON/Shape | Authoritative river centerline geometry — replaces our gradient-descent river tracing |
+| **NVE Flomsoner** (flood zones) | ★★★ | NLOD | WMS/Shape | Flood risk zones along Nidelva. Useful for dynamic flood events |
+| **NVE Sildre** (hydrological viz) | ★★★ | NLOD | Web/API | Visualization of historical flow — useful for balancing river physics |
+| **NVE Vannkraft** (hydropower) | ★★★★ | NLOD | WMS | Dam and power station locations on Nidelva (gameplay obstacles/landmarks) |
+
+**API**: https://hydapi.nve.no/ (free API key required)  
+**Stations on Nidelva**: Search "Nidelva" or county "Agder" in HydAPI  
+**Parameters**: Discharge (1001), Water stage (1000), Water temperature (1003)
+
+### Category 3: Aerial Imagery & Satellite
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Norge i bilder** (aerial ortho) | ★★★★★ | Restricted | WMS/WMTS | 10-25cm resolution aerial photos of entire Nidelva corridor. Perfect terrain textures |
+| **Sentinel-2** (satellite) | ★★★★ | Free/Copernicus | GeoTIFF | 10m multispectral. Good for seasonal vegetation colors, water detection |
+| **Kartverket N50 Raster** | ★★★ | NLOD | TIFF | 1:50000 topographic maps — useful as minimap overlay |
+
+**Access**: https://norgeibilder.no/ (WMS) | https://dataspace.copernicus.eu/ (Sentinel-2)
+
+### Category 4: Infrastructure & Buildings
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Kartverket FKB-Bygning** (buildings) | ★★★★★ | NLOD | GML/GeoJSON | Detailed 2.5D building footprints with heights. Place houses along riverbank |
+| **Kartverket Matrikkelen** (building points) | ★★★★ | NLOD | GeoJSON | Building registry — type, year, size. Useful for LOD decisions |
+| **NVDB API V4** (road database) | ★★★★ | NLOD | REST JSON | Roads, bridges, tunnels, barriers, guardrails. Bridges crossing Nidelva! |
+| **Bane NOR** (railway) | ★★★ | Open | GeoJSON | Sørlandsbanen railway bridge crosses Nidelva — recognizable landmark |
+| **OpenStreetMap** (OSM) | ★★★★ | ODbL | PBF/GeoJSON | Community-mapped paths, buildings, POIs, waterways. Good fallback |
+| **Kartverket FKB-Veg** (roads detail) | ★★★★ | NLOD | GML | Road geometry including small farm roads along the river |
+
+**API**: https://nvdbapiles.atlas.vegvesen.no/ (V4, no auth for read)  
+**Overpass API** (OSM): https://overpass-api.de/
+
+### Category 5: Wildlife & Biodiversity
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Artsdatabanken/Artskart** (species obs.) | ★★★★★ | CC-BY | REST API | 60M+ observations. Query species seen along Nidelva — exact bird, fish, mammal lists |
+| **GBIF** (global biodiversity) | ★★★★ | CC-BY/CC0 | REST/DwC-A | Includes Artsdatabanken data + international records. Good for species metadata |
+| **NIBIO Dyreportalen** (wildlife) | ★★★★ | NLOD | WMS | Deer, moose, fox, otter observations with heat maps |
+| **Lakseregisteret** (salmon registry) | ★★★★★ | Open | Web | Nidelva IS a famous salmon river. Spawning data, catch statistics, regulations |
+| **xeno-canto** (bird sounds) | ★★★★★ | CC-BY-NC | MP3/API | Species-specific recordings. Generate authentic soundscape per location/season |
+| **Fiskeridirektoratet** (fishing) | ★★★ | Open | WMS/API | Fishing regulations, catch zones along Nidelva |
+
+**API**: https://artskart.artsdatabanken.no/ (REST, query by bounding box)  
+**xeno-canto**: https://xeno-canto.org/api/2/recordings?query=cnt:norway  
+**Key species for Nidelva**: Atlantic salmon, sea trout, otter, kingfisher, dipper, grey heron, beaver
+
+### Category 6: Weather & Atmosphere
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **MET Norway Frost API** (historical) | ★★★★★ | CC-BY | REST JSON | Temperature, precipitation, wind, humidity. Drive dynamic weather system |
+| **MET Norway Yr API** (forecast) | ★★★★ | CC-BY | REST JSON | Location forecast. Could drive real-time weather in game |
+| **NVE SeNorge** (snow/water/temp grids) | ★★★ | NLOD | NetCDF/WMS | Gridded daily data — snow depth, soil moisture, evaporation |
+| **MET Norway Thredds** (radar/satellite) | ★★ | CC-BY | NetCDF | Precipitation radar — overkill for game, but impressive visual |
+
+**API**: https://frost.met.no/ (free, auth via client_id)  
+**Yr API**: https://api.met.no/weatherapi/locationforecast/2.0/  
+**Stations near Nidelva**: Arendal (SN37230), Froland (nearby stations)
+
+### Category 7: Maritime & AIS
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Barentswatch AIS** (ship tracking) | ★★★★ | Open (delayed) | REST/CSV | Historic ship movements in Arendal harbor/fjord. Animate real vessel traffic |
+| **Kystverket Hovedled/Biled** (fairways) | ★★★ | NLOD | GeoJSON | Navigation lanes at Nidelva mouth (Arendal port) |
+| **Kystverket Navigasjonsinnretninger** | ★★ | NLOD | WMS | Lighthouses, buoys, navigation marks at river mouth |
+
+**API**: https://ais.barentswatch.no/ (requires account, 3-min delay on public)
+
+### Category 8: Land Use & Vegetation
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **NIBIO AR5** (land resource map) | ★★★★★ | NLOD | GeoJSON/WMS | Detailed classification: forest type, bog, agriculture, water. Drives vegetation generator |
+| **NIBIO Skogportalen** (forest) | ★★★★ | NLOD | WMS | Forest density, tree species, height. Accurate tree placement |
+| **CORINE Land Cover** | ★★★ | Free | GeoTIFF | 100m European land cover. Too coarse for detail but good for large-scale biomes |
+| **Miljødirektoratet Naturtyper** | ★★★★ | NLOD | WMS/GeoJSON | Classified nature types — wetland, forest, coastal. Ecosystem accuracy |
+
+**Access**: https://kilden.nibio.no/ (map viewer + WMS)  
+**Download**: https://kartkatalog.geonorge.no/ → "FKB-AR5"
+
+### Category 9: Cultural Heritage & POIs
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **Riksantikvaren Askeladden** (heritage) | ★★★★ | NLOD | WMS/API | Protected cultural monuments along Nidelva — old mills, dams, iron works |
+| **Miljødirektoratet Friluftsområder** | ★★★ | NLOD | GeoJSON | Mapped outdoor recreation areas — campfire spots, beaches, swimming |
+| **SSB Befolkning** (population grids) | ★★ | CC-BY | CSV/Grid | Population density — useful for town sections vs wilderness |
+
+**Access**: https://askeladden.ra.no/ (requires login for detailed data, WMS free)
+
+### Category 10: Traffic & Transportation
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **NVDB Trafikkmengde** (AADT) | ★★★ | NLOD | REST | Average annual daily traffic on roads near river. Ambient traffic sounds |
+| **Statens vegvesen Trafikkdata** | ★★★ | NLOD | REST | Real-time and historical vehicle counts at measurement points |
+| **OpenSky Network** (flight ADS-B) | ★★ | CC-BY | REST/CSV | Aircraft above. Kjevik airport nearby — occasional plane flyovers |
+| **Avinor** (airport data) | ★ | Mixed | API | Flight schedules — marginal relevance |
+
+**API**: https://trafikkdata.atlas.vegvesen.no/ (GraphQL)  
+**OpenSky**: https://opensky-network.org/api/ (free, rate-limited)
+
+### Category 11: Sound & Audio
+
+| Source | Rating | License | Format | Notes |
+|--------|--------|---------|--------|-------|
+| **xeno-canto** (bird songs) | ★★★★★ | CC-BY-NC | MP3 | 800k+ recordings. Filter by species present at Nidelva |
+| **Freesound.org** | ★★★★ | CC-BY/CC0 | WAV/MP3 | River sounds, wind, rain, forest ambience, boat creaking |
+| **BBC Sound Effects** | ★★★ | RemArc | WAV | High-quality nature recordings (requires attribution) |
+
+### Integration Priority Order
+
+Based on the ratings above, recommended integration order:
+
+1. **NVE ELVIS + HydAPI** — Replace gradient-descent river path with real river geometry + flow data
+2. **Kartverket DTM 10** — Upgrade terrain from 30m to 10m resolution
+3. **NIBIO AR5** — Drive vegetation placement from real land-use data
+4. **Artsdatabanken** — Query real species list for Nidelva → spawn accurate wildlife
+5. **xeno-canto** — Download actual bird calls for species present
+6. **Kartverket FKB-Bygning** — Place real buildings along riverbanks
+7. **MET Frost API** — Historical weather patterns for dynamic weather system
+8. **NVDB bridges** — Place real bridges as landmarks/obstacles
+9. **Kartverket Dybdedata** — River depth for underwater terrain + boat physics
+10. **Norge i bilder** — Aerial photos as terrain textures (if license permits)
+11. **Lakseregisteret** — Salmon spawning events as gameplay feature
+12. **Barentswatch AIS** — Animate ship traffic near Arendal harbor
+13. **Riksantikvaren** — Cultural heritage POIs with info panels
+
+### Data Licensing Summary
+
+| License | Sources | Game Use |
+|---------|---------|----------|
+| NLOD (Norwegian Open Gov Data) | Kartverket, NVE, NIBIO, NVDB, Kystverket | ✅ Free for any use with attribution |
+| CC-BY 4.0 | MET, Artsdatabanken, GBIF, OpenSky | ✅ Free with attribution |
+| CC-BY-NC | xeno-canto | ⚠️ Non-commercial only (OK for indie) |
+| ODbL | OpenStreetMap | ✅ Free, share-alike for derived databases |
+| Copernicus | Sentinel-2, GLO-30 | ✅ Free with attribution |
+| Restricted | Norge i bilder (aerial ortho) | ⚠️ Check terms — may require Norge digitalt membership |
+
+---
+
 ## License & Data
 
 - Code: MIT License
-- Terrain: © Kartverket
-- Imagery: © ESA (Sentinel-2)
-- River data: OpenStreetMap contributors
+- Terrain DEM: © ESA/Copernicus (GLO-30), © Kartverket (DTM 10, NLOD)
+- River data: © NVE (HydAPI, ELVIS), OpenStreetMap contributors
+- Imagery: © ESA (Sentinel-2), © Kartverket/Norge i bilder
+- Wildlife: © Artsdatabanken (CC-BY), xeno-canto (CC-BY-NC)
+- Weather: © MET Norway (Frost API, CC-BY)
+- Infrastructure: © Kartverket (FKB, NLOD), © Statens vegvesen (NVDB, NLOD)
+- Land use: © NIBIO (AR5, NLOD)
+- Maritime: © Kystverket/Barentswatch (AIS, NLOD)
+- Cultural heritage: © Riksantikvaren (Askeladden, NLOD)
