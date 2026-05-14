@@ -256,9 +256,10 @@ namespace Nidelven.Environment
             return $"{displayHour}:{minutes:00} {ampm}";
         }
         
+#if UNITY_EDITOR
         void OnGUI()
         {
-            // Debug display
+            // Debug display (editor only)
             if (GUILayout.Button("Toggle Time Pause"))
             {
                 TogglePause();
@@ -267,5 +268,6 @@ namespace Nidelven.Environment
             GUILayout.Label($"Time: {GetFormattedTime()}");
             GUILayout.Label($"Scale: {timeScale:F4}x");
         }
+#endif
     }
 }

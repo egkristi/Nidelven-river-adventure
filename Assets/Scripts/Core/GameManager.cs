@@ -174,9 +174,10 @@ Game:
 ============================================");
         }
         
+#if UNITY_EDITOR
         void OnGUI()
         {
-            // Simple debug UI
+            // Debug UI (editor only)
             if (IsGenerated && riverCamera != null)
             {
                 float progress = riverCamera.GetProgress() * 100f;
@@ -197,6 +198,7 @@ Game:
                 }
             }
         }
+#endif
         
         void OnDestroy()
         {

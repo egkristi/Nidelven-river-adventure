@@ -57,6 +57,10 @@ namespace Nidelven.Core
         private AudioSource forestSource;
         private AudioSource musicSource;
         
+        // Child objects for spatial audio (PF4 fix)
+        private Transform riverAudioTransform;
+        private Transform forestAudioTransform;
+        
         // State
         private float nextBirdTime = 0f;
         private float currentRiverSpeed = 0f;
@@ -87,28 +91,38 @@ namespace Nidelven.Core
         
         void SetupAudioSources()
         {
+            // Create child object for river sounds (follows player)
+            var riverObj = new GameObject("RiverAudio");
+            riverObj.transform.SetParent(transform);
+            riverAudioTransform = riverObj.transform;
+            
             // River ambience (calm)
-            riverSource = gameObject.AddComponent<AudioSource>();
+            riverSource = riverObj.AddComponent<AudioSource>();
             riverSource.outputAudioMixerGroup = ambienceGroup;
             riverSource.spatialBlend = 1f; // 3D audio
             riverSource.loop = true;
             riverSource.playOnAwake = false;
             
             // River rapids
-            rapidsSource = gameObject.AddComponent<AudioSource>();
+            rapidsSource = riverObj.AddComponent<AudioSource>();
             rapidsSource.outputAudioMixerGroup = ambienceGroup;
             rapidsSource.spatialBlend = 1f;
             rapidsSource.loop = true;
             rapidsSource.playOnAwake = false;
             
+            // Create child object for forest sounds (follows player at offset)
+            var forestObj = new GameObject("ForestAudio");
+            forestObj.transform.SetParent(transform);
+            forestAudioTransform = forestObj.transform;
+            
             // Forest ambience
-            forestSource = gameObject.AddComponent<AudioSource>();
+            forestSource = forestObj.AddComponent<AudioSource>();
             forestSource.outputAudioMixerGroup = ambienceGroup;
-            forestSource.spatialBlend = 1f;
+            forestSource.spatialBlend = 0.5f; // Semi-spatial (surrounds player)
             forestSource.loop = true;
             forestSource.playOnAwake = false;
             
-            // Music
+            // Music (on manager itself — 2D, no spatial)
             if (ambientMusic != null)
             {
                 musicSource = gameObject.AddComponent<AudioSource>();
@@ -160,9 +174,9 @@ namespace Nidelven.Core
             float progress = river.GetClosestProgress(playerTransform.position);
             currentRiverSpeed = river.GetFlowSpeedAt(progress);
             
-            // Update audio position to follow player
-            riverSource.transform.position = playerTransform.position;
-            rapidsSource.transform.position = playerTransform.position;
+            // Move river audio child to player (not the manager itself)
+            riverAudioTransform.position = playerTransform.position;
+            forestAudioTransform.position = playerTransform.position;
             
             // Blend between calm and rapids based on speed
             float normalizedSpeed = Mathf.InverseLerp(0.5f, 3f, currentRiverSpeed);
