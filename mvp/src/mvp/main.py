@@ -20,7 +20,7 @@ import argparse
 import time
 from pathlib import Path
 
-from .dem_downloader import get_dem_path
+from .dem_downloader import NIDELVEN_BBOX, get_dem_path
 from .headless_renderer import generate_preview_images
 from .river_flow import create_river_from_dem
 from .terrain_mesh import create_terrain_from_dem, export_unity_raw
@@ -49,6 +49,11 @@ def main():
         "--orthophoto",
         action="store_true",
         help="Download aerial orthophoto from Norge i bilder as terrain texture",
+    )
+    parser.add_argument(
+        "--qgis",
+        action="store_true",
+        help="Export results as QGIS project (GeoTIFF + GeoJSON + .qgs)",
     )
 
     args = parser.parse_args()
@@ -137,6 +142,49 @@ def main():
             print(f"  ✓ Terrain texture exported: {texture_path}")
         else:
             print("  ✗ Orthophoto download failed (network issue or tiles unavailable)")
+        print()
+
+    # Step 3.6: Export QGIS project (optional)
+    if args.qgis:
+        print("STEP 3.6: QGIS Export")
+        print("-" * 40)
+
+        from .qgis_export import export_for_qgis
+        from .river_flow import compute_flow_accumulation, compute_flow_direction_d8_fast
+        from .terrain_mesh import load_dem as load_dem_for_qgis
+
+        dem_data_qgis, dem_meta_qgis = load_dem_for_qgis(dem_path)
+        bbox_qgis = dem_meta_qgis.get("bbox", None)
+
+        # Compute flow accumulation for QGIS visualization
+        print("  Computing D8 flow accumulation...")
+        flow_dir = compute_flow_direction_d8_fast(dem_data_qgis)
+        flow_acc = compute_flow_accumulation(dem_data_qgis, flow_dir)
+
+        river_pixels = flow_data.get("path", []) if flow_data else []
+        widths_list = flow_data.get("widths", None) if flow_data else None
+        speeds_list = flow_data.get("velocities", None) if flow_data else None
+
+        # Convert numpy arrays to lists for JSON serialization
+        if widths_list is not None and hasattr(widths_list, "tolist"):
+            widths_list = widths_list.tolist()
+        if speeds_list is not None and hasattr(speeds_list, "tolist"):
+            speeds_list = speeds_list.tolist()
+
+        # Check for orthophoto
+        ortho_path = output_dir / "terrain_orthophoto.png"
+        ortho_ref = ortho_path if ortho_path.exists() else None
+
+        export_for_qgis(
+            dem=dem_data_qgis,
+            river_path_pixels=river_pixels,
+            output_dir=output_dir,
+            bbox=bbox_qgis if bbox_qgis else NIDELVEN_BBOX,
+            flow_accumulation=flow_acc,
+            widths=widths_list,
+            speeds=speeds_list,
+            orthophoto_path=ortho_ref,
+        )
         print()
 
     # Step 4: Generate preview images

@@ -753,3 +753,143 @@ class TestNorgeIBilder:
         assert result is None or (result is not None and result.exists())
 
 
+class TestQgisExport:
+    """Tests for QGIS export module."""
+
+    def _make_dem_and_river(self):
+        """Create a simple test DEM and river path."""
+        dem = np.zeros((64, 64), dtype=np.float32)
+        # Simple valley: high on edges, low in center
+        for y in range(64):
+            for x in range(64):
+                dem[y, x] = 100 + abs(x - 32) * 5 - y * 0.5
+        # River path down the center
+        river_path = [(y, 32) for y in range(5, 60)]
+        return dem, river_path
+
+    def test_export_dem_geotiff(self, tmp_path):
+        """Test DEM export as GeoTIFF."""
+        from mvp.qgis_export import export_dem_geotiff
+
+        dem, _ = self._make_dem_and_river()
+        output = tmp_path / "test_dem.tif"
+        result = export_dem_geotiff(dem, output)
+        assert result.exists()
+        assert result.stat().st_size > 0
+
+    def test_export_river_geojson(self, tmp_path):
+        """Test river path export as GeoJSON."""
+        from mvp.qgis_export import export_river_geojson
+
+        dem, river_path = self._make_dem_and_river()
+        output = tmp_path / "test_river.geojson"
+        result = export_river_geojson(river_path, dem, output)
+        assert result.exists()
+
+        with open(result) as f:
+            geojson = json.load(f)
+
+        assert geojson["type"] == "FeatureCollection"
+        assert len(geojson["features"]) == 1
+        feature = geojson["features"][0]
+        assert feature["geometry"]["type"] == "LineString"
+        coords = feature["geometry"]["coordinates"]
+        assert len(coords) == len(river_path)
+        # Each coordinate should have [lon, lat, elevation]
+        assert len(coords[0]) == 3
+        # Properties should include metadata
+        assert "name" in feature["properties"]
+        assert feature["properties"]["num_points"] == len(river_path)
+
+    def test_export_river_geojson_with_widths(self, tmp_path):
+        """Test GeoJSON export includes width/speed properties."""
+        from mvp.qgis_export import export_river_geojson
+
+        dem, river_path = self._make_dem_and_river()
+        widths = [5.0] * len(river_path)
+        speeds = [1.5] * len(river_path)
+        output = tmp_path / "river_props.geojson"
+        export_river_geojson(river_path, dem, output, widths=widths, speeds=speeds)
+
+        with open(output) as f:
+            geojson = json.load(f)
+
+        props = geojson["features"][0]["properties"]
+        assert props["avg_width_m"] == 5.0
+        assert props["avg_speed_ms"] == 1.5
+
+    def test_generate_qgis_project(self, tmp_path):
+        """Test QGIS project file generation."""
+        from mvp.qgis_export import (
+            export_dem_geotiff,
+            export_river_geojson,
+            generate_qgis_project,
+        )
+
+        dem, river_path = self._make_dem_and_river()
+
+        # Create source files
+        dem_tif = tmp_path / "dem.tif"
+        export_dem_geotiff(dem, dem_tif)
+        river_geojson = tmp_path / "river.geojson"
+        export_river_geojson(river_path, dem, river_geojson)
+
+        # Generate project
+        result = generate_qgis_project(
+            tmp_path, dem_path=dem_tif, river_path=river_geojson
+        )
+        assert result.exists()
+        assert result.suffix == ".qgs"
+
+        # Should be valid XML
+        import xml.etree.ElementTree as ET
+
+        tree = ET.parse(result)
+        root = tree.getroot()
+        assert root.tag == "qgis"
+        assert root.get("projectname") == "Nidelven River Adventure"
+
+    def test_export_for_qgis_full(self, tmp_path):
+        """Test the complete export_for_qgis pipeline."""
+        from mvp.qgis_export import export_for_qgis
+
+        dem, river_path = self._make_dem_and_river()
+        flow_acc = np.ones_like(dem) * 10  # Dummy flow accumulation
+
+        result = export_for_qgis(
+            dem=dem,
+            river_path_pixels=river_path,
+            output_dir=tmp_path,
+            flow_accumulation=flow_acc,
+        )
+
+        assert "dem" in result
+        assert "river" in result
+        assert "flow_accumulation" in result
+        assert "project" in result
+
+        # All files should exist
+        for path in result.values():
+            assert path.exists()
+
+        # QGIS dir should be created
+        qgis_dir = tmp_path / "qgis"
+        assert qgis_dir.exists()
+
+    def test_export_for_qgis_minimal(self, tmp_path):
+        """Test export with empty river path."""
+        from mvp.qgis_export import export_for_qgis
+
+        dem = np.random.default_rng(42).uniform(50, 200, (32, 32)).astype(np.float32)
+
+        result = export_for_qgis(
+            dem=dem,
+            river_path_pixels=[],
+            output_dir=tmp_path,
+        )
+
+        assert "dem" in result
+        assert "river" in result
+        assert "project" in result
+
+
