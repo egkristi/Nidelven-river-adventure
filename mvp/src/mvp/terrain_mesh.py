@@ -109,9 +109,7 @@ def generate_mesh(
             dem_data = np.zeros_like(dem_data)
         else:
             # Get indices of nearest valid pixel for each NaN pixel
-            indices = distance_transform_edt(
-                mask, return_distances=False, return_indices=True
-            )
+            indices = distance_transform_edt(mask, return_distances=False, return_indices=True)
             dem_data[mask] = dem_data[indices[0][mask], indices[1][mask]]
 
     # Generate vertices
