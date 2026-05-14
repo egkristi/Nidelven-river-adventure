@@ -38,11 +38,24 @@ jobs:
         targetPlatform:
           - StandaloneWindows64
           - StandaloneLinux64
+          - StandaloneOSX
     steps:
       - name: Checkout
         uses: actions/checkout@v4
         with:
           lfs: true
+
+      - name: Prepare for CI (workaround ShaderGraph GUID issue)
+        run: |
+          python3 -c "
+          import json
+          with open('Packages/manifest.json', 'r') as f:
+              m = json.load(f)
+          m['dependencies'].pop('com.unity.render-pipelines.universal', None)
+          with open('Packages/manifest.json', 'w') as f:
+              json.dump(m, f, indent=2)
+          "
+          printf '%s\n' '-define:DISABLESTEAMWORKS' '-define:DISABLE_URP' > Assets/csc.rsp
 
       - name: Cache Library
         uses: actions/cache@v4
@@ -106,6 +119,12 @@ jobs:
             cd ../..
           fi
           
+          if [ -d "artifacts/Build-StandaloneOSX" ]; then
+            cd artifacts/Build-StandaloneOSX
+            zip -r ../../release/NidelvenRiverAdventure-macOS.zip .
+            cd ../..
+          fi
+          
           ls -la release/
 
       - name: Create Release
@@ -120,10 +139,11 @@ jobs:
             
             ### Assets
             - **Source-Code.zip** - Complete source code
-            - **NidelvenRiverAdventure-Windows.zip** - Windows build (if Unity secrets configured)
-            - **NidelvenRiverAdventure-Linux.zip** - Linux build (if Unity secrets configured)
+            - **NidelvenRiverAdventure-Windows.zip** - Windows x64 build
+            - **NidelvenRiverAdventure-Linux.zip** - Linux x64 build
+            - **NidelvenRiverAdventure-macOS.zip** - macOS build
             
-            ### Build Instructions
+            ### Build Instructions (from source)
             1. Download and extract Source-Code.zip
             2. Open in Unity 6000 LTS
             3. File → Build Settings → Build

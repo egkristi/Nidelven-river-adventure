@@ -89,9 +89,9 @@ docs/                  Data pipeline docs, Jira issues
 ### CI/CD
 - **Python MVP job:** Ruff lint → Black format → pytest → pipeline smoke test
 - **Unity Test job:** game-ci/unity-test-runner (EditMode + PlayMode)
-- **Unity Build job:** game-ci/unity-builder (Win64 + Linux64, `main` only)
+- **Unity Build job:** game-ci/unity-builder (Win64 + Linux64 + macOS, `main` only)
 - **CodeQL:** Python security analysis (weekly + on push)
-- **Release:** Tag `v*` → builds + GitHub Release with zipped artifacts
+- **Release:** Tag `v*` → builds Win64/Linux64/macOS + GitHub Release with zipped artifacts
 - **Unity secrets required:** `UNITY_LICENSE`, `UNITY_EMAIL`, `UNITY_PASSWORD` (all jobs gracefully skip if missing)
 
 ---
@@ -155,7 +155,6 @@ docs/                  Data pipeline docs, Jira issues
 
 ### CI Gaps
 - **C1:** Unity version mismatch: local 6000.4.6f1 vs CI 6000.4.5f1
-- Release workflow needs the same URP-removal workaround as CI (currently missing)
 
 ---
 
