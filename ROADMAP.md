@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 2 COMPLETE, Phase 3+4 complete, Phase 5 COMPLETE, 48 tests)
+Last updated: 2026-05-15 (Full audit complete, Phase 0-5 DONE, 48 tests, 7 new issues filed)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -8,12 +8,28 @@ Last updated: 2026-05-14 (Phase 2 COMPLETE, Phase 3+4 complete, Phase 5 COMPLETE
 
 ## Executive Summary
 
-The project has a **complete Unity codebase** (16 fully implemented scripts, URP shader, scene) and a **working Python terrain pipeline** (DEM download, mesh generation, river tracing, preview rendering). CI/CD is operational with automated Windows + Linux builds.
+The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-However, the two halves are **not connected** — the Python pipeline output is not automatically imported into Unity. The game will compile and build, but the player will only experience a synthetic terrain until the real DEM data integration is completed.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 5 phases complete.** v1.0.0 feature-complete.
 
-> ✅ **Phase 0 complete** — security issues fixed, Python lint clean, critical bugs resolved (see Resolved Issues below).
-> ✅ **Phase 1 complete** — boat+camera wired to terrain, Input System fixed, integration pipeline working, CI producing playable builds.
+> ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
+> ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
+> ✅ **Phase 2** — Real DEM data, D8 flow, NVE river, weather, Kartverket 1m
+> ✅ **Phase 3** — Water shader, particles, vegetation LOD, audio spatialization
+> ✅ **Phase 4** — CI hardening, test coverage, dead code removal
+> ✅ **Phase 5** — Tutorial, localization, achievements, physics, sound design
+
+### Full Audit (2026-05-15)
+
+A comprehensive audit was performed covering all Unity C# scripts, Python pipeline modules, and CI/CD workflows. **58 issues** identified across all layers:
+
+| Layer | Critical | High | Medium | Low | Total |
+|-------|----------|------|--------|-----|-------|
+| Unity C# | 2 | 7 | 12 | 8 | 29 |
+| Python pipeline | 3 | 5 | 9 | 9 | 26 |
+| CI/CD workflows | 2 | 4 | 8 | 7 | 21 |
+
+GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 ---
 
@@ -21,14 +37,48 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional | DEM download, mesh gen, river flow, renderer, lint clean |
-| Unity scripts (16) | ✅ Compile & build | All logic implemented, all bugs fixed |
-| CI — Python | ✅ Passing | Lint (strict), format, tests, pipeline run |
+| Python MVP pipeline | ✅ Functional (48 tests) | DEM, mesh, D8 flow, river, splatmap, weather — all lint clean |
+| Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
+| CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
-| CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64 + macOS, 7-day retention |
+| CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64 + macOS |
 | CodeQL | ✅ Passing | Python security scanning |
-| Integration (Python→Unity) | ✅ RAW export pipeline | `export_unity_raw()` → StreamingAssets auto-load |
-| Playable experience | ✅ First playable | Boat+camera on real DEM terrain, CI build artifacts |
+| Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
+| Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
+| Audit status | ⚠️ 7 open issues | Critical/High bugs identified (see below) |
+
+---
+
+## 🔴 Open Critical & High Issues (from Audit)
+
+### Critical (must fix before release)
+
+| # | Issue | Location | GitHub |
+|---|-------|----------|--------|
+| 1 | Volume slider `Mathf.Log10(0)` → `-Infinity` crashes AudioMixer | `SettingsMenu.cs` | #26 |
+| 2 | Sun intensity `*= multiplier` decays to zero each frame | `WeatherSystem.cs` | #27 |
+| 3 | `NIDELVA_BBOX_UTM33` targets Trondheim (63°N), not Agder (58°N) | `nve_river.py` L17 | #28 |
+| 4 | CQL injection in NVE WFS query (unescaped `river_name`) | `nve_river.py` L56 | #28 |
+| 5 | `compute_flow_direction_d8()` (slow version) has broken logic | `river_flow.py` L24 | — |
+| 6 | `release.yml` shell injection via `${{ secrets.* }}` interpolation | `.github/workflows/release.yml` L19 | #29 |
+| 7 | No `.github/dependabot.yml` — no CVE alerts for actions/deps | `.github/` | #30 |
+
+### High (should fix before playtest)
+
+| # | Issue | Location | GitHub |
+|---|-------|----------|--------|
+| 8 | River waves frozen (Time.time used at generation, not runtime) | `RiverController.cs` | #31 |
+| 9 | `VegetationGenerator` pre-allocated batches never used (dead memory) | `VegetationGenerator.cs` | #31 |
+| 10 | `AudioManager.UpdateRiverSound()` calls `GetComponent` every frame | `AudioManager.cs` | #32 |
+| 11 | Achievement tracking calls `UnlockAchievement` every frame (no guard) | `BoatController.cs` | #32 |
+| 12 | Capsize recovery doesn't reset `angularVelocity` (re-capsize) | `BoatController.cs` | #32 |
+| 13 | `RiverController` modifies shared material at runtime (persists in Editor) | `RiverController.cs` | #31 |
+| 14 | Multiple systems competing for `Time.timeScale` without coordination | Multiple scripts | #32 |
+| 15 | Actions pinned to mutable tags (`@v4`) — supply chain risk | All workflows | #30 |
+| 16 | No concurrency groups — rapid pushes stack expensive builds | All workflows | #30 |
+| 17 | No job timeouts (default 360min) — stuck build burns 18hr | All workflows | #30 |
+| 18 | `compute_flow_accumulation()` O(n) Python loop — unusable for large DEM | `river_flow.py` L95 | — |
+| 19 | `camera.py`/`renderer.py` crash on import (missing optional deps) | `camera.py` L6 | — |
 
 ---
 
@@ -267,17 +317,59 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 
 ## Technical Debt Register
 
-| Item | Severity | Effort | Notes |
-|------|----------|--------|-------|
-| ~~Dead code: `kartverket_dem.py`~~ | ~~Low~~ | — | ✅ Removed |
-| ~~Dead code: `scripts/` directory~~ | ~~Low~~ | — | ✅ Removed |
-| ~~Duplicate dev deps in pyproject.toml~~ | ~~Low~~ | — | ✅ Fixed (ruff+black added to dependency-groups) |
-| ~~`--size` and `--download` CLI args unused~~ | ~~Low~~ | — | ✅ Removed |
-| ~~`camera.py` coordinate mismatch~~ | ~~Medium~~ | — | ✅ Fixed (col→X, row→Z) |
-| ~~Python for-loop mesh generation~~ | ~~Medium~~ | — | ✅ Vectorized with numpy |
-| ~~Frame-rate-dependent camera smoothing~~ | ~~Low~~ | — | ✅ Fixed — SmoothDamp (c2fadd4) |
-| Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | Migrate to TextMeshPro when ready |
-| Cinemachine 2.x → 3.x | Low | 2 hr | Optional; 2.x still works in Unity 6 |
+### Active (from audit 2026-05-15)
+
+| Item | Severity | Effort | GitHub |
+|------|----------|--------|--------|
+| SettingsMenu Log10(0) crash | Critical | 10 min | #26 |
+| WeatherSystem intensity decay | Critical | 15 min | #27 |
+| nve_river.py wrong coordinates | Critical | 30 min | #28 |
+| release.yml shell injection | High | 15 min | #29 |
+| No dependabot.yml | High | 10 min | #30 |
+| Actions not pinned to SHA | High | 1 hr | #30 |
+| No concurrency groups / timeouts | High | 30 min | #30 |
+| River waves frozen at generation | High | 2 hr | #31 |
+| Achievement spam every frame | High | 15 min | #32 |
+| Recovery missing angularVelocity reset | High | 5 min | #32 |
+| AudioManager GetComponent in update | High | 10 min | #32 |
+| Time.timeScale competition | High | 1 hr | #32 |
+| `compute_flow_accumulation` O(n) Python loop | High | 2 hr | — |
+| `camera.py` unconditional import of optional deps | High | 15 min | — |
+| DayNightCycle double-calculates sun intensity | Medium | 5 min | — |
+| GameManager weak random seed (only 1000 values) | Medium | 5 min | — |
+| GameManager missing DontDestroyOnLoad | Medium | 5 min | — |
+| SaveManager auto-save overwrites last user slot | Medium | 30 min | — |
+| Space key conflict (RiverCamera vs BoatController) | Medium | 15 min | — |
+| SaveManager GetSlotScreenshot leaks Texture2D | Medium | 10 min | — |
+| Sprint in Update() not FixedUpdate() | Medium | 10 min | — |
+| RiverController GetClosestProgress div/0 with 1 point | Medium | 5 min | — |
+| SteamManager debug UI renders in release | Medium | 5 min | — |
+| Duplicate dev deps in pyproject.toml | Medium | 10 min | — |
+| `terrain_mesh.py` `__main__` wrong data path | Medium | 5 min | — |
+| Global `np.random.seed(42)` pollution | Medium | 5 min | — |
+| CI pipeline failure hidden by `\|\| echo` | Medium | 10 min | — |
+| CodeQL only scans Python (not C#) | Medium | 30 min | — |
+| Duplicated CI workaround code (3x) | Low | 1 hr | — |
+| Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | — |
+| `softprops/action-gh-release@v1` outdated (v2 exists) | Low | 10 min | — |
+| No CLI test coverage (main.py) | Low | 1 hr | — |
+| `export_river_path_json()` untested | Low | 30 min | — |
+| `pytest-cov` not declared as dependency | Low | 5 min | — |
+
+### Resolved
+
+| Item | Severity | Resolution |
+|------|----------|------------|
+| ~~Dead code: `kartverket_dem.py`~~ | Low | ✅ Removed |
+| ~~Dead code: `scripts/` directory~~ | Low | ✅ Removed |
+| ~~Duplicate dev deps in pyproject.toml~~ | Low | ✅ Fixed |
+| ~~`--size` and `--download` CLI args unused~~ | Low | ✅ Removed |
+| ~~`camera.py` coordinate mismatch~~ | Medium | ✅ Fixed |
+| ~~Python for-loop mesh generation~~ | Medium | ✅ Vectorized |
+| ~~Frame-rate-dependent camera smoothing~~ | Low | ✅ SmoothDamp (c2fadd4) |
+| ~~Deprecated Rigidbody APIs (velocity/angularDrag)~~ | Low | ✅ Fixed (4998aa8) |
+| ~~Missing .meta files (RiverParticles, WeatherSystem, PhotoFilter)~~ | Medium | ✅ Fixed (eee176c) |
+| ~~Orphaned KartverketDemImporter.cs.meta~~ | Medium | ✅ Removed (eee176c) |
 
 ---
 
@@ -331,13 +423,36 @@ cd Nidelven-river-adventure
 
 ---
 
-## Next Steps (Optional)
+## Next Steps — Phase 6: Stabilization & Release (v1.0.0)
 
-- Fix CI workflows (#11)
-- Weather effects (rain, fog)
+### Priority 1: Critical fixes (same-day)
+- [ ] Fix SettingsMenu Log10(0) → clamp to 0.0001 (#26)
+- [ ] Fix WeatherSystem intensity decay → store base value (#27)
+- [ ] Fix nve_river.py coordinates → Agder bbox (#28)
+- [ ] Fix release.yml shell injection → use env: indirection (#29)
+
+### Priority 2: High fixes (this week)
+- [ ] Add dependabot.yml + pin critical actions to SHA (#30)
+- [ ] Add concurrency groups + timeouts to all workflows (#30)
+- [ ] Fix frozen river waves → shader-based animation (#31)
+- [ ] Fix achievement spam + angularVelocity reset + GetComponent caching (#32)
+- [ ] Add Time.timeScale coordination (central pause manager) (#32)
+- [ ] Guard `camera.py`/`renderer.py` imports behind try/except
+
+### Priority 3: Quality (before v1.0.0 tag)
+- [ ] Add CLI tests (main.py entry point)
+- [ ] Add `export_river_path_json()` test
+- [ ] Pin pip deps in CI terrain generation step
+- [ ] Extract CI workaround into composite action
+- [ ] Add CodeQL for C# (extend existing workflow)
+- [ ] Add `pytest-cov` to dev deps + coverage gate in CI
+
+### Future (post-release)
+- Norge i bilder satellite textures (#25)
+- Weather effects (rain, fog particles)
 - Multiplayer co-op
 - VR support
-- Additional rivers
+- Additional rivers (Otra, Tovdalselva)
 
 ---
 
