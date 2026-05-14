@@ -85,7 +85,7 @@ mvp/
     river_flow.py      Gradient descent river tracer + flow properties
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               7 pytest tests (~25% coverage)
+  tests/               18 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml
 ```
@@ -122,7 +122,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (7 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (18 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
@@ -152,9 +152,9 @@ cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 
 See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
-- Python → Unity integration not automated (real DEM not yet in Unity builds)
-- ~25% test coverage
-- Architecture warnings documented in ROADMAP (dual terrain importers, legacy input API)
+- Real DEM not yet streaming into Unity builds (procedural terrain used at runtime)
+- UI/rendering modules have low test coverage (core pipeline at 46-69%)
+- Release workflow deadlock when Unity secrets are missing (C5)
 
 ---
 

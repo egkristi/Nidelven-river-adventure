@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2025-05-14 (Phase 1 complete)
+Last updated: 2025-05-15 (Phase 1 complete, Phase 4 in progress)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -72,12 +72,12 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 | # | Issue | Impact |
 |---|-------|--------|
-| A1 | Two unconnected terrain importers (`TerrainGenerator` + `KartverketDemImporter`) | Confusing; unclear which to use |
+| A1 | ~~Two unconnected terrain importers~~ | ✅ Fixed — removed `KartverketDemImporter`, single RAW pipeline |
 | A2 | `TerrainGenerator.LoadGeoTiff()` doesn't parse TIFF headers — reads raw bytes | Will produce garbage with real GeoTIFF files |
 | A3 | ~~Legacy Input API + New Input System~~ | ✅ Fixed — `activeInputHandler` set to 2 (Both) |
-| A4 | Escape key handled by both `GameManager` and `SettingsMenu` | Race condition / double-toggle |
-| A5 | Python `kartverket_dem.py` is dead code (WCS returns all-zero data) | Clutters codebase |
-| A6 | `scripts/` directory appears orphaned (pre-MVP approach) | Should be removed or integrated |
+| A4 | ~~Escape key handled by both `GameManager` and `SettingsMenu`~~ | ✅ Fixed — SettingsMenu only consumes Escape when panel is open |
+| A5 | ~~Python `kartverket_dem.py` is dead code~~ | ✅ Fixed — removed |
+| A6 | ~~`scripts/` directory appears orphaned~~ | ✅ Fixed — removed |
 
 ### Performance
 
@@ -105,15 +105,15 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | Module | Covered | Not Covered |
 |--------|---------|-------------|
 | `minimal.py` | `create_sample_dem_ascii` | `trace_river_path`, `render_ascii`, `render_html` |
-| `terrain_mesh.py` | `generate_mesh`, `calculate_normals`, `export_unity_raw` | `load_dem`, `save_mesh_obj`, `create_terrain_from_dem` |
-| `river_flow.py` | `find_start_point`, `trace_river_path` | `smooth_path`, `calculate_flow_properties`, `generate_river_mesh` |
+| `terrain_mesh.py` | `generate_mesh`, `calculate_normals`, `export_unity_raw`, NaN handling, multi-size | `load_dem` (partial), `save_mesh_obj` |
+| `river_flow.py` | `find_start_point` (all sides), `trace_river_path`, `smooth_path`, `calculate_flow_properties` | `generate_river_mesh` |
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
-| `headless_renderer.py` | ❌ | All |
-| `renderer.py` | ❌ | All |
-| `camera.py` | ❌ | All |
-| `main.py` | ❌ | All |
+| `headless_renderer.py` | ❌ | All (rendering, hard to unit test) |
+| `renderer.py` | ❌ | All (OpenGL, hard to unit test) |
+| `camera.py` | ❌ | All (OpenGL, hard to unit test) |
+| `main.py` | ❌ | All (CLI orchestration) |
 
-**Estimated coverage: ~20-25%.** No integration tests. No edge-case tests.
+**Core module coverage: terrain_mesh 69%, river_flow 46%.** 18 tests passing. Integration test included.
 
 ---
 
@@ -191,8 +191,10 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Configure artifact retention (7 days CI)
 - [ ] Fix release workflow deadlock (needs: with proper `if:`)
 - [ ] Pin Unity version in release.yml
-- [ ] Add integration test (full pipeline end-to-end)
-- [ ] Increase test coverage to >60%
+- [x] Add integration test (full pipeline end-to-end)
+- [x] Increase test coverage — 18 tests, core modules 46-69%
+- [x] Remove dead code (kartverket_dem.py, scripts/, KartverketDemImporter.cs)
+- [x] Fix architecture warnings (A1, A4, A5, A6)
 
 ### Phase 5: Game Experience (v1.0.0)
 
@@ -211,8 +213,8 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 | Item | Severity | Effort | Notes |
 |------|----------|--------|-------|
-| Dead code: `kartverket_dem.py` | Low | 5 min | WCS confirmed non-functional; remove |
-| Dead code: `scripts/` directory | Low | 5 min | Superseded by `mvp/` |
+| ~~Dead code: `kartverket_dem.py`~~ | ~~Low~~ | — | ✅ Removed |
+| ~~Dead code: `scripts/` directory~~ | ~~Low~~ | — | ✅ Removed |
 | ~~Duplicate dev deps in pyproject.toml~~ | ~~Low~~ | — | ✅ Fixed (ruff+black added to dependency-groups) |
 | `--size` and `--download` CLI args unused | Low | 10 min | Remove or implement |
 | `camera.py` coordinate mismatch | Medium | 30 min | Row/col → X/Z mapping inconsistent with terrain_mesh |
