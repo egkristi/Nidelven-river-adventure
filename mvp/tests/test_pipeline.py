@@ -412,6 +412,104 @@ class TestDemIntegrity:
         assert result is False
 
 
+class TestD8FlowAccumulation:
+    """Tests for D8 flow direction and accumulation algorithms."""
+
+    def _make_sloped_dem(self, size=32):
+        """Create a DEM that slopes from top-left to bottom-right with a valley."""
+        rows = np.arange(size).reshape(-1, 1)
+        cols = np.arange(size).reshape(1, -1)
+        # Base slope: elevation decreases toward bottom-right
+        dem = 100.0 - rows * 2.0 - cols * 0.5
+        # Add valley in the middle column
+        center = size // 2
+        for c in range(size):
+            dem[:, c] += 3.0 * np.exp(-((c - center) ** 2) / (2.0 * (size / 8) ** 2))
+        # Invert valley (make it lower)
+        dem[:, center] -= 5.0
+        return dem.astype(np.float64)
+
+    def test_flow_direction_basic(self):
+        """D8 flow directions should point downhill."""
+        from mvp.river_flow import compute_flow_direction_d8_fast
+
+        dem = self._make_sloped_dem()
+        flow_dir = compute_flow_direction_d8_fast(dem)
+        # No cell should be unassigned except possibly pits at edges
+        assert flow_dir.shape == dem.shape
+        # Most cells should have a valid direction (0-7)
+        valid = np.sum(flow_dir >= 0)
+        assert valid > dem.size * 0.9
+
+    def test_flow_accumulation_shape(self):
+        """Flow accumulation should have same shape as DEM."""
+        from mvp.river_flow import compute_flow_accumulation
+
+        dem = self._make_sloped_dem()
+        acc = compute_flow_accumulation(dem)
+        assert acc.shape == dem.shape
+        # All cells should have at least 1 (themselves)
+        assert np.all(acc >= 1.0)
+
+    def test_flow_accumulation_valley_has_high_values(self):
+        """Valley cells should have higher accumulation than ridges."""
+        from mvp.river_flow import compute_flow_accumulation
+
+        dem = self._make_sloped_dem(size=64)
+        acc = compute_flow_accumulation(dem)
+        center = 32
+        # Max accumulation should be near the valley center
+        max_row, max_col = np.unravel_index(np.argmax(acc), acc.shape)
+        assert abs(max_col - center) < 10  # Within 10 cells of center column
+
+    def test_trace_river_d8_produces_path(self):
+        """D8 river tracing should produce a non-trivial path."""
+        from mvp.river_flow import trace_river_d8
+
+        dem = self._make_sloped_dem(size=64)
+        path = trace_river_d8(dem)
+        assert len(path) > 10  # Should trace a meaningful path
+
+    def test_trace_river_d8_goes_downhill(self):
+        """D8 traced path should be monotonically decreasing in elevation."""
+        from mvp.river_flow import trace_river_d8
+
+        dem = self._make_sloped_dem(size=64)
+        path = trace_river_d8(dem)
+        elevations = [dem[r, c] for r, c in path]
+        # Should be mostly non-increasing (allow tiny float errors)
+        for i in range(1, len(elevations)):
+            assert elevations[i] <= elevations[i - 1] + 0.01
+
+    def test_trace_river_upstream_finds_source(self):
+        """Upstream tracing should find path from source to outlet."""
+        from mvp.river_flow import trace_river_upstream_d8
+
+        dem = self._make_sloped_dem(size=64)
+        path = trace_river_upstream_d8(dem)
+        assert len(path) > 10
+        # First point should be higher than last
+        assert dem[path[0]] >= dem[path[-1]]
+
+    def test_river_widths_from_accumulation(self):
+        """Width computation should produce reasonable values."""
+        from mvp.river_flow import (
+            compute_flow_accumulation,
+            compute_river_widths_from_accumulation,
+            trace_river_d8,
+        )
+
+        dem = self._make_sloped_dem(size=64)
+        acc = compute_flow_accumulation(dem)
+        path = trace_river_d8(dem)
+        widths = compute_river_widths_from_accumulation(acc, path)
+        assert len(widths) == len(path)
+        assert np.all(widths >= 5.0)
+        assert np.all(widths <= 80.0)
+        # Width should generally increase downstream
+        assert widths[-1] >= widths[0]
+
+
 class TestWeather:
     def test_get_seasonal_weather_valid_months(self):
         """Test seasonal weather returns valid data for all 12 months."""

@@ -2,6 +2,10 @@
 River flow calculator.
 Generates a river trajectory following the DEM elevation gradient,
 creating a natural path from high to low elevation.
+
+Supports two algorithms:
+- Gradient descent (original): fast but easily stuck in flat areas
+- D8 flow accumulation: standard hydrological algorithm, finds realistic valleys
 """
 
 from pathlib import Path
@@ -9,6 +13,304 @@ from pathlib import Path
 import numpy as np
 from scipy.interpolate import splev, splprep
 from scipy.ndimage import gaussian_filter
+
+# D8 direction offsets: N, NE, E, SE, S, SW, W, NW
+_D8_OFFSETS = np.array([(-1, 0), (-1, 1), (0, 1), (1, 1), (1, 0), (1, -1), (0, -1), (-1, -1)])
+_D8_DISTANCES = np.array([1.0, np.sqrt(2), 1.0, np.sqrt(2), 1.0, np.sqrt(2), 1.0, np.sqrt(2)])
+
+
+def compute_flow_direction_d8(dem: np.ndarray) -> np.ndarray:
+    """
+    Compute D8 flow direction for each cell.
+
+    For each cell, finds the steepest downhill neighbor (drop / distance).
+    Returns an array of direction indices (0-7) or -1 for sinks/flats.
+
+    The D8 directions are:
+        7  0  1
+        6  X  2
+        5  4  3
+    """
+    h, w = dem.shape
+    flow_dir = np.full((h, w), -1, dtype=np.int8)
+
+    # Pad DEM to avoid boundary checks
+    padded = np.pad(dem, 1, mode="edge")
+
+    for d in range(8):
+        dy, dx = _D8_OFFSETS[d]
+        # Neighbor values shifted
+        neighbor = padded[1 + dy : h + 1 + dy, 1 + dx : w + 1 + dx]
+        # Slope = drop / distance
+        slope = (dem - neighbor) / _D8_DISTANCES[d]
+
+        # Update where this direction has steepest slope
+        mask = slope > 0
+        # Compare with current best
+        current_best = np.where(flow_dir >= 0, np.zeros((h, w)), -np.inf)
+        for dd in range(8):
+            ddy, ddx = _D8_OFFSETS[dd]
+            nb = padded[1 + ddy : h + 1 + ddy, 1 + ddx : w + 1 + ddx]
+            s = (dem - nb) / _D8_DISTANCES[dd]
+            update = flow_dir == dd
+            current_best = np.where(update, s, current_best)
+
+        better = mask & (slope > current_best)
+        flow_dir = np.where(better, d, flow_dir)
+
+    return flow_dir
+
+
+def compute_flow_direction_d8_fast(dem: np.ndarray) -> np.ndarray:
+    """
+    Vectorized D8 flow direction computation.
+
+    For each cell, finds the neighbor with steepest downhill slope.
+    Returns direction index (0-7) or -1 for pits/flats.
+    """
+    h, w = dem.shape
+    padded = np.pad(dem, 1, mode="edge")
+
+    # Compute slope to all 8 neighbors at once
+    slopes = np.full((8, h, w), -np.inf)
+    for d in range(8):
+        dy, dx = _D8_OFFSETS[d]
+        neighbor = padded[1 + dy : h + 1 + dy, 1 + dx : w + 1 + dx]
+        slopes[d] = (dem - neighbor) / _D8_DISTANCES[d]
+
+    # Find direction with max positive slope
+    max_slope = np.max(slopes, axis=0)
+    flow_dir = np.argmax(slopes, axis=0).astype(np.int8)
+
+    # Mark flats/pits (no downhill neighbor) as -1
+    flow_dir[max_slope <= 0] = -1
+
+    return flow_dir
+
+
+def compute_flow_accumulation(dem: np.ndarray, flow_dir: np.ndarray | None = None) -> np.ndarray:
+    """
+    Compute flow accumulation using D8 flow directions.
+
+    Each cell gets a count of how many upstream cells drain through it.
+    High values indicate river channels (convergent flow).
+
+    Args:
+        dem: 2D elevation array
+        flow_dir: Pre-computed flow directions (optional, computed if None)
+
+    Returns:
+        2D array of flow accumulation values (cell counts)
+    """
+    if flow_dir is None:
+        flow_dir = compute_flow_direction_d8_fast(dem)
+
+    h, w = dem.shape
+    accumulation = np.ones((h, w), dtype=np.float64)
+
+    # Sort cells by elevation (highest first) for topological processing
+    flat_indices = np.argsort(dem.ravel())[::-1]
+
+    for idx in flat_indices:
+        row = idx // w
+        col = idx % w
+        d = flow_dir[row, col]
+        if d < 0:
+            continue
+
+        dy, dx = _D8_OFFSETS[d]
+        nr, nc = row + dy, col + dx
+        if 0 <= nr < h and 0 <= nc < w:
+            accumulation[nr, nc] += accumulation[row, col]
+
+    return accumulation
+
+
+def trace_river_d8(
+    dem: np.ndarray,
+    flow_dir: np.ndarray | None = None,
+    accumulation: np.ndarray | None = None,
+    min_accumulation: float | None = None,
+    start: tuple[int, int] | None = None,
+) -> list[tuple[int, int]]:
+    """
+    Trace river path using D8 flow directions, starting from the cell
+    with highest flow accumulation (or a specified start point).
+
+    This produces more realistic river paths than gradient descent because
+    it follows the natural drainage network.
+
+    Args:
+        dem: 2D elevation array
+        flow_dir: Pre-computed D8 directions (computed if None)
+        accumulation: Pre-computed flow accumulation (computed if None)
+        min_accumulation: Minimum accumulation threshold for river start.
+                         If None, uses top 0.1% of cells.
+        start: Optional explicit start point (row, col).
+               If None, starts from highest-accumulation cell on boundary.
+
+    Returns:
+        List of (row, col) points along the river (high to low elevation)
+    """
+    if flow_dir is None:
+        flow_dir = compute_flow_direction_d8_fast(dem)
+    if accumulation is None:
+        accumulation = compute_flow_accumulation(dem, flow_dir)
+
+    h, w = dem.shape
+
+    if start is None:
+        # Find start: highest-elevation cell that has significant accumulation.
+        # This gives us a river source point to trace downstream from.
+        if min_accumulation is None:
+            # Use top 1% of accumulation as "river" threshold
+            min_accumulation = np.percentile(accumulation, 99)
+
+        # Mask cells with enough accumulation (they're on a river)
+        river_mask = accumulation >= min_accumulation
+
+        if not np.any(river_mask):
+            # Fallback: use cell with absolute max accumulation
+            max_idx = np.argmax(accumulation)
+            start = (max_idx // w, max_idx % w)
+        else:
+            # Among river cells, pick the one with highest elevation (source)
+            river_elevations = np.where(river_mask, dem, -np.inf)
+            max_idx = np.argmax(river_elevations)
+            start = (max_idx // w, max_idx % w)
+
+    # Trace downstream from start
+    path = [start]
+    visited = set()
+    visited.add(start)
+
+    row, col = start
+    for _ in range(max(h, w) * 4):
+        d = flow_dir[row, col]
+        if d < 0:
+            break
+
+        dy, dx = _D8_OFFSETS[d]
+        nr, nc = row + dy, col + dx
+
+        if nr < 0 or nr >= h or nc < 0 or nc >= w:
+            break
+        if (nr, nc) in visited:
+            break
+
+        visited.add((nr, nc))
+        path.append((nr, nc))
+        row, col = nr, nc
+
+    return path
+
+
+def trace_river_upstream_d8(
+    dem: np.ndarray,
+    flow_dir: np.ndarray | None = None,
+    accumulation: np.ndarray | None = None,
+    start: tuple[int, int] | None = None,
+) -> list[tuple[int, int]]:
+    """
+    Trace river from outlet (highest accumulation on boundary) upstream,
+    always following the tributary with the highest accumulation.
+
+    This gives a complete river from source to outlet, following the
+    main channel at every junction.
+
+    Returns:
+        List of (row, col) from source (high elevation) to outlet (low elevation)
+    """
+    if flow_dir is None:
+        flow_dir = compute_flow_direction_d8_fast(dem)
+    if accumulation is None:
+        accumulation = compute_flow_accumulation(dem, flow_dir)
+
+    h, w = dem.shape
+
+    if start is None:
+        # Find outlet: highest accumulation cell on boundary
+        boundary_mask = np.zeros((h, w), dtype=bool)
+        boundary_mask[0, :] = True
+        boundary_mask[-1, :] = True
+        boundary_mask[:, 0] = True
+        boundary_mask[:, -1] = True
+
+        boundary_acc = np.where(boundary_mask, accumulation, 0)
+        max_idx = np.argmax(boundary_acc)
+        start = (max_idx // w, max_idx % w)
+
+    # Build reverse flow: for each cell, find which cells flow INTO it
+    # Then trace upstream always following the branch with highest accumulation
+    path = [start]
+    visited = set()
+    visited.add(start)
+
+    row, col = start
+    for _ in range(max(h, w) * 4):
+        # Find all cells that flow into (row, col)
+        best_acc = -1
+        best_upstream = None
+
+        for d in range(8):
+            dy, dx = _D8_OFFSETS[d]
+            nr, nc = row + dy, col + dx
+            if nr < 0 or nr >= h or nc < 0 or nc >= w:
+                continue
+            if (nr, nc) in visited:
+                continue
+            # Check if that cell flows TO (row, col): it must have opposite direction
+            opposite_d = (d + 4) % 8
+            if flow_dir[nr, nc] == opposite_d and accumulation[nr, nc] > best_acc:
+                best_acc = accumulation[nr, nc]
+                best_upstream = (nr, nc)
+
+        if best_upstream is None:
+            break
+
+        visited.add(best_upstream)
+        path.append(best_upstream)
+        row, col = best_upstream
+
+    # Reverse so path goes source → outlet (high → low elevation)
+    path.reverse()
+    return path
+
+
+def compute_river_widths_from_accumulation(
+    accumulation: np.ndarray,
+    path: list[tuple[int, int]],
+    cell_size: float = 30.0,
+    min_width: float = 5.0,
+    max_width: float = 80.0,
+    exponent: float = 0.4,
+) -> np.ndarray:
+    """
+    Compute river width from upstream drainage area using Leopold & Maddock (1953)
+    power-law relationship: width ~ A^exponent
+
+    Args:
+        accumulation: Flow accumulation grid
+        path: River path as list of (row, col)
+        cell_size: Size of each DEM cell in meters
+        min_width: Minimum river width (m)
+        max_width: Maximum river width (m)
+        exponent: Power law exponent (typically 0.3-0.5)
+
+    Returns:
+        Array of widths (one per path point)
+    """
+    # Sample accumulation along path
+    acc_values = np.array([accumulation[r, c] for r, c in path], dtype=np.float64)
+
+    # Convert cell count to drainage area (km²)
+    area_km2 = acc_values * (cell_size**2) / 1e6
+
+    # Leopold & Maddock: w = a * A^b
+    # Calibrated for Norwegian rivers: a ≈ 3.0, b ≈ 0.4
+    widths = 3.0 * np.power(np.maximum(area_km2, 0.01), exponent)
+
+    return np.clip(widths, min_width, max_width)
 
 
 def find_start_point(dem: np.ndarray, start_side: str = "top") -> tuple[int, int]:
