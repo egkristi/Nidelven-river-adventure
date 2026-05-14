@@ -49,18 +49,19 @@ class RiverCamera:
         Set the river path to follow.
 
         Args:
-            path: Nx3 array of world positions or Nx2 array of grid coordinates
+            path: Nx3 array of world positions or Nx2 array of grid coordinates (row, col)
             elevations: Optional elevation for each point
         """
         self.river_path = path
         self.progress = 0.0
 
-        # Convert 2D to 3D if needed
+        # Convert 2D (row, col) to 3D (X, Y, Z)
+        # Mapping: col → X, elevation → Y, row → Z (consistent with terrain_mesh)
         if path.shape[1] == 2 and elevations is not None:
-            self.river_path = np.column_stack([path, elevations])
+            self.river_path = np.column_stack([path[:, 1], elevations, path[:, 0]])
         elif path.shape[1] == 2:
             # Assume flat terrain
-            self.river_path = np.column_stack([path[:, 0], np.zeros(len(path)), path[:, 1]])
+            self.river_path = np.column_stack([path[:, 1], np.zeros(len(path)), path[:, 0]])
 
     def update(self, dt: float):
         """Update camera position for this frame."""

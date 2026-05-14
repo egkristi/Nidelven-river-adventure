@@ -11,7 +11,7 @@ This script runs the complete MVP pipeline:
 
 Usage:
     python -m mvp.main                     # Full pipeline with synthetic data
-    python -m mvp.main --download          # Try to download real DEM
+    python -m mvp.main --sample            # Force use of synthetic DEM
     python -m mvp.main --interactive       # Launch interactive renderer
     python -m mvp.main --output-dir ./out  # Custom output directory
 """
@@ -28,9 +28,6 @@ from .terrain_mesh import create_terrain_from_dem, export_unity_raw
 
 def main():
     parser = argparse.ArgumentParser(description="Nidelven River Adventure MVP")
-    parser.add_argument(
-        "--download", action="store_true", help="Try to download real DEM from Kartverket"
-    )
     parser.add_argument("--sample", action="store_true", help="Force use of synthetic DEM data")
     parser.add_argument(
         "--interactive",
@@ -40,7 +37,6 @@ def main():
     parser.add_argument(
         "--output-dir", type=Path, default=None, help="Output directory for generated files"
     )
-    parser.add_argument("--size", type=int, default=512, help="DEM size in pixels (default: 512)")
     parser.add_argument("--skip-terrain", action="store_true", help="Skip terrain mesh generation")
     parser.add_argument("--skip-river", action="store_true", help="Skip river flow calculation")
     parser.add_argument("--skip-render", action="store_true", help="Skip image rendering")

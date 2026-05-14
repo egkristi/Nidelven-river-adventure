@@ -194,10 +194,7 @@ def calculate_normals(
     normals = np.zeros_like(vertices)
 
     # Flatten if 2D
-    if indices.ndim == 2:
-        flat_indices = indices.flatten()
-    else:
-        flat_indices = indices
+    flat_indices = indices.flatten() if indices.ndim == 2 else indices
 
     # Reshape to Nx3 triangles
     tri_idx = flat_indices.reshape(-1, 3)
