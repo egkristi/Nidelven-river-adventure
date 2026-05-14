@@ -108,6 +108,8 @@ Thumbs.db
 .env
 .env.local
 *.pem
+*.alf
+*.ulf
 *.key
 secrets/
 *.alf
