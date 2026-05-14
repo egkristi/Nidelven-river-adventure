@@ -625,3 +625,45 @@ class TestWeather:
             assert p["water_wave_height"] > 0
             assert p["water_wave_speed"] > 0
 
+
+class TestKartverketDem:
+    def test_wgs84_to_utm33n_known_point(self):
+        """Test WGS84→UTM33N conversion against a known point (Arendal)."""
+        from mvp.kartverket_dem import wgs84_to_utm33n
+
+        # Arendal city center: approximately 8.77°E, 58.46°N
+        # UTM33N (central meridian 15°E): E~136800, N~6488000
+        easting, northing = wgs84_to_utm33n(8.77, 58.46)
+        assert 130000 < easting < 145000
+        assert 6485000 < northing < 6500000
+
+    def test_wgs84_to_utm33n_bbox_order(self):
+        """Test that UTM coordinates maintain correct spatial ordering."""
+        from mvp.kartverket_dem import wgs84_to_utm33n
+
+        # East should have higher easting, North should have higher northing
+        e_min, n_min = wgs84_to_utm33n(8.45, 58.38)
+        e_max, n_max = wgs84_to_utm33n(8.85, 58.62)
+        assert e_max > e_min
+        assert n_max > n_min
+
+    def test_download_kartverket_dtm_returns_none_on_bad_bbox(self):
+        """Test that invalid bbox returns None gracefully."""
+        from mvp.kartverket_dem import download_kartverket_dtm
+
+        # Use an impossibly small bbox that's outside Norway
+        result = download_kartverket_dtm(
+            bbox=(0.0, 0.0, 0.01, 0.01),
+            max_retries=1,
+        )
+        # Should return None (either network error or WCS exception)
+        assert result is None
+
+    def test_get_kartverket_dem_cache_miss(self, tmp_path):
+        """Test that get_kartverket_dem handles missing cache gracefully."""
+        from mvp.kartverket_dem import get_kartverket_dem
+
+        # With no network and no cache, should return None
+        result = get_kartverket_dem(tmp_path, bbox=(0.0, 0.0, 0.01, 0.01), resolution=100.0)
+        assert result is None
+

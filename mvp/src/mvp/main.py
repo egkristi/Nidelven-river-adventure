@@ -40,6 +40,11 @@ def main():
     parser.add_argument("--skip-terrain", action="store_true", help="Skip terrain mesh generation")
     parser.add_argument("--skip-river", action="store_true", help="Skip river flow calculation")
     parser.add_argument("--skip-render", action="store_true", help="Skip image rendering")
+    parser.add_argument(
+        "--kartverket",
+        action="store_true",
+        help="Use Kartverket 1m LiDAR DEM (requires network, rasterio)",
+    )
 
     args = parser.parse_args()
 
@@ -66,9 +71,23 @@ def main():
     print("-" * 40)
 
     data_dir = Path(__file__).parent.parent.parent / "data"
-    prefer_real = not args.sample
 
-    dem_path = get_dem_path(data_dir, prefer_real=prefer_real)
+    if args.kartverket:
+        # Try Kartverket 1m DTM (high-res LiDAR)
+        from .kartverket_dem import get_kartverket_dem
+
+        print("  Source: Kartverket DTM 1m (LiDAR)")
+        dem_array = get_kartverket_dem(data_dir)
+        if dem_array is not None:
+            dem_path = data_dir / "kartverket_dtm1m.tif"
+            print(f"  ✓ Using Kartverket 1m: {dem_array.shape[1]}x{dem_array.shape[0]}")
+        else:
+            print("  ✗ Kartverket unavailable, falling back to Copernicus 30m")
+            prefer_real = not args.sample
+            dem_path = get_dem_path(data_dir, prefer_real=prefer_real)
+    else:
+        prefer_real = not args.sample
+        dem_path = get_dem_path(data_dir, prefer_real=prefer_real)
     print()
 
     # Step 2: Generate terrain mesh
