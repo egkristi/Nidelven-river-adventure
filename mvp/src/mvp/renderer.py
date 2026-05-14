@@ -256,6 +256,14 @@ class NidelvenRenderer(mglw.WindowConfig):
         self.light_dir = np.array([0.3, -0.8, 0.2], dtype=np.float32)
         self.light_dir /= np.linalg.norm(self.light_dir)
 
+        # Load data passed via class attributes from run_renderer()
+        if getattr(self.__class__, "_terrain_mesh", None) is not None:
+            self.set_terrain_mesh(self.__class__._terrain_mesh)
+        if getattr(self.__class__, "_water_mesh", None) is not None:
+            self.set_water_mesh(self.__class__._water_mesh)
+        if getattr(self.__class__, "_river_path", None) is not None:
+            self.set_river_path(self.__class__._river_path)
+
     def load_mesh(self, mesh_data: dict, shader_type: str = "terrain"):
         """
         Load a mesh from generated data.

@@ -49,10 +49,11 @@ class TestRiverFlow:
         dem = np.zeros((32, 32), dtype=np.float32)
         for i in range(32):
             dem[i, :] = 100 - i * 3
-        # Make a low point at top row
-        dem[0, 16] = 10
+        # Make a high point at top row (river source = highest point)
+        dem[0, 16] = 200
         start = find_start_point(dem, start_side="top")
         assert start[0] == 0  # Top row
+        assert start[1] == 16  # Highest point on that edge
 
     def test_trace_river_path(self):
         # Simple slope: high at top, low at bottom

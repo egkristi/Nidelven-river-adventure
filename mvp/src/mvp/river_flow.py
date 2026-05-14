@@ -14,48 +14,50 @@ from scipy.ndimage import gaussian_filter
 def find_start_point(dem: np.ndarray, start_side: str = "top") -> tuple[int, int]:
     """
     Find the river starting point on one edge of the DEM.
+    Uses the HIGHEST point on the chosen edge (headwater/source),
+    since the river traces downhill from start.
 
     Args:
         dem: 2D elevation array
         start_side: Which edge to start from ("top", "bottom", "left", "right")
 
     Returns:
-        (row, col) of start point (lowest elevation on that edge)
+        (row, col) of start point (highest elevation on that edge)
     """
     h, w = dem.shape
 
     if start_side == "top":
         edge = dem[0, :]
-        col = int(np.argmin(edge))
+        col = int(np.argmax(edge))
         return (0, col)
     elif start_side == "bottom":
         edge = dem[-1, :]
-        col = int(np.argmin(edge))
+        col = int(np.argmax(edge))
         return (h - 1, col)
     elif start_side == "left":
         edge = dem[:, 0]
-        row = int(np.argmin(edge))
+        row = int(np.argmax(edge))
         return (row, 0)
     elif start_side == "right":
         edge = dem[:, -1]
-        row = int(np.argmin(edge))
+        row = int(np.argmax(edge))
         return (row, w - 1)
     else:
-        # Default: find global minimum on boundary
+        # Default: find global maximum on boundary (highest source point)
         boundary = np.concatenate(
             [dem[0, :], dem[-1, :], dem[:, 0], dem[:, -1]]  # top  # bottom  # left  # right
         )
-        min_val = np.min(boundary)
+        max_val = np.max(boundary)
 
         # Find where it is
-        if min_val in dem[0, :]:
-            col = int(np.argmin(dem[0, :]))
+        if max_val in dem[0, :]:
+            col = int(np.argmax(dem[0, :]))
             return (0, col)
-        elif min_val in dem[-1, :]:
-            col = int(np.argmin(dem[-1, :]))
+        elif max_val in dem[-1, :]:
+            col = int(np.argmax(dem[-1, :]))
             return (h - 1, col)
         else:
-            row = int(np.argmin(dem[:, 0]))
+            row = int(np.argmax(dem[:, 0]))
             return (row, 0)
 
 

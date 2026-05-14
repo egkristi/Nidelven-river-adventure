@@ -84,6 +84,10 @@ namespace Nidelven.Core
             Directory.CreateDirectory(SaveDirectory);
             
             sessionStartTime = Time.time;
+            
+            // Initialize lastPosition to boat position to avoid bogus distance on first frame
+            if (boatController != null)
+                lastPosition = boatController.transform.position;
         }
         
         void Update()

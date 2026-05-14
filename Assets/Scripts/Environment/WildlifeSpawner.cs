@@ -100,10 +100,13 @@ namespace Nidelven.Environment
                 spawnPos.y = terrain.GetHeightAt(spawnPos);
             }
             
-            // Check distance from river
+            // Check distance from river (use actual world distance, not progress)
             if (river != null)
             {
-                float riverDist = river.GetClosestProgress(spawnPos);
+                float progress = river.GetClosestProgress(spawnPos);
+                int pathIdx = Mathf.RoundToInt(progress * (river.riverPath.Count - 1));
+                pathIdx = Mathf.Clamp(pathIdx, 0, river.riverPath.Count - 1);
+                float riverDist = Vector3.Distance(spawnPos, river.riverPath[pathIdx]);
                 if (riverDist < 20f) return; // Too close to river
             }
             
