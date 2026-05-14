@@ -171,5 +171,69 @@ Shader "Nidelven/SimpleWater"
             }
             ENDHLSL
         }
+
+        Pass
+        {
+            Name "DepthOnly"
+            Tags { "LightMode" = "DepthOnly" }
+
+            ZWrite On
+            ColorMask R
+            Cull Back
+
+            HLSLPROGRAM
+            #pragma vertex DepthOnlyVert
+            #pragma fragment DepthOnlyFrag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float2 uv : TEXCOORD0;
+            };
+
+            struct Varyings
+            {
+                float4 positionHCS : SV_POSITION;
+            };
+
+            CBUFFER_START(UnityPerMaterial)
+                float4 _BaseColor;
+                float4 _FoamColor;
+                float _WaveHeight;
+                float _WaveSpeed;
+                float _WaveScale;
+                float _FoamThreshold;
+                float _FlowSpeed;
+                float4 _FlowOffset;
+                float _Smoothness;
+            CBUFFER_END
+
+            float CalculateWaveHeightDepth(float2 uv, float time)
+            {
+                float wave = 0.0;
+                float2 pos = uv * _WaveScale;
+                wave += sin(pos.x + time * _WaveSpeed) * 0.5;
+                wave += cos(pos.y * 0.7 + time * _WaveSpeed * 0.8) * 0.3;
+                wave += sin((pos.x + pos.y) * 1.5 + time * _WaveSpeed * 1.2) * 0.2;
+                return wave * _WaveHeight;
+            }
+
+            Varyings DepthOnlyVert(Attributes input)
+            {
+                Varyings output;
+                float3 positionOS = input.positionOS.xyz;
+                positionOS.y += CalculateWaveHeightDepth(input.uv, _Time.y);
+                output.positionHCS = TransformObjectToHClip(positionOS);
+                return output;
+            }
+
+            float4 DepthOnlyFrag(Varyings input) : SV_TARGET
+            {
+                return 0;
+            }
+            ENDHLSL
+        }
     }
 }

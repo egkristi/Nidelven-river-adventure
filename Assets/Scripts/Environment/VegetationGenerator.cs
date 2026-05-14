@@ -41,6 +41,12 @@ namespace Nidelven.Environment
         private List<Matrix4x4> rockMatrices = new List<Matrix4x4>();
         private MaterialPropertyBlock propertyBlock;
         
+        // Pre-allocated batch arrays to avoid GC pressure (PF2 fix)
+        private Matrix4x4[][] treeBatches;
+        private int[] treeBatchCounts;
+        private Matrix4x4[][] rockBatches;
+        private int[] rockBatchCounts;
+        
         void Start()
         {
             if (generateOnStart)
@@ -70,6 +76,8 @@ namespace Nidelven.Environment
             
             GenerateTrees();
             GenerateRocks();
+            
+            PreAllocateBatches();
             
             Debug.Log($"Generated {treeMatrices.Count} trees and {rockMatrices.Count} rocks");
         }
@@ -191,39 +199,67 @@ namespace Nidelven.Environment
             }
             
             // Render trees
-            for (int meshIdx = 0; meshIdx < treeMeshes.Length; meshIdx++)
+            if (treeBatches != null)
             {
-                Mesh mesh = treeMeshes[meshIdx];
-                Material mat = treeMaterials[meshIdx % treeMaterials.Length];
-                
-                if (mesh != null && mat != null)
+                for (int meshIdx = 0; meshIdx < treeMeshes.Length; meshIdx++)
                 {
-                    // Split into batches of 1023 (Unity limit)
-                    for (int i = 0; i < treeMatrices.Count; i += 1023)
+                    Mesh mesh = treeMeshes[meshIdx];
+                    Material mat = treeMaterials[meshIdx % treeMaterials.Length];
+                    
+                    if (mesh != null && mat != null)
                     {
-                        int count = Mathf.Min(1023, treeMatrices.Count - i);
-                        Matrix4x4[] batch = treeMatrices.GetRange(i, count).ToArray();
-                        Graphics.DrawMeshInstanced(mesh, 0, mat, batch, count, propertyBlock);
+                        for (int b = 0; b < treeBatches.Length; b++)
+                        {
+                            Graphics.DrawMeshInstanced(mesh, 0, mat, treeBatches[b], treeBatchCounts[b], propertyBlock);
+                        }
                     }
                 }
             }
             
             // Render rocks
-            for (int meshIdx = 0; meshIdx < rockMeshes.Length; meshIdx++)
+            if (rockBatches != null)
             {
-                Mesh mesh = rockMeshes[meshIdx];
-                Material mat = rockMaterials[meshIdx % rockMaterials.Length];
-                
-                if (mesh != null && mat != null)
+                for (int meshIdx = 0; meshIdx < rockMeshes.Length; meshIdx++)
                 {
-                    for (int i = 0; i < rockMatrices.Count; i += 1023)
+                    Mesh mesh = rockMeshes[meshIdx];
+                    Material mat = rockMaterials[meshIdx % rockMaterials.Length];
+                    
+                    if (mesh != null && mat != null)
                     {
-                        int count = Mathf.Min(1023, rockMatrices.Count - i);
-                        Matrix4x4[] batch = rockMatrices.GetRange(i, count).ToArray();
-                        Graphics.DrawMeshInstanced(mesh, 0, mat, batch, count, propertyBlock);
+                        for (int b = 0; b < rockBatches.Length; b++)
+                        {
+                            Graphics.DrawMeshInstanced(mesh, 0, mat, rockBatches[b], rockBatchCounts[b], propertyBlock);
+                        }
                     }
                 }
             }
+        }
+        
+        void PreAllocateBatches()
+        {
+            treeBatches = BuildBatches(treeMatrices, out treeBatchCounts);
+            rockBatches = BuildBatches(rockMatrices, out rockBatchCounts);
+        }
+        
+        static Matrix4x4[][] BuildBatches(List<Matrix4x4> matrices, out int[] batchCounts)
+        {
+            int totalBatches = (matrices.Count + 1022) / 1023;
+            var batches = new Matrix4x4[totalBatches][];
+            batchCounts = new int[totalBatches];
+            
+            for (int b = 0; b < totalBatches; b++)
+            {
+                int start = b * 1023;
+                int count = Mathf.Min(1023, matrices.Count - start);
+                batches[b] = new Matrix4x4[1023];
+                batchCounts[b] = count;
+                for (int i = 0; i < count; i++)
+                {
+                    batches[b][i] = matrices[start + i];
+                }
+            }
+            
+            return batches;
         }
         
         void OnDrawGizmosSelected()
