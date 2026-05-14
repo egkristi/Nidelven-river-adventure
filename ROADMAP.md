@@ -169,9 +169,11 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Fix NaN handling in terrain_mesh.py
 - [ ] Fix river tracer for real DEM (use flow accumulation / D8 algorithm)
 - [ ] Implement proper river path from OSM or NVE data
-- [ ] Texture terrain from Sentinel-2 satellite imagery or Norway aerial photos
+- [ ] Texture terrain from geolocated imagery (see Geolocated Data Sources below)
 - [ ] Add DEM integrity verification (checksum)
 - [ ] Vectorize terrain mesh generation (eliminate Python for-loops)
+- [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
+- [ ] Import river geometry from NVE Elvenett / ELVIS
 
 ### Phase 3: Polish (v0.3.0)
 
@@ -206,6 +208,53 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [ ] Settings menu with URP quality presets
 - [ ] Localization (Norwegian / English)
 - [ ] Performance profiling + optimization pass
+
+---
+
+## Geolocated Data Sources
+
+Free, open data sources that can improve terrain, textures, river accuracy, and environmental detail for the Nidelven valley (Agder, Norway).
+
+| Source | Data Type | Resolution | Access | Use Case |
+|--------|-----------|-----------|--------|----------|
+| **Kartverket DTM** (høydedata.no) | LiDAR DEM | 1m | Free WCS/download | Replace 30m Copernicus DEM with 1m terrain |
+| **Norge i bilder** (norgeibilder.no) | Aerial orthophoto | 10-25 cm | Free WMS/WMTS | Terrain texturing — real ground cover |
+| **Sentinel-2** (Copernicus) | Multispectral satellite | 10m | Free (AWS S3) | Terrain color, vegetation classification |
+| **NVE Elvenett / ELVIS** | River centerlines + catchments | Vector | Free GeoJSON/WFS | Accurate river path (replaces gradient descent) |
+| **Kartverket N50** | Topographic vector map | 1:50000 | Free WFS | Roads, buildings, water bodies, land use |
+| **OpenStreetMap** | Crowd-sourced vector | Variable | Free (Overpass API) | River path, bridges, points of interest |
+| **Kartverket sjøkart** | Bathymetry | 1-5m | Free WMS | River depth data for realistic water |
+| **NIBIO AR5** | Land cover classification | 1:5000 | Free WFS | Forest type, farmland, wetland → vegetation placement |
+| **Met.no Frost API** | Weather/climate | Station data | Free REST API | Realistic weather patterns, seasonal variation |
+
+### Integration Plan
+
+1. **Terrain (Priority):** Kartverket DTM 1m via høydedata.no WCS → drastically better terrain than current 30m
+2. **Textures (Priority):** Norge i bilder WMTS → real aerial photo as terrain texture (splatmap from NIBIO AR5 for procedural detail)
+3. **River path:** NVE ELVIS GeoJSON → import exact Nidelva centerline, width, and flow direction
+4. **Vegetation:** NIBIO AR5 land cover → place correct tree species (pine/spruce/birch) by zone
+5. **Fallback:** Sentinel-2 10m satellite as lower-quality texture alternative (no auth needed, global coverage)
+
+### API Endpoints (Nidelven area: ~8.45°E, 58.38°N to 8.85°E, 58.62°N)
+
+```
+# Kartverket DTM 1m (WCS)
+https://wcs.geonorge.no/skwms1/wcs.hoyde-dtm-nhm-25833?service=WCS&version=2.0.1&request=GetCoverage
+
+# Norge i bilder orthophoto (WMTS)
+https://opencache.statkart.no/gatekeeper/gk/gk.open_nib_web_mercator_wmts_v2?SERVICE=WMTS
+
+# NVE ELVIS river network (WFS)
+https://gis3.nve.no/map/services/Elvenett/MapServer/WFSServer
+
+# NIBIO AR5 land cover (WFS)
+https://wfs.nibio.no/wfs/ar5?service=WFS&version=2.0.0&request=GetFeature
+
+# Sentinel-2 (AWS S3, no auth)
+s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
+```
+
+> **Note:** All Norwegian public geodata listed above is free for any use (CC BY 4.0 or NLOD). Sentinel-2 is CC BY-SA 3.0 IGO.
 
 ---
 
