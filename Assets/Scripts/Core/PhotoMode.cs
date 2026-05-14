@@ -244,32 +244,50 @@ namespace Nidelven.Core
         
         void ApplyFilters(Texture2D image)
         {
-            // Simple filter application
-            Color[] pixels = image.GetPixels();
-            for (int i = 0; i < pixels.Length; i++)
+            // GPU-based filter using a temporary material + Graphics.Blit
+            // This replaces the previous per-pixel CPU loop (PF3 fix)
+            Shader filterShader = Shader.Find("Hidden/PhotoFilter");
+            if (filterShader != null)
             {
-                Color c = pixels[i];
-                
-                // Brightness
-                c.r *= brightness;
-                c.g *= brightness;
-                c.b *= brightness;
-                
-                // Contrast
-                c.r = (c.r - 0.5f) * contrast + 0.5f;
-                c.g = (c.g - 0.5f) * contrast + 0.5f;
-                c.b = (c.b - 0.5f) * contrast + 0.5f;
-                
-                // Saturation
-                float luminance = c.grayscale;
-                c.r = Mathf.Lerp(luminance, c.r, saturation);
-                c.g = Mathf.Lerp(luminance, c.g, saturation);
-                c.b = Mathf.Lerp(luminance, c.b, saturation);
-                
-                pixels[i] = c;
+                Material filterMat = new Material(filterShader);
+                filterMat.SetFloat("_Brightness", brightness);
+                filterMat.SetFloat("_Contrast", contrast);
+                filterMat.SetFloat("_Saturation", saturation);
+
+                RenderTexture src = RenderTexture.GetTemporary(image.width, image.height, 0);
+                RenderTexture dst = RenderTexture.GetTemporary(image.width, image.height, 0);
+
+                Graphics.Blit(image, src);
+                Graphics.Blit(src, dst, filterMat);
+
+                RenderTexture.active = dst;
+                image.ReadPixels(new Rect(0, 0, image.width, image.height), 0, 0);
+                image.Apply();
+                RenderTexture.active = null;
+
+                RenderTexture.ReleaseTemporary(src);
+                RenderTexture.ReleaseTemporary(dst);
+                Destroy(filterMat);
             }
-            image.SetPixels(pixels);
-            image.Apply();
+            else
+            {
+                // Fallback: batch pixel processing (still faster than individual pixel ops)
+                Color[] pixels = image.GetPixels();
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    Color c = pixels[i];
+                    c.r = Mathf.Clamp01(((c.r * brightness) - 0.5f) * contrast + 0.5f);
+                    c.g = Mathf.Clamp01(((c.g * brightness) - 0.5f) * contrast + 0.5f);
+                    c.b = Mathf.Clamp01(((c.b * brightness) - 0.5f) * contrast + 0.5f);
+                    float lum = c.r * 0.2126f + c.g * 0.7152f + c.b * 0.0722f;
+                    c.r = Mathf.Lerp(lum, c.r, saturation);
+                    c.g = Mathf.Lerp(lum, c.g, saturation);
+                    c.b = Mathf.Lerp(lum, c.b, saturation);
+                    pixels[i] = c;
+                }
+                image.SetPixels(pixels);
+                image.Apply();
+            }
         }
         
         void OnGUI()

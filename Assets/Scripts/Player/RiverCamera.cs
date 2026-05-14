@@ -79,6 +79,8 @@ namespace Nidelven.Player
         private Vector3 currentLookTarget;
         private Vector3 targetPosition;
         private Vector3 targetLookTarget;
+        private Vector3 positionVelocity;
+        private Vector3 lookVelocity;
         private bool isPaused = false;
         
         void Start()
@@ -191,9 +193,9 @@ namespace Nidelven.Player
             targetLookTarget = river.GetPositionOnRiver(lookAheadProgress);
             targetLookTarget.y += 5f; // Look slightly above water
             
-            // Smooth movement
-            currentPosition = Vector3.Lerp(currentPosition, targetPosition, positionSmoothing);
-            currentLookTarget = Vector3.Lerp(currentLookTarget, targetLookTarget, lookSmoothing);
+            // Smooth movement (frame-rate independent)
+            currentPosition = Vector3.SmoothDamp(currentPosition, targetPosition, ref positionVelocity, positionSmoothing);
+            currentLookTarget = Vector3.SmoothDamp(currentLookTarget, targetLookTarget, ref lookVelocity, lookSmoothing);
             
             // Apply to transform
             transform.position = currentPosition;
