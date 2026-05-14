@@ -1,107 +1,143 @@
 # Nidelven River Adventure 🛶
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
+[![CodeQL](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/codeql.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/codeql.yml)
 
-A relaxing river exploration game set on the real Nidelven river in Agder, Norway. Built with Unity using real-world elevation data from Copernicus GLO-30 DEM.
+A relaxing river exploration game set on the **Nidelven river in Agder, Norway**. Paddle through a photorealistic valley generated from real 30m satellite elevation data. Built with Unity 6000 LTS and a Python terrain pipeline.
 
-## Current Status
-
-- ✅ Python MVP pipeline (terrain generation, river flow, real DEM)
-- ✅ CI/CD (Python linting, tests, Unity test + build)
-- ✅ Unity scripts (boat physics, camera, audio, etc.)
-- ✅ Unity scene (MainScene with camera + lighting)
-- ✅ Real DEM data (Copernicus GLO-30 30m resolution)
-
-## Features
-
-- ✅ **Terrain Generation**: Real DEM from Copernicus GLO-30 (30m resolution)
-- ✅ **River Flow**: Realistic current based on elevation gradient
-- ✅ **Interactive Renderer**: 3D terrain viewer with ModernGL (optional)
-- ✅ **Boat Physics**: Buoyancy, paddling, capsize/recovery
-- ✅ **Vegetation System**: GPU-instanced trees and rocks
-- ✅ **Day/Night Cycle**: Dynamic lighting and atmosphere
-- ✅ **Audio**: River ambience, birds, forest sounds
-- ✅ **Photo Mode**: Freeze time, filters, screenshot capture
-- ✅ **Save/Load**: JSON persistence with auto-save
-- ✅ **Settings Menu**: Graphics, audio, controls
-- ✅ **Tutorial System**: First-time player guidance
-- ✅ **Steam Integration**: Achievements, cloud saves
-- ✅ **Wildlife System**: Birds, deer with AI behavior
-- ✅ **CI/CD**: GitHub Actions for CI, CodeQL, releases
+---
 
 ## Running on PC
 
-### Option 1: Download a Build (easiest)
+### Download a Build (easiest)
 
 1. Go to [Actions → CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml)
 2. Click the latest successful run on `main`
-3. Download the artifact **Build-StandaloneWindows64** (or **Build-StandaloneLinux64**)
+3. Download **Build-StandaloneWindows64** (or **Build-StandaloneLinux64**)
 4. Extract the zip and run `NidelvenRiverAdventure.exe`
 
-> Builds are produced automatically on every push to `main`.
+> Builds are produced automatically on every push to `main` (Windows + Linux).
 
-### Option 2: Unity Editor (development)
+### From Source (Unity Editor)
 
-1. Install [Unity Hub](https://unity.com/download) and Unity **6000 LTS** (6000.4.x)
-2. Clone the repo and open the root folder in Unity Hub → "Add project from disk"
+```bash
+git clone https://github.com/egkristi/Nidelven-river-adventure.git
+```
+
+1. Install [Unity Hub](https://unity.com/download) and Unity **6000.4.x LTS**
+2. Open the cloned folder via Unity Hub → "Add project from disk"
 3. Open `Assets/Scenes/MainScene.unity`
 4. Press **Play** ▶️
 
-### Option 3: Python MVP Terrain Viewer
+### Python MVP (terrain viewer only)
 
 ```bash
-# Clone repo
-git clone https://github.com/egkristi/Nidelven-river-adventure.git
-cd Nidelven-river-adventure/mvp
-
-# Install and run (downloads real 30m DEM automatically)
-uv sync && uv run mvp --skip-render
-
-# Interactive 3D terrain viewer (requires OpenGL)
-uv pip install -e '.[interactive]' && uv run mvp --interactive
+cd mvp
+uv sync
+uv run mvp                      # generates terrain + preview images
+uv run mvp --interactive        # 3D terrain viewer (requires OpenGL)
 ```
 
-### Running Tests
+The MVP downloads real Copernicus GLO-30 DEM data automatically on first run. Use `--sample` to skip the download and use synthetic terrain instead.
 
-```bash
-cd mvp && uv run pytest tests/ -v
-```
+---
+
+## Features
+
+| Category | Details |
+|----------|---------|
+| **Terrain** | Real 30m DEM (Copernicus GLO-30) covering the Nidelven valley |
+| **River** | Flow simulation based on elevation gradient descent |
+| **Boat Physics** | Buoyancy, paddling, capsize & recovery |
+| **Vegetation** | GPU-instanced trees and rocks |
+| **Day/Night** | Dynamic sun cycle, atmospheric lighting |
+| **Audio** | River ambience, birdsong, forest sounds |
+| **Wildlife** | Birds, deer with steering-behavior AI |
+| **Photo Mode** | Freeze time, color filters, screenshot capture |
+| **Save/Load** | JSON persistence with auto-save |
+| **Settings** | Graphics quality, audio levels, control remapping |
+| **Tutorial** | Contextual first-time player guidance |
+| **Steam** | Achievements, cloud saves (opt-in via `DISABLESTEAMWORKS`) |
+
+---
 
 ## Project Structure
 
 ```
-Assets/Scripts/    Unity C# scripts (boat, camera, terrain, audio, etc.)
-mvp/               Python MVP pipeline
-  src/mvp/         Source code (terrain mesh, river flow, renderer)
-  tests/           Pytest test suite
-  output/          Generated files (gitignored)
-Packages/          Unity package manifest
-.github/workflows/ CI/CD configuration
+Assets/
+  Scenes/            Unity scenes (MainScene.unity)
+  Scripts/
+    Core/            GameManager, AudioManager, SaveManager, PhotoMode, Steam
+    Environment/     DayNightCycle, TerrainGenerator, Vegetation, Wildlife, River
+    Player/          BoatController, RiverCamera
+    UI/              SettingsMenu, TutorialSystem
+  Shaders/           SimpleWater.shader
+mvp/
+  src/mvp/           Python pipeline (DEM download, terrain mesh, river flow, renderer)
+  tests/             Pytest suite (7 tests)
+Packages/            Unity package manifest
+.github/workflows/   CI (Python + Unity) and CodeQL
 ```
+
+---
 
 ## Controls
 
 | Key | Action |
 |-----|--------|
-| F12 | Photo Mode |
-| WASD | Paddle boat |
+| W / A / S / D | Paddle (forward / left / back / right) |
 | Shift | Sprint |
-| Escape | Settings Menu |
+| F12 | Photo Mode |
+| Escape | Settings / Pause |
 
-## Documentation
-
-- [ROADMAP.md](ROADMAP.md) - Development status & next steps
-- [CI_SETUP.md](CI_SETUP.md) - CI/CD configuration
-- [mvp/README.md](mvp/README.md) - Python MVP details
+---
 
 ## Tech Stack
 
-- Unity 6000 LTS with URP
-- Python 3.11 + UV + pytest
-- Copernicus GLO-30 DEM (30m, free, no auth)
-- GitHub Actions CI/CD
+| Layer | Technology |
+|-------|-----------|
+| Engine | Unity 6000 LTS, Universal Render Pipeline |
+| Language | C# (Unity), Python 3.11 (MVP pipeline) |
+| Elevation Data | Copernicus GLO-30 DEM — 30m resolution, free, no auth |
+| Package Manager | UV (Python), Unity Package Manager |
+| CI/CD | GitHub Actions (lint, test, build, CodeQL) |
+| Build Targets | Windows x64, Linux x64 |
+
+---
+
+## CI/CD
+
+All pipelines run on every push and PR to `main`:
+
+| Workflow | What it does |
+|----------|-------------|
+| **Python MVP** | Ruff lint, Black format check, pytest, full pipeline run |
+| **Unity Test** | Compile + EditMode/PlayMode tests (game-ci) |
+| **Unity Build** | Produces Windows + Linux builds (artifacts on `main` only) |
+| **CodeQL** | Static security analysis for Python |
+
+---
+
+## Development
+
+```bash
+# Run tests
+cd mvp && uv run pytest tests/ -v
+
+# Lint
+cd mvp && uv run ruff check src/
+
+# Format
+cd mvp && uv run black src/
+```
+
+See [ROADMAP.md](ROADMAP.md) for planned features and progress, [CI_SETUP.md](CI_SETUP.md) for CI configuration details, and [mvp/README.md](mvp/README.md) for the Python pipeline documentation.
+
+---
 
 ## License
+
+MIT — see [LICENSE](LICENSE).
 
 MIT - see [LICENSE](LICENSE)
 
