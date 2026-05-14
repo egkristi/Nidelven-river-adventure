@@ -13,6 +13,7 @@ namespace Nidelven.Player
         [Header("River Reference")]
         public RiverController river;
         public TerrainGenerator terrain;
+        public RiverParticles riverParticles;
         
         [Header("Physics")]
         [Tooltip("Boat mass in kg")]
@@ -261,6 +262,7 @@ namespace Nidelven.Player
             rb.AddForce(force, ForceMode.Impulse);
             timeSinceLastStroke = 0f;
             PlayPaddleSound();
+            EmitPaddleSplash();
         }
         
         void PaddleBackward()
@@ -269,6 +271,7 @@ namespace Nidelven.Player
             rb.AddForce(force, ForceMode.Impulse);
             timeSinceLastStroke = 0f;
             PlayPaddleSound();
+            EmitPaddleSplash();
         }
         
         void PaddleLeft()
@@ -353,6 +356,16 @@ namespace Nidelven.Player
         {
             // TODO: Trigger paddle sound
             // AudioManager.Instance?.PlayPaddleSound();
+        }
+        
+        void EmitPaddleSplash()
+        {
+            if (riverParticles != null)
+            {
+                Vector3 splashPos = transform.position;
+                splashPos.y = waterLevel;
+                riverParticles.EmitSplash(splashPos, 1f);
+            }
         }
         
         void OnDrawGizmos()
