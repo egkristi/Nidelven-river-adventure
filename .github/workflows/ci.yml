@@ -153,6 +153,23 @@ jobs:
           "
           printf '%s\n' '-define:DISABLESTEAMWORKS' '-define:DISABLE_URP' > Assets/csc.rsp
 
+      - name: Generate terrain data for build
+        run: |
+          pip install -q numpy
+          mkdir -p Assets/StreamingAssets
+          cd mvp
+          python -c "
+          import sys
+          sys.path.insert(0, 'src')
+          from mvp.dem_downloader import create_sample_dem
+          from mvp.terrain_mesh import generate_mesh, export_unity_raw
+          import numpy as np
+          dem = create_sample_dem()
+          vertices, indices, normals = generate_mesh(dem, spacing=30.0)
+          export_unity_raw(dem, '../Assets/StreamingAssets/terrain.raw', '../Assets/StreamingAssets/terrain_metadata.json')
+          print(f'Exported terrain.raw ({dem.shape[0]}x{dem.shape[1]}) to StreamingAssets')
+          "
+
       - name: Cache Library
         uses: actions/cache@v4
         with:
