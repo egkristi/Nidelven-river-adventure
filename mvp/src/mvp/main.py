@@ -45,6 +45,11 @@ def main():
         action="store_true",
         help="Use Kartverket 1m LiDAR DEM (requires network, rasterio)",
     )
+    parser.add_argument(
+        "--orthophoto",
+        action="store_true",
+        help="Download aerial orthophoto from Norge i bilder as terrain texture",
+    )
 
     args = parser.parse_args()
 
@@ -118,6 +123,20 @@ def main():
         print("STEP 3: Skipping river flow calculation")
         flow_data = None
         river_path = None
+        print()
+
+    # Step 3.5: Download aerial orthophoto (optional)
+    if args.orthophoto:
+        print("STEP 3.5: Norge i bilder Orthophoto")
+        print("-" * 40)
+
+        from .norgeibilder import export_terrain_texture
+
+        texture_path = export_terrain_texture(output_dir=output_dir)
+        if texture_path:
+            print(f"  ✓ Terrain texture exported: {texture_path}")
+        else:
+            print("  ✗ Orthophoto download failed (network issue or tiles unavailable)")
         print()
 
     # Step 4: Generate preview images

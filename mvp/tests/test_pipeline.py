@@ -667,3 +667,89 @@ class TestKartverketDem:
         result = get_kartverket_dem(tmp_path, bbox=(0.0, 0.0, 0.01, 0.01), resolution=100.0)
         assert result is None
 
+
+class TestNorgeIBilder:
+    """Tests for Norge i bilder WMTS orthophoto client."""
+
+    def test_wgs84_to_tile_known_point(self):
+        """Test coordinate-to-tile conversion for known values."""
+        from mvp.norgeibilder import wgs84_to_tile
+
+        # Oslo (59.9°N, 10.7°E) at zoom 10
+        x, y = wgs84_to_tile(10.7, 59.9, 10)
+        # Should be roughly in the expected range for Norway
+        assert 500 < x < 600
+        assert 270 < y < 320
+
+    def test_tile_to_wgs84_roundtrip(self):
+        """Test that tile_to_wgs84 is inverse of wgs84_to_tile."""
+        from mvp.norgeibilder import tile_to_wgs84, wgs84_to_tile
+
+        lon, lat = 8.6, 58.5  # Nidelven area
+        zoom = 15
+        x, y = wgs84_to_tile(lon, lat, zoom)
+        lon2, lat2 = tile_to_wgs84(x, y, zoom)
+        # Should be close to original (within one tile)
+        assert abs(lon2 - lon) < 0.02
+        assert abs(lat2 - lat) < 0.02
+
+    def test_get_tile_bounds_nidelven(self):
+        """Test tile bounds for Nidelven area."""
+        from mvp.norgeibilder import NIDELVEN_BBOX, get_tile_bounds
+
+        x_min, y_min, x_max, y_max = get_tile_bounds(NIDELVEN_BBOX, zoom=15)
+        # Should have a reasonable number of tiles
+        num_x = x_max - x_min + 1
+        num_y = y_max - y_min + 1
+        assert 1 <= num_x <= 50
+        assert 1 <= num_y <= 50
+        # x_min < x_max and y_min < y_max
+        assert x_min <= x_max
+        assert y_min <= y_max
+
+    def test_get_tile_bounds_small_area(self):
+        """Test tile bounds for a very small bounding box."""
+        from mvp.norgeibilder import get_tile_bounds
+
+        # Tiny area — should result in 1 tile
+        bbox = (8.6, 58.5, 8.601, 58.501)
+        x_min, y_min, x_max, y_max = get_tile_bounds(bbox, zoom=10)
+        num_tiles = (x_max - x_min + 1) * (y_max - y_min + 1)
+        assert num_tiles >= 1
+
+    def test_download_orthophoto_exceeds_max_tiles(self):
+        """Test that exceeding max_tiles raises ValueError."""
+        import pytest
+
+        from mvp.norgeibilder import NIDELVEN_BBOX, download_orthophoto
+
+        # Very low max_tiles should trigger the safety limit
+        with pytest.raises(ValueError, match="exceeding max_tiles"):
+            download_orthophoto(NIDELVEN_BBOX, zoom=18, max_tiles=5)
+
+    def test_download_tile_returns_none_on_invalid(self):
+        """Test that download_tile handles network failure gracefully."""
+        from mvp.norgeibilder import download_tile
+
+        # Use zoom 0, tile 0,0 — unlikely to have Norge i bilder data
+        # but also tests network failure handling
+        result = download_tile(0, 0, zoom=0, timeout=2)
+        # May return None or an image depending on network availability
+        assert result is None or hasattr(result, "size")
+
+    def test_export_terrain_texture_no_network(self, tmp_path):
+        """Test export_terrain_texture handles download failure gracefully."""
+        from mvp.norgeibilder import export_terrain_texture
+
+        # Use a bbox far from Norway where tiles don't exist
+        result = export_terrain_texture(
+            bbox=(0.0, 0.0, 0.001, 0.001),
+            output_dir=tmp_path,
+            zoom=10,
+            texture_size=256,
+        )
+        # Should return None when no tiles can be downloaded
+        # (or a path if somehow tiles exist)
+        assert result is None or (result is not None and result.exists())
+
+

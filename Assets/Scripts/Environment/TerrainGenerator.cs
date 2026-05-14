@@ -38,6 +38,10 @@ namespace Nidelven.Environment
         [Tooltip("Base terrain color")]
         public Color baseColor = new Color(0.35f, 0.5f, 0.25f);
         
+        [Header("Orthophoto Texture")]
+        [Tooltip("Load aerial orthophoto from StreamingAssets/terrain_orthophoto.png")]
+        public bool useOrthophoto = true;
+        
         [Header("River Integration")]
         [Tooltip("River path for terrain deformation")]
         public Transform riverPath;
@@ -84,6 +88,12 @@ namespace Nidelven.Environment
             terrainData.SetHeights(0, 0, heights);
             terrain.terrainData = terrainData;
             
+            // Apply orthophoto texture if available, otherwise use material
+            if (useOrthophoto)
+            {
+                ApplyOrthophotoTexture();
+            }
+            
             // Apply material
             if (terrainMaterial != null)
             {
@@ -99,6 +109,52 @@ namespace Nidelven.Environment
             collider.terrainData = terrainData;
             
             Debug.Log($"Terrain generated: {resolution}x{resolution}, size: {terrainSize}");
+        }
+        
+        /// <summary>
+        /// Apply orthophoto texture from StreamingAssets as a terrain layer.
+        /// Falls back silently if texture file is not found.
+        /// </summary>
+        void ApplyOrthophotoTexture()
+        {
+            string orthoPath = Path.Combine(Application.streamingAssetsPath, "terrain_orthophoto.png");
+            if (!File.Exists(orthoPath))
+            {
+                Debug.Log("No orthophoto found at StreamingAssets/terrain_orthophoto.png — using default texturing.");
+                return;
+            }
+            
+            try
+            {
+                byte[] imageData = File.ReadAllBytes(orthoPath);
+                Texture2D orthoTex = new Texture2D(2, 2);
+                if (!orthoTex.LoadImage(imageData))
+                {
+                    Debug.LogWarning("Failed to decode orthophoto texture.");
+                    return;
+                }
+                
+                // Create a TerrainLayer using the orthophoto
+                TerrainLayer orthoLayer = new TerrainLayer();
+                orthoLayer.diffuseTexture = orthoTex;
+                orthoLayer.tileSize = new Vector2(terrainSize.x, terrainSize.z);
+                orthoLayer.tileOffset = Vector2.zero;
+                
+                terrainData.terrainLayers = new TerrainLayer[] { orthoLayer };
+                
+                // Set splatmap to 100% orthophoto layer
+                float[,,] alphamap = new float[terrainData.alphamapResolution, terrainData.alphamapResolution, 1];
+                for (int y = 0; y < terrainData.alphamapResolution; y++)
+                    for (int x = 0; x < terrainData.alphamapResolution; x++)
+                        alphamap[y, x, 0] = 1f;
+                terrainData.SetAlphamaps(0, 0, alphamap);
+                
+                Debug.Log($"Applied orthophoto terrain texture ({orthoTex.width}x{orthoTex.height})");
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to load orthophoto: {e.Message}");
+            }
         }
         
         /// <summary>
