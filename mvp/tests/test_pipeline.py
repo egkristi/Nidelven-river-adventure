@@ -410,3 +410,66 @@ class TestDemIntegrity:
 
         result = verify_dem_integrity(dem_file, checksums_file)
         assert result is False
+
+
+class TestWeather:
+    def test_get_seasonal_weather_valid_months(self):
+        """Test seasonal weather returns valid data for all 12 months."""
+        from mvp.weather import get_seasonal_weather
+
+        for month in range(1, 13):
+            data = get_seasonal_weather(month)
+            assert "temperature_celsius" in data
+            assert "wind_speed_ms" in data
+            assert "cloud_cover_fraction" in data
+            assert "sunrise_hour" in data
+            assert "sunset_hour" in data
+            assert 0.0 <= data["cloud_cover_fraction"] <= 1.0
+            assert data["sunrise_hour"] < data["sunset_hour"]
+
+    def test_get_seasonal_weather_summer_warmer(self):
+        """Test that summer is warmer than winter."""
+        from mvp.weather import get_seasonal_weather
+
+        winter = get_seasonal_weather(1)
+        summer = get_seasonal_weather(7)
+        assert summer["temperature_celsius"] > winter["temperature_celsius"]
+        assert summer["daylight_hours"] > winter["daylight_hours"]
+
+    def test_build_weather_data_offline(self):
+        """Test building weather data without network access."""
+        from mvp.weather import build_weather_data
+
+        data = build_weather_data(month=6, fetch_live=False)
+        assert "seasonal" in data
+        assert "active" in data
+        assert "unity_params" in data
+        assert data["unity_params"]["sunrise_hour"] < 6.0  # Early sunrise in June at 58N
+        assert data["unity_params"]["sunset_hour"] > 20.0  # Late sunset
+
+    def test_export_weather_json(self, tmp_path):
+        """Test exporting weather data to JSON file."""
+        from mvp.weather import export_weather_json
+
+        output = tmp_path / "weather_data.json"
+        export_weather_json(output, fetch_live=False, month=5)
+
+        assert output.exists()
+        data = json.loads(output.read_text())
+        assert data["location"]["name"] == "Nidelven, Agder"
+        assert "unity_params" in data
+        assert data["unity_params"]["wind_speed"] > 0
+
+    def test_unity_params_valid_ranges(self):
+        """Test that Unity parameters are in valid ranges."""
+        from mvp.weather import build_weather_data
+
+        for month in (1, 4, 7, 10):
+            data = build_weather_data(month=month, fetch_live=False)
+            p = data["unity_params"]
+            assert 0 <= p["fog_density"] <= 0.1
+            assert 0 <= p["cloud_cover"] <= 1.0
+            assert 0 <= p["sun_intensity_multiplier"] <= 2.0
+            assert p["water_wave_height"] > 0
+            assert p["water_wave_speed"] > 0
+

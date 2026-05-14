@@ -86,7 +86,12 @@ jobs:
               metadata = {'width': dem_data.shape[1], 'height': dem_data.shape[0]}
               flow_data = calculate_flow_properties(smooth, dem_data, metadata)
               export_river_path_json(flow_data, metadata, Path('../Assets/StreamingAssets/river_path.json'))
-          print('Terrain + river path exported to StreamingAssets')
+
+          # Generate weather_data.json (offline/seasonal)
+          from mvp.weather import export_weather_json
+          export_weather_json(Path('../Assets/StreamingAssets/weather_data.json'), fetch_live=False)
+
+          print('Terrain + river path + weather exported to StreamingAssets')
           "
 
       - name: Cache Library

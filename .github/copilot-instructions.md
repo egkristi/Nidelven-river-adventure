@@ -57,6 +57,7 @@ docs/                  Data pipeline docs, Jira issues
 | CI | GitHub Actions (game-ci/unity-builder v4) | — |
 | DEM Source | Copernicus GLO-30 (AWS S3, no auth) | 30m |
 | River Data | NVE ELVIS WFS | NLOD license |
+| Weather | MET Norway Locationforecast 2.0 + Frost API | CC BY 4.0 |
 
 ---
 
@@ -105,6 +106,7 @@ docs/                  Data pipeline docs, Jira issues
 | `terrain_mesh.py` | DEM → mesh/normals (numpy vectorized) | 69% |
 | `river_flow.py` | Gradient descent river tracing + flow | 46% |
 | `nve_river.py` | NVE ELVIS WFS river geometry import | partial |
+| `weather.py` | MET Norway weather integration (live + seasonal) | partial |
 | `dem_downloader.py` | Copernicus GLO-30 tile download | 30% |
 | `camera.py` | Interactive 3D viewer (OpenGL/glm) | 0% |
 | `headless_renderer.py` | Matplotlib preview images | 0% |
@@ -125,6 +127,7 @@ docs/                  Data pipeline docs, Jira issues
 | `DayNightCycle` | Sun rotation, sky/fog gradients, time compression |
 | `VegetationGenerator` | GPU-instanced trees/rocks by elevation/slope |
 | `WildlifeSpawner` | Birds, fish, deer with despawn distance |
+| `WeatherSystem` | Real weather from MET Norway (live/historical/seasonal) |
 | `PhotoMode` | Freeze time, free camera, screenshot capture |
 | `SaveManager` | JSON save/load, auto-save, progress tracking |
 | `SettingsMenu` | Resolution, quality, audio sliders |
