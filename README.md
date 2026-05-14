@@ -5,7 +5,7 @@
 
 A relaxing river exploration game set on the **Nidelven river in Agder, Norway**. Paddle through a valley generated from real 30m satellite elevation data. Built with Unity 6000 LTS and a Python terrain pipeline.
 
-> **Status:** Pre-alpha. Unity builds compile and run but use procedural terrain. Real DEM integration in progress — see [ROADMAP.md](ROADMAP.md) for the full audit and plan.
+> **Status:** v1.0.0 feature-complete. All phases done — boat physics balanced, sound design implemented, full CI/CD pipeline. See [ROADMAP.md](ROADMAP.md) for details.
 
 ---
 
@@ -179,7 +179,5 @@ See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 ## License
 
 MIT — see [LICENSE](LICENSE).
-
-MIT - see [LICENSE](LICENSE)
 
 Data: © Kartverket, © ESA (Sentinel-2), OpenStreetMap contributors
