@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2025-05-14
+Last updated: 2025-05-14 (Phase 1 complete)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -13,6 +13,7 @@ The project has a **complete Unity codebase** (16 fully implemented scripts, URP
 However, the two halves are **not connected** — the Python pipeline output is not automatically imported into Unity. The game will compile and build, but the player will only experience a synthetic terrain until the real DEM data integration is completed.
 
 > ✅ **Phase 0 complete** — security issues fixed, Python lint clean, critical bugs resolved (see Resolved Issues below).
+> ✅ **Phase 1 complete** — boat+camera wired to terrain, Input System fixed, integration pipeline working, CI producing playable builds.
 
 ---
 
@@ -27,7 +28,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64, 7-day retention |
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ✅ RAW export pipeline | `export_unity_raw()` → StreamingAssets auto-load |
-| Playable experience | ⚠️ Partial | Synthetic terrain only; no real DEM in Unity |
+| Playable experience | ✅ First playable | Boat+camera on real DEM terrain, CI build artifacts |
 
 ---
 
@@ -159,8 +160,8 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Build pipeline: Python `export_unity_raw()` → Unity StreamingAssets auto-load
 - [x] Fix Input System configuration (set to "Both")
 - [x] Add test for `export_unity_raw` (8 tests passing)
-- [ ] Wire up boat + camera with real terrain in scene
-- [ ] First playable build with real terrain
+- [x] Wire up boat + camera with real terrain in scene
+- [x] First playable build with real terrain (CI produces Win64 + Linux64 artifacts)
 
 ### Phase 2: Data Quality (v0.2.0)
 
