@@ -19,8 +19,8 @@ import numpy as np
 ELVIS_WFS_URL = "https://gis3.nve.no/map/services/Elvenett/MapServer/WFSServer"
 
 # Nidelva bounding box (UTM33N / EPSG:25833)
-# Covers the stretch from Nedre Leirfoss to Trondheim Fjord
-NIDELVA_BBOX_UTM33 = (569000, 7032000, 573000, 7040000)
+# Covers the stretch of Nidelva in Agder (Arendal area, ~58.5°N)
+NIDELVA_BBOX_UTM33 = (452000, 6474000, 468000, 6490000)
 
 # Default river name filter
 NIDELVA_NAME = "Nidelva"
@@ -58,6 +58,10 @@ def fetch_river_geometry(
     }
 
     if river_name:
+        import re
+
+        if not re.match(r"^[A-Za-zÆØÅæøå\s\-]+$", river_name):
+            raise ValueError(f"Invalid river name: {river_name!r}")
         params["CQL_FILTER"] = f"elvenavn='{river_name}'"
 
     url = f"{ELVIS_WFS_URL}?{urlencode(params)}"
