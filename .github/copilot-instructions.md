@@ -71,7 +71,7 @@ docs/                  Data pipeline docs, Jira issues
 ### Python (mvp/)
 - **Formatter:** Black (line-length 100)
 - **Linter:** Ruff (rules: E, F, I, W, UP, B, C4, SIM; ignores: E501, N806, N802, N803)
-- **Tests:** pytest (currently 23 tests in `tests/test_pipeline.py`)
+- **Tests:** pytest (currently 27 tests in `tests/test_pipeline.py`)
 - **Package manager:** UV (`uv sync`, `uv run`)
 - **Source layout:** `mvp/src/mvp/` (hatchling src layout)
 - **Run tests:** `cd mvp && uv run pytest tests/ -v`
@@ -132,10 +132,10 @@ docs/                  Data pipeline docs, Jira issues
 | `SteamManager` | Steam integration (guarded by `#if !DISABLESTEAMWORKS`) |
 
 ### Water Shader (SimpleWater.shader)
-- URP `UniversalForward` pass only (no DepthOnly — known gap)
+- URP `UniversalForward` + `DepthOnly` passes
 - Properties: `_BaseColor`, `_FoamColor`, `_WaveHeight`, `_WaveSpeed`, `_FlowOffset`, `_Smoothness`
-- Transparent blend, ZWrite Off
-- Missing: depth-based effects (needs DepthOnly pass)
+- Transparent blend, ZWrite Off (ForwardLit), ZWrite On (DepthOnly)
+- DepthOnly pass includes wave displacement for correct depth buffer
 
 ---
 
@@ -147,9 +147,11 @@ docs/                  Data pipeline docs, Jira issues
 - **#22** Phase 3: Audio spatialization (PF4) + LOD system
 
 ### Performance Issues (Still Open)
-- **PF2:** `VegetationGenerator.RenderInstanced()` allocates arrays every frame → GC pressure
 - **PF3:** `PhotoMode.ApplyFilters()` iterates every pixel on CPU
-- **PF4:** `AudioManager` moves its own transform to player (breaks 3D spatialization)
+
+### Performance Issues (Resolved)
+- **PF2:** ~~VegetationGenerator allocates every frame~~ → Pre-allocated batch arrays
+- **PF4:** ~~AudioManager breaks 3D audio~~ → Child objects for spatial sources
 
 ### CI Gaps
 - **C1:** Unity version mismatch: local 6000.4.6f1 vs CI 6000.4.5f1
