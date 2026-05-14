@@ -96,7 +96,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | C2 | Lint/format steps use `\|\| true` — never fail | No code quality gate |
 | C3 | No uv/pip caching in Python job | ~30s wasted per run |
 | C4 | No artifact retention configured (90-day default) | Storage cost for 500MB+ builds |
-| C5 | Release workflow deadlocks when Unity secrets are missing | Release never triggers without secrets |
+| C5 | ~~Release workflow deadlocks when Unity secrets are missing~~ | ✅ Fixed — `if: always()` condition added |
 
 ---
 
@@ -189,7 +189,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Remove `|| true` from lint/format CI steps
 - [x] Add uv caching to Python job
 - [x] Configure artifact retention (7 days CI)
-- [ ] Fix release workflow deadlock (needs: with proper `if:`)
+- [x] Fix release workflow deadlock (needs: with proper `if:`)
 - [ ] Pin Unity version in release.yml
 - [x] Add integration test (full pipeline end-to-end)
 - [x] Increase test coverage — 18 tests, core modules 46-69%
