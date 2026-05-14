@@ -2,19 +2,21 @@
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
-A relaxing river exploration game set on the real Nidelven river in Agder, Norway. Built with Unity using real-world elevation data from Kartverket.
+A relaxing river exploration game set on the real Nidelven river in Agder, Norway. Built with Unity using real-world elevation data from Copernicus GLO-30 DEM.
 
 ## Current Status
 
-- ✅ Python MVP pipeline (terrain generation, river flow, preview images)
-- ✅ CI/CD (Python linting, tests, Unity test runner)
+- ✅ Python MVP pipeline (terrain generation, river flow, real DEM)
+- ✅ CI/CD (Python linting, tests, Unity test + build)
 - ✅ Unity scripts (boat physics, camera, audio, etc.)
-- ⏸️ Unity build (disabled until scenes are committed)
+- ✅ Unity scene (MainScene with camera + lighting)
+- ✅ Real DEM data (Copernicus GLO-30 30m resolution)
 
 ## Features
 
-- ✅ **Terrain Generation**: Synthetic or real DEM from Kartverket
+- ✅ **Terrain Generation**: Real DEM from Copernicus GLO-30 (30m resolution)
 - ✅ **River Flow**: Realistic current based on elevation gradient
+- ✅ **Interactive Renderer**: 3D terrain viewer with ModernGL (optional)
 - ✅ **Boat Physics**: Buoyancy, paddling, capsize/recovery
 - ✅ **Vegetation System**: GPU-instanced trees and rocks
 - ✅ **Day/Night Cycle**: Dynamic lighting and atmosphere
@@ -33,11 +35,14 @@ A relaxing river exploration game set on the real Nidelven river in Agder, Norwa
 # Clone repo
 git clone https://github.com/egkristi/Nidelven-river-adventure.git
 
-# Run Python MVP
-cd mvp && uv sync && uv run mvp
+# Run Python MVP (downloads real 30m DEM automatically)
+cd mvp && uv sync && uv run mvp --skip-render
 
 # Run tests
 cd mvp && uv run pytest tests/ -v
+
+# Interactive 3D viewer (optional)
+cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 
 # Or open Assets/ in Unity 6000 LTS
 ```
@@ -73,7 +78,7 @@ Packages/          Unity package manifest
 
 - Unity 6000 LTS with URP
 - Python 3.11 + UV + pytest
-- Kartverket DEM data
+- Copernicus GLO-30 DEM (30m, free, no auth)
 - GitHub Actions CI/CD
 
 ## License
