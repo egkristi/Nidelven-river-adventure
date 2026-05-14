@@ -4,6 +4,8 @@ Downloads real elevation data from Copernicus GLO-30 DEM (30m resolution).
 Falls back to synthetic DEM if download fails.
 """
 
+import hashlib
+import json
 import math
 import time
 from pathlib import Path
@@ -27,6 +29,56 @@ def _copernicus_tile_url(lat: int, lon: int) -> str:
     lon_str = f"{lon_prefix}{abs(lon):03d}"
     tile_name = f"Copernicus_DSM_COG_10_{lat_str}_00_{lon_str}_00_DEM"
     return f"{COPERNICUS_BASE_URL}/{tile_name}/{tile_name}.tif"
+
+
+def compute_file_checksum(filepath: Path) -> str:
+    """Compute SHA-256 checksum of a file."""
+    sha256 = hashlib.sha256()
+    with open(filepath, "rb") as f:
+        for chunk in iter(lambda: f.read(65536), b""):
+            sha256.update(chunk)
+    return sha256.hexdigest()
+
+
+def verify_dem_integrity(dem_path: Path, checksums_path: Path | None = None) -> bool:
+    """
+    Verify DEM file integrity using stored checksums.
+
+    Args:
+        dem_path: Path to the DEM file to verify
+        checksums_path: Path to JSON checksums file (default: dem_path.parent / "checksums.json")
+
+    Returns:
+        True if checksum matches or no stored checksum exists (first download)
+    """
+    if not dem_path.exists():
+        return False
+
+    if checksums_path is None:
+        checksums_path = dem_path.parent / "checksums.json"
+
+    current_checksum = compute_file_checksum(dem_path)
+
+    if checksums_path.exists():
+        checksums = json.loads(checksums_path.read_text())
+        stored = checksums.get(dem_path.name)
+        if stored and stored != current_checksum:
+            print(f"  ✗ Checksum mismatch for {dem_path.name}")
+            print(f"    Expected: {stored}")
+            print(f"    Got:      {current_checksum}")
+            return False
+        if stored:
+            print(f"  ✓ Checksum verified: {dem_path.name}")
+            return True
+
+    # No stored checksum — save the current one
+    checksums = {}
+    if checksums_path.exists():
+        checksums = json.loads(checksums_path.read_text())
+    checksums[dem_path.name] = current_checksum
+    checksums_path.write_text(json.dumps(checksums, indent=2))
+    print(f"  ✓ Checksum recorded: {dem_path.name}")
+    return True
 
 
 def download_dem_copernicus(

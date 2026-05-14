@@ -354,3 +354,59 @@ class TestNveRiver:
         # Should form continuous line from 0 to 50 (or 50 to 0)
         diffs = np.abs(np.diff(path[:, 0]))
         assert np.all(diffs == 10)  # all steps are 10
+
+
+class TestDemIntegrity:
+    """Tests for DEM checksum verification."""
+
+    def test_compute_file_checksum(self, tmp_path):
+        """Test that checksum is computed consistently."""
+        from mvp.dem_downloader import compute_file_checksum
+
+        test_file = tmp_path / "test.bin"
+        test_file.write_bytes(b"hello world")
+        checksum1 = compute_file_checksum(test_file)
+        checksum2 = compute_file_checksum(test_file)
+        assert checksum1 == checksum2
+        assert len(checksum1) == 64  # SHA-256 hex length
+
+    def test_verify_dem_integrity_first_download(self, tmp_path):
+        """Test that first verification records checksum."""
+        from mvp.dem_downloader import verify_dem_integrity
+
+        dem_file = tmp_path / "test.tif"
+        dem_file.write_bytes(b"fake dem data")
+        checksums_file = tmp_path / "checksums.json"
+
+        result = verify_dem_integrity(dem_file, checksums_file)
+        assert result is True
+        assert checksums_file.exists()
+        checksums = json.loads(checksums_file.read_text())
+        assert "test.tif" in checksums
+
+    def test_verify_dem_integrity_valid(self, tmp_path):
+        """Test that valid file passes verification."""
+        from mvp.dem_downloader import compute_file_checksum, verify_dem_integrity
+
+        dem_file = tmp_path / "test.tif"
+        dem_file.write_bytes(b"valid dem data")
+        checksums_file = tmp_path / "checksums.json"
+
+        # Pre-record correct checksum
+        checksum = compute_file_checksum(dem_file)
+        checksums_file.write_text(json.dumps({"test.tif": checksum}))
+
+        result = verify_dem_integrity(dem_file, checksums_file)
+        assert result is True
+
+    def test_verify_dem_integrity_corrupted(self, tmp_path):
+        """Test that corrupted file fails verification."""
+        from mvp.dem_downloader import verify_dem_integrity
+
+        dem_file = tmp_path / "test.tif"
+        dem_file.write_bytes(b"original data")
+        checksums_file = tmp_path / "checksums.json"
+        checksums_file.write_text(json.dumps({"test.tif": "wrong_checksum_value"}))
+
+        result = verify_dem_integrity(dem_file, checksums_file)
+        assert result is False
