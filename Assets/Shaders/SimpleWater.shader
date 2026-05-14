@@ -3,6 +3,7 @@ Shader "Nidelven/SimpleWater"
     Properties
     {
         _BaseColor ("Base Color", Color) = (0.2, 0.4, 0.6, 0.8)
+        _ShallowColor ("Shallow Color", Color) = (0.3, 0.7, 0.8, 0.6)
         _FoamColor ("Foam Color", Color) = (0.9, 0.95, 1.0, 1.0)
         _WaveHeight ("Wave Height", Float) = 0.3
         _WaveSpeed ("Wave Speed", Float) = 2.0
@@ -11,6 +12,8 @@ Shader "Nidelven/SimpleWater"
         _FlowSpeed ("Flow Speed", Float) = 1.0
         _FlowOffset ("Flow Offset", Vector) = (0, 0, 0, 0)
         _Smoothness ("Smoothness", Range(0, 1)) = 0.9
+        _DepthFadeDistance ("Depth Fade Distance", Float) = 3.0
+        _ShoreBlend ("Shore Blend Distance", Float) = 0.5
     }
     
     SubShader
@@ -37,6 +40,7 @@ Shader "Nidelven/SimpleWater"
             
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             
             struct Attributes
             {
@@ -56,6 +60,7 @@ Shader "Nidelven/SimpleWater"
             
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _ShallowColor;
                 float4 _FoamColor;
                 float _WaveHeight;
                 float _WaveSpeed;
@@ -64,6 +69,8 @@ Shader "Nidelven/SimpleWater"
                 float _FlowSpeed;
                 float4 _FlowOffset;
                 float _Smoothness;
+                float _DepthFadeDistance;
+                float _ShoreBlend;
             CBUFFER_END
             
             // Simple noise function
@@ -140,14 +147,32 @@ Shader "Nidelven/SimpleWater"
                 // Normal
                 float3 normalWS = normalize(input.normalWS);
                 
+                // --- Depth-based effects ---
+                float2 screenUV = input.positionNDC.xy / input.positionNDC.w;
+                float sceneDepthRaw = SampleSceneDepth(screenUV);
+                float sceneDepthEye = LinearEyeDepth(sceneDepthRaw, _ZBufferParams);
+                float surfaceDepthEye = input.positionHCS.w;
+                float waterDepth = sceneDepthEye - surfaceDepthEye;
+                
+                // Depth fade: 0 at shore, 1 in deep water
+                float depthFade = saturate(waterDepth / _DepthFadeDistance);
+                // Shore blend for soft edges
+                float shoreFade = saturate(waterDepth / _ShoreBlend);
+                
                 // Calculate flow foam
                 float2 flowUV = input.uv + _FlowOffset.xy;
                 float flowNoise = noise(flowUV * _WaveScale * 2.0 + float2(_Time.y * _FlowSpeed, 0.0));
                 float foam = smoothstep(_FoamThreshold - 0.1, _FoamThreshold + 0.1, flowNoise);
                 
-                // Base color with flow variation
+                // Shore foam (more foam near edges)
+                foam = max(foam, (1.0 - shoreFade) * 0.6);
+                
+                // Blend between shallow and deep color based on depth
+                float4 baseColor = lerp(_ShallowColor, _BaseColor, depthFade);
+                
+                // Add flow variation
                 float flowVariation = noise(flowUV * _WaveScale + float2(_Time.y * _FlowSpeed, 0.0));
-                float4 baseColor = lerp(_BaseColor * 0.8, _BaseColor, flowVariation);
+                baseColor = lerp(baseColor * 0.8, baseColor, flowVariation);
                 
                 // Add foam
                 float4 finalColor = lerp(baseColor, _FoamColor, foam * 0.3);
@@ -166,6 +191,9 @@ Shader "Nidelven/SimpleWater"
                 // Simple lighting
                 float ndotl = saturate(dot(normalWS, lightDir));
                 finalColor.rgb *= (0.4 + ndotl * 0.6);
+                
+                // Alpha: more transparent at shore, more opaque in deep water
+                finalColor.a = lerp(_ShallowColor.a, _BaseColor.a, depthFade) * shoreFade;
                 
                 return finalColor;
             }
@@ -200,6 +228,7 @@ Shader "Nidelven/SimpleWater"
 
             CBUFFER_START(UnityPerMaterial)
                 float4 _BaseColor;
+                float4 _ShallowColor;
                 float4 _FoamColor;
                 float _WaveHeight;
                 float _WaveSpeed;
@@ -208,6 +237,8 @@ Shader "Nidelven/SimpleWater"
                 float _FlowSpeed;
                 float4 _FlowOffset;
                 float _Smoothness;
+                float _DepthFadeDistance;
+                float _ShoreBlend;
             CBUFFER_END
 
             float CalculateWaveHeightDepth(float2 uv, float time)
