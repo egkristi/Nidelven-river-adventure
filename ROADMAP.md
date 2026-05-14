@@ -335,19 +335,11 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 |------|----------|--------|--------|
 | Time.timeScale competition (multiple systems) | Medium | 1 hr | — |
 | `compute_flow_accumulation` O(n) Python loop | Medium | 2 hr | — |
-| `camera.py` unconditional import of optional deps | Medium | 15 min | — |
-| DayNightCycle double-calculates sun intensity | Medium | 5 min | — |
-| GameManager weak random seed (only 1000 values) | Medium | 5 min | — |
-| GameManager missing DontDestroyOnLoad | Medium | 5 min | — |
 | SaveManager auto-save overwrites last user slot | Medium | 30 min | — |
 | Space key conflict (RiverCamera vs BoatController) | Medium | 15 min | — |
-| SaveManager GetSlotScreenshot leaks Texture2D | Medium | 10 min | — |
 | Sprint in Update() not FixedUpdate() | Medium | 10 min | — |
-| RiverController GetClosestProgress div/0 with 1 point | Medium | 5 min | — |
-| SteamManager debug UI renders in release | Medium | 5 min | — |
 | Duplicate dev deps in pyproject.toml | Medium | 10 min | — |
 | `terrain_mesh.py` `__main__` wrong data path | Medium | 5 min | — |
-| Global `np.random.seed(42)` pollution | Medium | 5 min | — |
 | CI pipeline failure hidden by `\|\| echo` | Medium | 10 min | — |
 
 ### Resolved (Phase 6 stabilization - 2026-05-15)
@@ -366,6 +358,14 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | AudioManager GetComponent in update | Cached reference | 0ffe037 |
 | Achievement spam every frame | Guard flags (tenKm, speedDemon) | 0ffe037 |
 | Recovery missing angularVelocity reset | Zero on recovery | 0ffe037 |
+| GameManager missing DontDestroyOnLoad | Added DontDestroyOnLoad | 2b045d1 |
+| GameManager weak random seed (1000 values) | Use Environment.TickCount | 2b045d1 |
+| DayNightCycle double-calculates sun intensity | Use cachedSunIntensity in UpdateFog | 2b045d1 |
+| SteamManager debug UI renders in release | Gate behind #if UNITY_EDITOR | 2b045d1 |
+| RiverController GetClosestProgress div/0 | Guard riverPath.Count <= 1 | 2b045d1 |
+| SaveManager GetSlotScreenshot leaks Texture2D | Cache in screenshotCache[] | 2b045d1 |
+| camera.py unconditional import of optional deps | Lazy-import glm | 2b045d1 |
+| Global np.random.seed(42) pollution | Use local default_rng instance | 2b045d1 |
 | CodeQL only scans Python (not C#) | Medium | 30 min | — |
 | Duplicated CI workaround code (3x) | Low | 1 hr | — |
 | Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | — |
