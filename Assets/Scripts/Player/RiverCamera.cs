@@ -44,6 +44,10 @@ namespace Nidelven.Player
         [Tooltip("Look direction smoothing factor")]
         public float lookSmoothing = 0.08f;
         
+        [Header("Follow Target")]
+        [Tooltip("If set, camera follows this transform along the river instead of auto-progressing")]
+        public Transform followTarget;
+        
         [Header("Orbit Control")]
         [Tooltip("Allow manual orbit with mouse")]
         public bool allowOrbit = true;
@@ -96,7 +100,12 @@ namespace Nidelven.Player
         {
             HandleInput();
             
-            if (autoFollow && !isPaused && river != null)
+            if (followTarget != null && river != null)
+            {
+                // Follow the target's position along the river
+                riverProgress = river.GetClosestProgress(followTarget.position);
+            }
+            else if (autoFollow && !isPaused && river != null)
             {
                 UpdateRiverProgress();
             }
