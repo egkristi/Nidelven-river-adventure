@@ -211,6 +211,12 @@ def main():
         print("-" * 40)
 
         try:
+            # Clear sys.argv BEFORE importing renderer — moderngl-window
+            # parses argv at import time and rejects unknown flags
+            import sys
+
+            sys.argv = [sys.argv[0]]
+
             from .renderer import run_renderer
 
             if terrain_mesh and flow_data:
@@ -223,11 +229,6 @@ def main():
                 from .river_flow import generate_river_mesh
 
                 river_mesh = generate_river_mesh(flow_data, dem_data, terrain_mesh)
-
-                # Clear sys.argv so moderngl-window doesn't choke on our CLI flags
-                import sys
-
-                sys.argv = [sys.argv[0]]
 
                 run_renderer(
                     terrain_mesh=terrain_mesh, water_mesh=river_mesh, river_path=river_path
