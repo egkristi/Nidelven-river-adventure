@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 3 complete, Phase 4 complete)
+Last updated: 2026-05-14 (Phase 2 nearly complete, Phase 3+4 complete)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -106,7 +106,9 @@ However, the two halves are **not connected** — the Python pipeline output is 
 |--------|---------|-------------|
 | `minimal.py` | `create_sample_dem_ascii` | `trace_river_path`, `render_ascii`, `render_html` |
 | `terrain_mesh.py` | `generate_mesh`, `calculate_normals`, `export_unity_raw`, NaN handling, multi-size | `load_dem` (partial), `save_mesh_obj` |
-| `river_flow.py` | `find_start_point` (all sides), `trace_river_path`, `smooth_path`, `calculate_flow_properties` | `generate_river_mesh` |
+| `river_flow.py` | `find_start_point` (all sides), `trace_river_path`, `smooth_path`, `calculate_flow_properties`, D8 flow direction, accumulation, trace, upstream, widths | `generate_river_mesh` |
+| `terrain_textures.py` | `compute_slope`, `generate_splatmap`, `export_splatmap` | — |
+| `weather.py` | `get_seasonal_weather`, `build_weather_data`, `export_weather_json`, `unity_params` | `fetch_live_weather`, `fetch_historical_weather` (network) |
 | `dem_downloader.py` | `create_sample_dem` | `download_dem_copernicus`, `get_dem_path` |
 | `nve_river.py` | `extract_river_path`, `_merge_segments`, `save/load_river_path` | `fetch_river_geometry` (network), `get_nidelva_path` |
 | `headless_renderer.py` | ❌ | All (rendering, hard to unit test) |
@@ -114,7 +116,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 27 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 44 tests passing. Integration test included.
 
 ---
 
@@ -168,15 +170,17 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 - [x] Download real DEM (Copernicus GLO-30, 30m)
 - [x] Fix NaN handling in terrain_mesh.py
-- [ ] Fix river tracer for real DEM (use flow accumulation / D8 algorithm)
+- [x] D8 flow accumulation algorithm for river tracing ✔️ (b21800d)
+- [x] River widths from upstream drainage area (Leopold-Maddock) ✔️ (b21800d)
 - [x] Implement proper river path from NVE ELVIS data ✔️
 - [x] Export river path JSON for Unity RiverController ✔️
-- [ ] Texture terrain from geolocated imagery (see Geolocated Data Sources below)
+- [x] Procedural terrain splatmap (slope/elevation/flow-based) ✔️ (0ee1826)
 - [x] Add DEM integrity verification (checksum) ✔️
 - [x] Vectorize terrain mesh generation (eliminate Python for-loops) ✔️
 - [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
 - [x] Import river geometry from NVE Elvenett / ELVIS ✔️
-- [x] Auto-generate terrain.raw + river_path.json in CI builds ✔️
+- [x] Auto-generate terrain.raw + river_path.json + splatmap in CI builds ✔️
+- [x] Weather integration (MET Norway Locationforecast + Frost + seasonal) ✔️ (980ae49)
 
 ### Phase 3: Polish (v0.3.0) ✅ COMPLETE
 
