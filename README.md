@@ -29,22 +29,42 @@ A relaxing river exploration game set on the real Nidelven river in Agder, Norwa
 - ✅ **Wildlife System**: Birds, deer with AI behavior
 - ✅ **CI/CD**: GitHub Actions for CI, CodeQL, releases
 
-## Quick Start
+## Running on PC
+
+### Option 1: Download a Build (easiest)
+
+1. Go to [Actions → CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml)
+2. Click the latest successful run on `main`
+3. Download the artifact **Build-StandaloneWindows64** (or **Build-StandaloneLinux64**)
+4. Extract the zip and run `NidelvenRiverAdventure.exe`
+
+> Builds are produced automatically on every push to `main`.
+
+### Option 2: Unity Editor (development)
+
+1. Install [Unity Hub](https://unity.com/download) and Unity **6000 LTS** (6000.4.x)
+2. Clone the repo and open the root folder in Unity Hub → "Add project from disk"
+3. Open `Assets/Scenes/MainScene.unity`
+4. Press **Play** ▶️
+
+### Option 3: Python MVP Terrain Viewer
 
 ```bash
 # Clone repo
 git clone https://github.com/egkristi/Nidelven-river-adventure.git
+cd Nidelven-river-adventure/mvp
 
-# Run Python MVP (downloads real 30m DEM automatically)
-cd mvp && uv sync && uv run mvp --skip-render
+# Install and run (downloads real 30m DEM automatically)
+uv sync && uv run mvp --skip-render
 
-# Run tests
+# Interactive 3D terrain viewer (requires OpenGL)
+uv pip install -e '.[interactive]' && uv run mvp --interactive
+```
+
+### Running Tests
+
+```bash
 cd mvp && uv run pytest tests/ -v
-
-# Interactive 3D viewer (optional)
-cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
-
-# Or open Assets/ in Unity 6000 LTS
 ```
 
 ## Project Structure
