@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using Nidelven.Core;
 
 namespace Nidelven.UI
 {
@@ -135,7 +136,10 @@ namespace Nidelven.UI
             ShowStep(currentStep);
             
             // Pause game
-            Time.timeScale = 0f;
+            if (GameManager.Instance != null)
+                GameManager.Instance.RequestPause();
+            else
+                Time.timeScale = 0f;
         }
         
         void ShowStep(int index)
@@ -239,7 +243,10 @@ namespace Nidelven.UI
             PlayerPrefs.Save();
             
             // Resume game
-            Time.timeScale = 1f;
+            if (GameManager.Instance != null)
+                GameManager.Instance.ReleasePause();
+            else
+                Time.timeScale = 1f;
             
             Debug.Log("Tutorial completed");
         }

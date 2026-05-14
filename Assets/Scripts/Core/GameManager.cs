@@ -28,6 +28,7 @@ namespace Nidelven.Core
         // State
         public bool IsPaused { get; private set; }
         public bool IsGenerated { get; private set; }
+        private int pauseRequestCount = 0;
         
         void Awake()
         {
@@ -140,7 +141,29 @@ namespace Nidelven.Core
         public void SetTimeScale(float scale)
         {
             gameTimeScale = Mathf.Clamp(scale, 0.1f, 5f);
-            if (!IsPaused)
+            if (!IsPaused && pauseRequestCount == 0)
+            {
+                Time.timeScale = gameTimeScale;
+            }
+        }
+        
+        /// <summary>
+        /// Request a pause from a subsystem (stacks with other pause requests).
+        /// Call ReleasePause() when done.
+        /// </summary>
+        public void RequestPause()
+        {
+            pauseRequestCount++;
+            Time.timeScale = 0f;
+        }
+        
+        /// <summary>
+        /// Release a pause request. Resumes only when all requests are released.
+        /// </summary>
+        public void ReleasePause()
+        {
+            pauseRequestCount = Mathf.Max(0, pauseRequestCount - 1);
+            if (pauseRequestCount == 0 && !IsPaused)
             {
                 Time.timeScale = gameTimeScale;
             }

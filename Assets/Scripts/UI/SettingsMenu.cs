@@ -153,14 +153,20 @@ namespace Nidelven.UI
             
             if (settingsPanel.activeSelf)
             {
-                Time.timeScale = 0f; // Pause game
+                if (GameManager.Instance != null)
+                    GameManager.Instance.RequestPause();
+                else
+                    Time.timeScale = 0f;
                 Cursor.lockState = CursorLockMode.None;
                 Cursor.visible = true;
                 ShowPanel("graphics");
             }
             else
             {
-                Time.timeScale = 1f; // Resume game
+                if (GameManager.Instance != null)
+                    GameManager.Instance.ReleasePause();
+                else
+                    Time.timeScale = 1f;
                 Cursor.lockState = CursorLockMode.Locked;
                 Cursor.visible = false;
             }
