@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 3 in progress, Phase 4 complete)
+Last updated: 2026-05-14 (Phase 2/3 nearly complete, Phase 4 complete)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -25,7 +25,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | Unity scripts (16) | ✅ Compile & build | All logic implemented, all bugs fixed |
 | CI — Python | ✅ Passing | Lint (strict), format, tests, pipeline run |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
-| CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64, 7-day retention |
+| CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64 + macOS, 7-day retention |
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ✅ RAW export pipeline | `export_unity_raw()` → StreamingAssets auto-load |
 | Playable experience | ✅ First playable | Boat+camera on real DEM terrain, CI build artifacts |
@@ -169,12 +169,14 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Download real DEM (Copernicus GLO-30, 30m)
 - [x] Fix NaN handling in terrain_mesh.py
 - [ ] Fix river tracer for real DEM (use flow accumulation / D8 algorithm)
-- [ ] Implement proper river path from OSM or NVE data
+- [x] Implement proper river path from NVE ELVIS data ✔️
+- [x] Export river path JSON for Unity RiverController ✔️
 - [ ] Texture terrain from geolocated imagery (see Geolocated Data Sources below)
 - [x] Add DEM integrity verification (checksum) ✔️
 - [x] Vectorize terrain mesh generation (eliminate Python for-loops) ✔️
 - [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
 - [x] Import river geometry from NVE Elvenett / ELVIS ✔️
+- [x] Auto-generate terrain.raw + river_path.json in CI builds ✔️
 
 ### Phase 3: Polish (v0.3.0)
 
@@ -183,9 +185,9 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Fix vegetation GPU instancing (pre-allocate batches) ✔️
 - [x] Fix AudioManager 3D spatialization (child objects for sources) ✔️
 - [x] Remove debug OnGUI overlays (gated behind `#if UNITY_EDITOR`) ✔️
-- [ ] Add proper water depth/transparency
+- [x] Add proper water depth/transparency (depth texture sampling) ✔️
 - [ ] Particle effects (splash, foam, mist)
-- [ ] LOD system for terrain + vegetation
+- [x] LOD system for vegetation (distance-based culling) ✔️
 
 ### Phase 4: CI/CD Hardening ✅ COMPLETE
 

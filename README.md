@@ -154,8 +154,8 @@ cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
 - Real DEM not yet streaming into Unity builds (procedural terrain used at runtime)
-- Water shader needs depth-based transparency (DepthOnly pass added, depth sampling TBD)
 - PhotoMode pixel filter is CPU-bound (PF3 — use GPU post-processing)
+- Particle effects (splash, foam, mist) not yet implemented
 
 ---
 
