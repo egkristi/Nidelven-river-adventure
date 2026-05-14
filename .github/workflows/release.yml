@@ -59,19 +59,34 @@ jobs:
 
       - name: Generate terrain data for build
         run: |
-          pip install -q numpy
+          pip install -q numpy scipy pillow
           mkdir -p Assets/StreamingAssets
           cd mvp
           python -c "
           import sys
           sys.path.insert(0, 'src')
+          from pathlib import Path
           from mvp.dem_downloader import create_sample_dem
-          from mvp.terrain_mesh import generate_mesh, export_unity_raw
+          from mvp.terrain_mesh import export_unity_raw
+          from mvp.river_flow import find_start_point, trace_river_path, smooth_path, calculate_flow_properties, export_river_path_json
           import numpy as np
-          dem = create_sample_dem()
-          vertices, indices, normals = generate_mesh(dem, spacing=30.0)
-          export_unity_raw(dem, '../Assets/StreamingAssets/terrain.raw', '../Assets/StreamingAssets/terrain_metadata.json')
-          print(f'Exported terrain.raw ({dem.shape[0]}x{dem.shape[1]}) to StreamingAssets')
+
+          # Generate terrain.raw via file-based pipeline
+          dem_path = Path('/tmp/sample_dem.tif')
+          create_sample_dem(dem_path, size=256)
+          export_unity_raw(dem_path, Path('../Assets/StreamingAssets'), resolution=257)
+
+          # Generate river_path.json from the DEM file
+          from mvp.terrain_mesh import load_dem
+          dem_data, dem_meta = load_dem(dem_path)
+          start = find_start_point(dem_data, 'left')
+          path = trace_river_path(dem_data, start)
+          if len(path) >= 4:
+              smooth = smooth_path(path, num_points=100)
+              metadata = {'width': dem_data.shape[1], 'height': dem_data.shape[0]}
+              flow_data = calculate_flow_properties(smooth, dem_data, metadata)
+              export_river_path_json(flow_data, metadata, Path('../Assets/StreamingAssets/river_path.json'))
+          print('Terrain + river path exported to StreamingAssets')
           "
 
       - name: Cache Library

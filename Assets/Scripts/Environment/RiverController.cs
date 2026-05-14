@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using System.IO;
 
 namespace Nidelven.Environment
 {
@@ -46,6 +47,9 @@ namespace Nidelven.Environment
         [Tooltip("Height offset from terrain")]
         public float waterLevelOffset = -1f;
         
+        [Tooltip("Load river path from StreamingAssets/river_path.json if available")]
+        public bool loadFromFile = true;
+        
         // Generated river data
         [HideInInspector]
         public List<Vector3> riverPath = new List<Vector3>();
@@ -91,12 +95,21 @@ namespace Nidelven.Environment
         
         /// <summary>
         /// Generate the river trajectory following terrain elevation.
+        /// Tries to load from StreamingAssets/river_path.json first.
         /// </summary>
         void GenerateRiverPath()
         {
             riverPath.Clear();
             flowSpeeds.Clear();
             riverWidths.Clear();
+            
+            if (loadFromFile && TryLoadRiverPathFromFile())
+            {
+                Debug.Log($"River path loaded from file: {riverPath.Count} points");
+                return;
+            }
+            
+            // Fallback: generate synthetic path
             
             // Start at one edge of terrain
             Vector3 startPos = new Vector3(0, 0, -500f);
@@ -149,6 +162,73 @@ namespace Nidelven.Environment
             }
             
             Debug.Log($"River path generated: {riverPath.Count} points");
+        }
+        
+        /// <summary>
+        /// Try to load river path from StreamingAssets/river_path.json.
+        /// JSON format: { "points": [[x,y,z], ...], "widths": [...], "speeds": [...] }
+        /// </summary>
+        bool TryLoadRiverPathFromFile()
+        {
+            string path = Path.Combine(Application.streamingAssetsPath, "river_path.json");
+            if (!File.Exists(path)) return false;
+            
+            try
+            {
+                string json = File.ReadAllText(path);
+                RiverPathData data = JsonUtility.FromJson<RiverPathData>(json);
+                
+                if (data == null || data.points == null || data.points.Length < 2)
+                    return false;
+                
+                for (int i = 0; i < data.points.Length; i++)
+                {
+                    Vector3 pos = new Vector3(data.points[i].x, data.points[i].y, data.points[i].z);
+                    
+                    // Optionally re-sample height from terrain
+                    if (terrainGenerator != null)
+                    {
+                        float terrainHeight = terrainGenerator.GetHeightAt(pos);
+                        pos.y = terrainHeight + waterLevelOffset;
+                    }
+                    
+                    riverPath.Add(pos);
+                    
+                    float t = i / (float)(data.points.Length - 1);
+                    float speed = (data.speeds != null && i < data.speeds.Length) 
+                        ? data.speeds[i] 
+                        : baseFlowSpeed * flowSpeedCurve.Evaluate(t);
+                    float width = (data.widths != null && i < data.widths.Length) 
+                        ? data.widths[i] 
+                        : baseWidth * widthCurve.Evaluate(t);
+                    
+                    flowSpeeds.Add(speed);
+                    riverWidths.Add(width);
+                }
+                
+                return true;
+            }
+            catch (System.Exception e)
+            {
+                Debug.LogWarning($"Failed to load river_path.json: {e.Message}");
+                return false;
+            }
+        }
+        
+        [System.Serializable]
+        private class RiverPathData
+        {
+            public RiverPoint[] points;
+            public float[] widths;
+            public float[] speeds;
+        }
+        
+        [System.Serializable]
+        private class RiverPoint
+        {
+            public float x;
+            public float y;
+            public float z;
         }
         
         /// <summary>

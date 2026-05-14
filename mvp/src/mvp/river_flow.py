@@ -445,6 +445,61 @@ def create_river_from_dem(
     return flow_data, metadata
 
 
+def export_river_path_json(
+    flow_data: dict,
+    metadata: dict,
+    output_path: Path,
+    spacing: float = 30.0,
+) -> Path:
+    """
+    Export river path as JSON for Unity RiverController.
+
+    Converts DEM row/col coordinates to world-space X/Y/Z that Unity expects.
+    Format: { "points": [{"x": ..., "y": ..., "z": ...}, ...], "widths": [...], "speeds": [...] }
+
+    Args:
+        flow_data: Output from calculate_flow_properties()
+        metadata: DEM metadata with 'width', 'height', 'bbox'
+        output_path: Where to write the JSON
+        spacing: DEM pixel spacing in meters
+
+    Returns:
+        Path to the written JSON
+    """
+    import json
+
+    path = flow_data["path"]
+    elevations = flow_data["elevations"]
+    widths = flow_data["widths"]
+    velocities = flow_data["velocities"]
+
+    h = metadata["height"]
+    w = metadata["width"]
+
+    # Convert row/col to world coordinates centered at origin
+    # col → X, elevation → Y, row → Z (matching terrain_mesh convention)
+    points = []
+    for i, (row, col) in enumerate(path):
+        x = (col - w / 2.0) * spacing
+        y = float(elevations[i])
+        z = (row - h / 2.0) * spacing
+        points.append({"x": round(x, 2), "y": round(y, 2), "z": round(z, 2)})
+
+    data = {
+        "points": points,
+        "widths": [round(float(w), 2) for w in widths],
+        "speeds": [round(float(v), 2) for v in velocities],
+    }
+
+    output_path = Path(output_path)
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(output_path, "w") as f:
+        json.dump(data, f)
+
+    print(f"  River path JSON: {output_path} ({len(points)} points)")
+    return output_path
+
+
 if __name__ == "__main__":
     import sys
 
