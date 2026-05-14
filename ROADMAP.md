@@ -20,10 +20,10 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional | DEM download, mesh gen, river flow, lint clean |
-| Unity scripts (16) | ✅ Compile & build | All logic implemented, 2 minor bugs remain |
+| Python MVP pipeline | ✅ Functional | DEM download, mesh gen, river flow, renderer, lint clean |
+| Unity scripts (16) | ✅ Compile & build | All logic implemented, all bugs fixed |
 | CI — Python | ✅ Passing | Lint (strict), format, tests, pipeline run |
-| CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.6f1) |
+| CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
 | CI — Unity Build | ✅ Producing artifacts | Win64 + Linux64, 7-day retention |
 | CodeQL | ✅ Passing | Python security scanning |
 | Integration (Python→Unity) | ❌ Not connected | Manual file copy required |
@@ -50,8 +50,8 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | P1 | ~~Broken package imports~~ | ✅ Fixed — all relative imports |
 | P2 | ~~Wrong BBOX~~ | ✅ Fixed — (8.45, 58.38, 8.85, 58.62) covers Nidelva |
 | P3 | ~~NaN fill broken~~ | ✅ Fixed — uses distance_transform_edt indices correctly |
-| P4 | **Interactive renderer never loads data** — class attrs set but not read by `__init__` | Empty scene in 3D viewer |
-| P5 | **River start logic inverted** — finds lowest (exit) point, not highest (source) | River traces wrong direction on real DEM |
+| P4 | ~~Interactive renderer never loads data~~ | ✅ Fixed — `__init__` now reads class attrs from `run_renderer()` |
+| P5 | ~~River start logic inverted~~ | ✅ Fixed — uses `argmax` (highest = headwater) instead of `argmin` |
 | P6 | ~~Missing `import math`~~ | ✅ Fixed |
 
 ### Unity
@@ -60,8 +60,8 @@ However, the two halves are **not connected** — the Python pipeline output is 
 |---|-----|------|--------|
 | U1 | ~~RiverController `riverWidths` IndexOutOfRange~~ | ✅ Fixed — added initial width/speed for point 0 |
 | U2 | ~~Shader property `_FlowOffset` not declared~~ | ✅ Fixed — added to shader Properties + CBUFFER |
-| U3 | **SaveManager.lastPosition not initialized** — bogus distance on first frame | Stats show 1000s of meters immediately |
-| U4 | **WildlifeSpawner compares progress (0–1) to distance (20f)** | Animals spawn anywhere regardless of river proximity |
+| U3 | ~~SaveManager.lastPosition not initialized~~ | ✅ Fixed — initialized from boatController in Awake() |
+| U4 | ~~WildlifeSpawner compares progress to distance~~ | ✅ Fixed — now computes actual world distance to river path |
 
 ---
 

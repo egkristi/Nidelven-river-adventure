@@ -55,9 +55,9 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
 | **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
 | **Day/Night** | Dynamic sun cycle, ambient gradients, fog | ✅ Implemented |
-| **Water Shader** | URP shader with waves, foam, fresnel, specular | ✅ Shader done / ⚠️ Flow anim broken |
+| **Water Shader** | URP shader with waves, foam, fresnel, specular | ✅ Shader + flow animation |
 | **Audio** | River ambience, birdsong, forest, paddle SFX | ✅ Implemented |
-| **Wildlife** | Birds, deer with steering AI | ✅ Implemented (minor bugs) |
+| **Wildlife** | Birds, deer with steering AI | ✅ Implemented |
 | **Photo Mode** | Freeze time, brightness/contrast/saturation, capture | ✅ Implemented |
 | **Save/Load** | JSON persistence with auto-save + distance tracking | ✅ Implemented |
 | **Settings** | Resolution, quality, fullscreen, render scale, audio | ✅ Implemented |
@@ -153,9 +153,8 @@ cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
 - Python → Unity integration not automated (real DEM not yet in Unity builds)
-- River flow animation broken (shader property mismatch)
 - ~25% test coverage
-- Several runtime bugs documented in ROADMAP Phase 0
+- Architecture warnings documented in ROADMAP (dual terrain importers, legacy input API)
 
 ---
 
