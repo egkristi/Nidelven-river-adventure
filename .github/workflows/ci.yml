@@ -10,11 +10,6 @@ permissions:
   contents: read
   checks: write
 
-env:
-  UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-  UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
-  UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
-
 jobs:
   # Python MVP checks - always runs
   python-mvp:
@@ -31,6 +26,9 @@ jobs:
 
       - name: Install uv
         uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+          cache-dependency-glob: "mvp/uv.lock"
 
       - name: Install dependencies
         working-directory: ./mvp
@@ -38,11 +36,11 @@ jobs:
 
       - name: Lint with Ruff
         working-directory: ./mvp
-        run: uv run ruff check src/ --output-format=github || true
+        run: uv run ruff check src/ --output-format=github
 
       - name: Format Check with Black
         working-directory: ./mvp
-        run: uv run black --check --diff src/ || true
+        run: uv run black --check --diff src/
 
       - name: Test MVP imports
         working-directory: ./mvp
@@ -53,7 +51,7 @@ jobs:
       - name: Run MVP pipeline
         working-directory: ./mvp
         run: |
-          timeout 60 uv run mvp --skip-render || echo "MVP pipeline completed (or timeout)"
+          timeout 60 uv run mvp --sample --skip-render || echo "MVP pipeline timed out (non-blocking)"
 
       - name: Run tests
         working-directory: ./mvp
@@ -67,6 +65,10 @@ jobs:
       has_secrets: ${{ steps.check.outputs.has_secrets }}
     steps:
       - id: check
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         run: |
           if [ -n "$UNITY_LICENSE" ] && [ -n "$UNITY_EMAIL" ] && [ -n "$UNITY_PASSWORD" ]; then
             echo "has_secrets=true" >> $GITHUB_OUTPUT
@@ -116,7 +118,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          unityVersion: 6000.4.5f1
+          unityVersion: 6000.4.6f1
           githubToken: ${{ secrets.GITHUB_TOKEN }}
           customParameters: -nographics -batchmode
 
@@ -166,7 +168,7 @@ jobs:
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
-          unityVersion: 6000.4.5f1
+          unityVersion: 6000.4.6f1
           targetPlatform: ${{ matrix.targetPlatform }}
           buildName: NidelvenRiverAdventure
           customParameters: -nographics
@@ -178,3 +180,4 @@ jobs:
         with:
           name: Build-${{ matrix.targetPlatform }}
           path: build/${{ matrix.targetPlatform }}
+          retention-days: 7
