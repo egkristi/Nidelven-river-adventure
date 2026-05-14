@@ -14,10 +14,10 @@ import requests
 KARTVERKET_WCS_URL = "https://wcs.geonorge.no/skwms1/wcs.hoyde-dtm10"
 KARTVERKET_WCS_1M = "https://wcs.geonorge.no/skwms1/wcs.hoyde-dtm1"
 
-# Nidelven river bounding box (approximate)
+# Nidelva river bounding box (Agder, Norway)
 # Format: (min_lon, min_lat, max_lon, max_lat) in WGS84
 NIDELVEN_BBOX = {
-    "full": (8.2, 58.3, 8.9, 58.9),  # Full river
+    "full": (8.45, 58.38, 8.85, 58.62),  # Full river (Froland to Arendal)
     "amli": (8.4, 58.7, 8.6, 58.8),  # Åmli area (test)
 }
 

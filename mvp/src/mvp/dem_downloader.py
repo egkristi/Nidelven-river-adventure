@@ -10,9 +10,10 @@ from pathlib import Path
 
 import requests
 
-# Nidelven river bounding box (approximate, covers full river)
-# Format: (min_lon, min_lat, max_lon, max_lat)
-NIDELVEN_BBOX = (8.2, 58.3, 8.9, 58.9)
+# Nidelva river bounding box (Agder, Norway)
+# Covers from Froland (upstream) to Arendal fjord (mouth)
+# Format: (min_lon, min_lat, max_lon, max_lat) in WGS84
+NIDELVEN_BBOX = (8.45, 58.38, 8.85, 58.62)
 
 # Copernicus GLO-30 DEM on AWS (free, no auth required)
 COPERNICUS_BASE_URL = "https://copernicus-dem-30m.s3.amazonaws.com"
