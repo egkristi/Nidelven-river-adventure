@@ -38,6 +38,7 @@ cd mvp
 uv sync                          # install dependencies
 uv run nidelven                  # download real DEM + generate terrain + previews
 uv run nidelven --sample         # use synthetic terrain (no download)
+uv run nidelven --kartverket     # use Kartverket 1m LiDAR DEM (high-res)
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
 uv run pytest tests/ -v          # run test suite
 ```
@@ -50,7 +51,7 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 
 | Category | Details | Status |
 |----------|---------|--------|
-| **Terrain** | 30m DEM from Copernicus GLO-30 (Nidelven valley) + procedural splatmap | ✅ Pipeline + Unity |
+| **Terrain** | 30m DEM (Copernicus GLO-30) + 1m LiDAR (Kartverket) + procedural splatmap | ✅ Pipeline + Unity |
 | **River** | D8 flow accumulation + NVE ELVIS real geometry + Leopold-Maddock widths | ✅ Works |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
@@ -86,10 +87,11 @@ mvp/
     river_flow.py      D8 flow accumulation + gradient descent river tracer
     nve_river.py       NVE ELVIS WFS river geometry import
     terrain_textures.py Procedural splatmap (slope/elevation/flow-based)
+    kartverket_dem.py  Kartverket 1m LiDAR DEM importer (WCS 2.0.1)
     weather.py         MET Norway weather integration (live/seasonal)
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               44 pytest tests (core modules: 46-69% coverage)
+  tests/               48 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml
 ```
@@ -126,7 +128,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (44 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (48 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
@@ -156,8 +158,9 @@ cd mvp && uv pip install -e '.[interactive]' && uv run nidelven --interactive
 
 See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
 
-- PhotoMode pixel filter is CPU-bound (PF3 — use GPU post-processing)
-- Kartverket 1m DEM not yet integrated (using 30m Copernicus)
+- ~~PhotoMode pixel filter is CPU-bound~~ → ✅ Fixed (GPU shader via `Graphics.Blit`)
+- ~~Kartverket 1m DEM not integrated~~ → ✅ Implemented (`--kartverket` flag)
+- Norge i bilder satellite imagery not yet integrated (issue #25)
 
 ---
 

@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 2 nearly complete, Phase 3+4 complete)
+Last updated: 2025-05-14 (Phase 2 COMPLETE, Phase 3+4 complete, 48 tests)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -85,7 +85,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 |---|-------|--------|
 | PF1 | ~~`terrain_mesh.py` vertex generation uses Python for-loops (262k iterations)~~ | ✅ Vectorized with numpy |
 | PF2 | ~~`VegetationGenerator.RenderInstanced()` allocates arrays every frame~~ | ✅ Fixed — pre-allocated batches |
-| PF3 | `PhotoMode.ApplyFilters()` iterates every pixel on CPU | Multi-second freeze on capture at 2x resolution |
+| PF3 | ~~`PhotoMode.ApplyFilters()` iterates every pixel on CPU~~ | ✅ Fixed — GPU shader via Graphics.Blit (c2fadd4) |
 | PF4 | ~~`AudioManager` moves its own transform to player position~~ | ✅ Fixed — uses child objects |
 
 ### CI/CD
@@ -116,7 +116,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | ❌ | All (CLI orchestration) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 44 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 48 tests passing. Integration test included.
 
 ---
 
@@ -177,7 +177,7 @@ However, the two halves are **not connected** — the Python pipeline output is 
 - [x] Procedural terrain splatmap (slope/elevation/flow-based) ✔️ (0ee1826)
 - [x] Add DEM integrity verification (checksum) ✔️
 - [x] Vectorize terrain mesh generation (eliminate Python for-loops) ✔️
-- [ ] Upgrade DEM to Kartverket DTM 1m LiDAR (where available)
+- [x] Upgrade DEM to Kartverket DTM 1m LiDAR (where available) ✔️ (b890809, --kartverket flag)
 - [x] Import river geometry from NVE Elvenett / ELVIS ✔️
 - [x] Auto-generate terrain.raw + river_path.json + splatmap in CI builds ✔️
 - [x] Weather integration (MET Norway Locationforecast + Frost + seasonal) ✔️ (980ae49)
@@ -275,7 +275,7 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | ~~`--size` and `--download` CLI args unused~~ | ~~Low~~ | — | ✅ Removed |
 | ~~`camera.py` coordinate mismatch~~ | ~~Medium~~ | — | ✅ Fixed (col→X, row→Z) |
 | ~~Python for-loop mesh generation~~ | ~~Medium~~ | — | ✅ Vectorized with numpy |
-| Frame-rate-dependent camera smoothing | Low | 15 min | Use `SmoothDamp` instead of `Lerp` |
+| ~~Frame-rate-dependent camera smoothing~~ | ~~Low~~ | — | ✅ Fixed — SmoothDamp (c2fadd4) |
 | Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | Migrate to TextMeshPro when ready |
 | Cinemachine 2.x → 3.x | Low | 2 hr | Optional; 2.x still works in Unity 6 |
 
