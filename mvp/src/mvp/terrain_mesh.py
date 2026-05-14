@@ -390,12 +390,13 @@ if __name__ == "__main__":
     if len(sys.argv) > 1:
         dem_path = Path(sys.argv[1])
     else:
-        dem_path = Path(__file__).parent / "data" / "dem.tif"
+        # In src layout, data is at mvp/data/ (two levels up from src/mvp/)
+        dem_path = Path(__file__).parent.parent.parent / "data" / "dem.tif"
 
     if not dem_path.exists():
         print(f"DEM not found: {dem_path}")
         print("Run dem_downloader.py first")
         sys.exit(1)
 
-    output_dir = Path(__file__).parent / "output"
+    output_dir = Path(__file__).parent.parent.parent / "output"
     mesh = create_terrain_from_dem(dem_path, output_dir)

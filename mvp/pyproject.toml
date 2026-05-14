@@ -34,12 +34,6 @@ interactive = [
     "moderngl-window>=2.4.0",
     "PyGLM>=2.7.0",
 ]
-dev = [
-    "pytest>=7.0",
-    "black>=23.0",
-    "ruff>=0.1.0",
-    "mypy>=1.0",
-]
 
 [project.scripts]
 nidelven = "mvp.main:main"
@@ -74,6 +68,8 @@ warn_unused_configs = true
 [dependency-groups]
 dev = [
     "pytest>=9.0.3",
+    "pytest-cov>=6.0",
     "black>=23.0",
     "ruff>=0.1.0",
+    "mypy>=1.0",
 ]
