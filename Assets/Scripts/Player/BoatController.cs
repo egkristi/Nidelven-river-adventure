@@ -87,6 +87,8 @@ namespace Nidelven.Player
         private float totalDistance = 0f;
         private Vector3 lastAchievementPos;
         private bool firstJourneyUnlocked = false;
+        private bool tenKmUnlocked = false;
+        private bool speedDemonUnlocked = false;
         
         public enum VesselType
         {
@@ -173,15 +175,17 @@ namespace Nidelven.Player
             }
             
             // 10km achievement
-            if (totalDistance > 10000f)
+            if (!tenKmUnlocked && totalDistance > 10000f)
             {
+                tenKmUnlocked = true;
                 if (SteamManager.Instance != null)
                     SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.COMPLETE_10KM);
             }
             
             // Speed demon: > 8 m/s
-            if (rb.linearVelocity.magnitude > 8f)
+            if (!speedDemonUnlocked && rb.linearVelocity.magnitude > 8f)
             {
+                speedDemonUnlocked = true;
                 if (SteamManager.Instance != null)
                     SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.SPEED_DEMON);
             }
@@ -423,8 +427,9 @@ namespace Nidelven.Player
         
         void AttemptRecovery()
         {
-            // Reset orientation
+            // Reset orientation and angular velocity
             transform.rotation = Quaternion.LookRotation(transform.forward, Vector3.up);
+            rb.angularVelocity = Vector3.zero;
             isCapsized = false;
             
             // Add small penalty

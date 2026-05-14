@@ -81,6 +81,7 @@ namespace Nidelven.Core
         private float targetRiverVolume = 1f;
         private float targetRapidsVolume = 0f;
         private float targetWindVolume = 0.3f;
+        private Nidelven.Player.BoatController cachedBoatController;
         
         void Awake()
         {
@@ -229,8 +230,9 @@ namespace Nidelven.Core
             if (windSource != null)
             {
                 float boatSpeed = 0f;
-                var boat = playerTransform.GetComponent<Nidelven.Player.BoatController>();
-                if (boat != null) boatSpeed = boat.GetSpeed();
+                if (cachedBoatController == null && playerTransform != null)
+                    cachedBoatController = playerTransform.GetComponent<Nidelven.Player.BoatController>();
+                if (cachedBoatController != null) boatSpeed = cachedBoatController.GetSpeed();
                 targetWindVolume = Mathf.Lerp(0.15f, 0.5f, Mathf.Clamp01(boatSpeed / 5f));
                 windSource.volume = Mathf.Lerp(windSource.volume, targetWindVolume, Time.deltaTime * 2f);
             }
