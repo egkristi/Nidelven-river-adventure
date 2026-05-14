@@ -163,8 +163,12 @@ jobs:
           sys.path.insert(0, 'src')
           from pathlib import Path
           from mvp.dem_downloader import create_sample_dem
-          from mvp.terrain_mesh import export_unity_raw
-          from mvp.river_flow import find_start_point, trace_river_path, smooth_path, calculate_flow_properties, export_river_path_json
+          from mvp.terrain_mesh import export_unity_raw, load_dem
+          from mvp.river_flow import (
+              compute_flow_accumulation, trace_river_d8, smooth_path,
+              calculate_flow_properties, export_river_path_json,
+              compute_river_widths_from_accumulation
+          )
           import numpy as np
 
           # Generate terrain.raw via file-based pipeline
@@ -172,22 +176,27 @@ jobs:
           create_sample_dem(dem_path, size=256)
           export_unity_raw(dem_path, Path('../Assets/StreamingAssets'), resolution=257)
 
-          # Generate river_path.json from the DEM file
-          from mvp.terrain_mesh import load_dem
+          # Generate river_path.json using D8 flow accumulation
           dem_data, dem_meta = load_dem(dem_path)
-          start = find_start_point(dem_data, 'left')
-          path = trace_river_path(dem_data, start)
+          acc = compute_flow_accumulation(dem_data)
+          path = trace_river_d8(dem_data, accumulation=acc)
           if len(path) >= 4:
               smooth = smooth_path(path, num_points=100)
               metadata = {'width': dem_data.shape[1], 'height': dem_data.shape[0]}
               flow_data = calculate_flow_properties(smooth, dem_data, metadata)
+              # Use D8 widths from upstream drainage area
+              flow_data['widths'] = compute_river_widths_from_accumulation(acc, [(int(r), int(c)) for r, c in smooth])
               export_river_path_json(flow_data, metadata, Path('../Assets/StreamingAssets/river_path.json'))
 
           # Generate weather_data.json (offline/seasonal)
           from mvp.weather import export_weather_json
           export_weather_json(Path('../Assets/StreamingAssets/weather_data.json'), fetch_live=False)
 
-          print('Terrain + river path + weather exported to StreamingAssets')
+          # Generate terrain splatmap
+          from mvp.terrain_textures import export_splatmap
+          export_splatmap(dem_data, Path('../Assets/StreamingAssets/terrain_splatmap.png'), accumulation=acc)
+
+          print('Terrain + river path + weather + splatmap exported to StreamingAssets')
           "
 
       - name: Cache Library

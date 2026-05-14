@@ -1,6 +1,7 @@
 """Tests for the MVP terrain pipeline."""
 
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -410,6 +411,59 @@ class TestDemIntegrity:
 
         result = verify_dem_integrity(dem_file, checksums_file)
         assert result is False
+
+
+class TestTerrainTextures:
+    """Tests for terrain splatmap generation."""
+
+    def test_compute_slope_flat(self):
+        """Flat DEM should have zero slope."""
+        from mvp.terrain_textures import compute_slope
+
+        dem = np.ones((32, 32)) * 100.0
+        slope = compute_slope(dem)
+        assert np.allclose(slope, 0.0, atol=0.01)
+
+    def test_compute_slope_tilted(self):
+        """Tilted DEM should have non-zero slope."""
+        from mvp.terrain_textures import compute_slope
+
+        dem = np.arange(32).reshape(1, -1).repeat(32, axis=0).astype(float) * 10.0
+        slope = compute_slope(dem, cell_size=10.0)
+        # Interior cells should have consistent slope
+        assert np.all(slope[1:-1, 1:-1] > 0)
+
+    def test_splatmap_shape(self):
+        """Splatmap should have correct shape (HxWx4)."""
+        from mvp.terrain_textures import generate_splatmap
+
+        dem = np.random.rand(64, 64) * 100 + 50
+        splatmap = generate_splatmap(dem)
+        assert splatmap.shape == (64, 64, 4)
+        assert splatmap.dtype == np.uint8
+
+    def test_splatmap_channels_sum(self):
+        """Splatmap channels should approximately sum to 255 per pixel."""
+        from mvp.terrain_textures import generate_splatmap
+
+        dem = np.random.rand(32, 32) * 200 + 50
+        splatmap = generate_splatmap(dem)
+        channel_sum = splatmap.astype(int).sum(axis=-1)
+        # Rounding from float→uint8 loses up to 4 per pixel (1 per channel)
+        assert np.all(channel_sum >= 251)
+        assert np.all(channel_sum <= 259)
+
+    def test_export_splatmap_creates_file(self):
+        """export_splatmap should create a PNG file."""
+        import tempfile
+
+        from mvp.terrain_textures import export_splatmap
+
+        dem = np.random.rand(64, 64) * 100 + 50
+        out = Path(tempfile.mkdtemp()) / "splatmap.png"
+        result = export_splatmap(dem, out)
+        assert result.exists()
+        assert result.suffix == ".png"
 
 
 class TestD8FlowAccumulation:
