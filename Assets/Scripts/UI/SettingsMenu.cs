@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
 using System.Collections.Generic;
+using Nidelven.Core;
 
 namespace Nidelven.UI
 {
@@ -35,6 +36,9 @@ namespace Nidelven.UI
         [Header("Audio Mixer")]
         public AudioMixer audioMixer;
         
+        [Header("Language")]
+        public Dropdown languageDropdown;
+        
         [Header("Key Bindings")]
         public Transform keyBindContainer;
         public GameObject keyBindPrefab;
@@ -48,6 +52,7 @@ namespace Nidelven.UI
             InitializeGraphicsSettings();
             InitializeAudioSettings();
             InitializeKeyBindings();
+            InitializeLanguage();
             
             // Hide on start
             settingsPanel.SetActive(false);
@@ -87,9 +92,9 @@ namespace Nidelven.UI
             resolutionDropdown.value = currentResolutionIndex;
             resolutionDropdown.RefreshShownValue();
             
-            // Quality settings
+            // Quality settings (URP presets)
             qualityDropdown.ClearOptions();
-            qualityDropdown.AddOptions(new List<string> { "Low", "Medium", "High", "Ultra" });
+            qualityDropdown.AddOptions(new List<string>(QualitySettings.names));
             qualityDropdown.value = QualitySettings.GetQualityLevel();
             
             // Fullscreen
@@ -118,6 +123,28 @@ namespace Nidelven.UI
         {
             // Key binding setup would go here
             // For now, use default Unity Input Manager
+        }
+        
+        void InitializeLanguage()
+        {
+            if (languageDropdown == null) return;
+            
+            languageDropdown.ClearOptions();
+            languageDropdown.AddOptions(new List<string> { "English", "Norsk" });
+            
+            if (LocalizationManager.Instance != null)
+            {
+                languageDropdown.value = LocalizationManager.Instance.currentLanguage == LocalizationManager.Language.Norwegian ? 1 : 0;
+            }
+        }
+        
+        public void OnLanguageChanged(int index)
+        {
+            if (LocalizationManager.Instance != null)
+            {
+                var lang = index == 1 ? LocalizationManager.Language.Norwegian : LocalizationManager.Language.English;
+                LocalizationManager.Instance.SetLanguage(lang);
+            }
         }
         
         public void ToggleSettings()

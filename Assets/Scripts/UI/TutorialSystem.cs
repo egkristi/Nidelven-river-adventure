@@ -39,6 +39,70 @@ namespace Nidelven.UI
         private int currentStep = 0;
         private bool isShowing = false;
         
+        void Awake()
+        {
+            // If no steps assigned in Inspector, use built-in defaults
+            if (tutorialSteps == null || tutorialSteps.Length == 0)
+            {
+                tutorialSteps = CreateDefaultSteps();
+            }
+        }
+        
+        TutorialStep[] CreateDefaultSteps()
+        {
+            return new TutorialStep[]
+            {
+                new TutorialStep
+                {
+                    title = "Welcome to Nidelven",
+                    description = "You are kayaking on the Nidelven river in Agder, Norway.\nReal terrain data from Copernicus satellite elevation maps shapes the valley around you.\n\nPress any key to continue.",
+                    waitForKey = KeyCode.None,
+                    waitForTime = false,
+                    requiresPlayerInput = false
+                },
+                new TutorialStep
+                {
+                    title = "Paddling",
+                    description = "Use W to paddle forward.\nA and D steer left and right.\nS brakes against the current.\n\nPress W to continue.",
+                    waitForKey = KeyCode.W,
+                    waitForTime = false,
+                    requiresPlayerInput = true
+                },
+                new TutorialStep
+                {
+                    title = "Sprinting",
+                    description = "Hold SHIFT to sprint — this uses stamina.\nStamina recovers when you rest.\n\nPress SHIFT to continue.",
+                    waitForKey = KeyCode.LeftShift,
+                    waitForTime = false,
+                    requiresPlayerInput = true
+                },
+                new TutorialStep
+                {
+                    title = "River Current",
+                    description = "The river has a natural current that carries you downstream.\nSteer to avoid obstacles and enjoy the scenery.\n\nPress any key to continue.",
+                    waitForKey = KeyCode.None,
+                    waitForTime = false,
+                    requiresPlayerInput = false
+                },
+                new TutorialStep
+                {
+                    title = "Photo Mode",
+                    description = "Press F12 to enter Photo Mode.\nFreeze time, move the camera freely, and capture screenshots.\nAdjust brightness, contrast, and saturation with sliders.\n\nPress F12 to try it.",
+                    waitForKey = KeyCode.F12,
+                    waitForTime = false,
+                    requiresPlayerInput = true
+                },
+                new TutorialStep
+                {
+                    title = "Ready to Explore",
+                    description = "That's everything you need to know.\nEnjoy paddling through the Nidelven valley.\n\nPress ESC at any time for settings.\n\nPress any key to begin your journey.",
+                    waitForKey = KeyCode.None,
+                    waitForTime = false,
+                    requiresPlayerInput = false
+                }
+            };
+        }
+        
         void Start()
         {
             // Check if tutorial already completed

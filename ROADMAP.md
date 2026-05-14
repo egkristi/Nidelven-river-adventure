@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2025-05-14 (Phase 2 COMPLETE, Phase 3+4 complete, 48 tests)
+Last updated: 2025-05-14 (Phase 2 COMPLETE, Phase 3+4 complete, Phase 5 in progress, 48 tests)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -207,13 +207,13 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 ### Phase 5: Game Experience (v1.0.0)
 
-- [ ] Complete tutorial flow with real terrain
+- [x] Complete tutorial flow with real terrain ✔️ (default tutorial steps)
 - [ ] Balance boat physics + stamina
 - [ ] Sound design pass (real recordings or quality samples)
-- [ ] Multiple save slots with preview screenshots
-- [ ] Steam achievements for river milestones
-- [ ] Settings menu with URP quality presets
-- [ ] Localization (Norwegian / English)
+- [x] Multiple save slots with preview screenshots ✔️
+- [x] Steam achievements for river milestones ✔️
+- [x] Settings menu with URP quality presets ✔️
+- [x] Localization (Norwegian / English) ✔️
 - [x] Performance profiling + optimization pass ✔️
 
 ---

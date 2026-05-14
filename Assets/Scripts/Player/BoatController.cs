@@ -1,5 +1,6 @@
 using UnityEngine;
 using Nidelven.Environment;
+using Nidelven.Core;
 
 namespace Nidelven.Player
 {
@@ -68,6 +69,11 @@ namespace Nidelven.Player
         // Buoyancy points (simplified as single center)
         private Vector3 buoyancyCenter = Vector3.zero;
         
+        // Achievement tracking
+        private float totalDistance = 0f;
+        private Vector3 lastAchievementPos;
+        private bool firstJourneyUnlocked = false;
+        
         public enum VesselType
         {
             Kayak,    // Fast, less stable
@@ -83,6 +89,7 @@ namespace Nidelven.Player
             rb.interpolation = RigidbodyInterpolation.Interpolate;
             
             currentStamina = maxStamina;
+            lastAchievementPos = transform.position;
             ApplyVesselStats();
         }
         
@@ -128,6 +135,36 @@ namespace Nidelven.Player
             HandleInput();
             RecoverStamina();
             timeSinceLastStroke += Time.deltaTime;
+            TrackAchievements();
+        }
+        
+        void TrackAchievements()
+        {
+            float frameDist = Vector3.Distance(transform.position, lastAchievementPos);
+            totalDistance += frameDist;
+            lastAchievementPos = transform.position;
+            
+            // First Journey: travel 100m
+            if (!firstJourneyUnlocked && totalDistance > 100f)
+            {
+                firstJourneyUnlocked = true;
+                if (SteamManager.Instance != null)
+                    SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.FIRST_JOURNEY);
+            }
+            
+            // 10km achievement
+            if (totalDistance > 10000f)
+            {
+                if (SteamManager.Instance != null)
+                    SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.COMPLETE_10KM);
+            }
+            
+            // Speed demon: > 8 m/s
+            if (rb.linearVelocity.magnitude > 8f)
+            {
+                if (SteamManager.Instance != null)
+                    SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.SPEED_DEMON);
+            }
         }
         
         void UpdateWaterData()
@@ -348,6 +385,10 @@ namespace Nidelven.Player
             
             // Add small penalty
             currentStamina *= 0.5f;
+            
+            // Achievement: recover from capsize
+            if (SteamManager.Instance != null)
+                SteamManager.Instance.UnlockAchievement(SteamManager.Achievements.CAPSIZE_RECOVERY);
             
             Debug.Log("Boat recovered!");
         }

@@ -61,9 +61,11 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Audio** | River ambience, birdsong, forest, paddle SFX | ✅ Implemented |
 | **Wildlife** | Birds, deer with steering AI | ✅ Implemented |
 | **Photo Mode** | Freeze time, brightness/contrast/saturation, capture | ✅ Implemented |
-| **Save/Load** | JSON persistence with auto-save + distance tracking | ✅ Implemented |
-| **Settings** | Resolution, quality, fullscreen, render scale, audio | ✅ Implemented |
-| **Tutorial** | Step-based with key-wait and time-wait | ✅ Implemented |
+| **Save/Load** | JSON persistence with auto-save + distance tracking + slot screenshots | ✅ Implemented |
+| **Settings** | Resolution, quality, fullscreen, render scale, audio, language | ✅ Implemented |
+| **Tutorial** | Step-based with key-wait and time-wait, default 6-step flow | ✅ Implemented |
+| **Localization** | English / Norwegian with JSON file override | ✅ Implemented |
+| **Achievements** | Steam achievements (first journey, 10km, capsize recovery, speed) | ✅ Implemented |
 | **Steam** | Achievements, stats, cloud saves (opt-in) | ✅ Guarded with `#if` |
 | **CI/CD** | Python lint/test, Unity test/build, CodeQL | ✅ All green |
 
@@ -75,8 +77,8 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 Assets/
   Scenes/              MainScene.unity (camera + directional light)
   Scripts/
-    Core/              GameManager, AudioManager, SaveManager, PhotoMode, SteamManager
-    Environment/       DayNightCycle, TerrainGenerator, RiverController, Vegetation, Wildlife
+    Core/              GameManager, AudioManager, SaveManager, PhotoMode, SteamManager, LocalizationManager
+    Environment/       DayNightCycle, TerrainGenerator, RiverController, Vegetation, Wildlife, Weather
     Player/            BoatController, RiverCamera
     UI/                SettingsMenu, TutorialSystem
   Shaders/             SimpleWater.shader (URP)

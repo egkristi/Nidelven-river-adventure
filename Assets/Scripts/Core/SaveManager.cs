@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.IO;
 using System;
+using System.Collections;
 using Nidelven.Environment;
 using Nidelven.Player;
 
@@ -34,6 +35,7 @@ namespace Nidelven.Core
         {
             public string version = "0.1.0";
             public string saveDate;
+            public string screenshotPath;
             
             // Progress
             public float riverProgress;
@@ -127,11 +129,62 @@ namespace Nidelven.Core
             {
                 File.WriteAllText(filePath, json);
                 Debug.Log($"Game saved to slot {slot}: {filePath}");
+                
+                // Capture screenshot preview for save slot
+                StartCoroutine(CaptureSlotScreenshot(slot));
             }
             catch (Exception e)
             {
                 Debug.LogError($"Failed to save game: {e.Message}");
             }
+        }
+        
+        IEnumerator CaptureSlotScreenshot(int slot)
+        {
+            yield return new WaitForEndOfFrame();
+            
+            int width = Screen.width / 4;
+            int height = Screen.height / 4;
+            Texture2D screenshot = new Texture2D(width, height, TextureFormat.RGB24, false);
+            
+            RenderTexture rt = new RenderTexture(width, height, 24);
+            Camera cam = Camera.main;
+            if (cam != null)
+            {
+                cam.targetTexture = rt;
+                cam.Render();
+                RenderTexture.active = rt;
+                screenshot.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+                screenshot.Apply();
+                cam.targetTexture = null;
+                RenderTexture.active = null;
+            }
+            
+            byte[] bytes = screenshot.EncodeToPNG();
+            string screenshotPath = GetScreenshotPath(slot);
+            File.WriteAllBytes(screenshotPath, bytes);
+            
+            UnityEngine.Object.Destroy(rt);
+            UnityEngine.Object.Destroy(screenshot);
+        }
+        
+        /// <summary>
+        /// Get the screenshot texture for a save slot (for UI display).
+        /// </summary>
+        public Texture2D GetSlotScreenshot(int slot)
+        {
+            string path = GetScreenshotPath(slot);
+            if (!File.Exists(path)) return null;
+            
+            byte[] bytes = File.ReadAllBytes(path);
+            Texture2D tex = new Texture2D(2, 2);
+            tex.LoadImage(bytes);
+            return tex;
+        }
+        
+        string GetScreenshotPath(int slot)
+        {
+            return Path.Combine(SaveDirectory, $"save_{slot}_preview.png");
         }
         
         /// <summary>
