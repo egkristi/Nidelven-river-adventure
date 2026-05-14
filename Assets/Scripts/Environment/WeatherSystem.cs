@@ -21,6 +21,8 @@ namespace Nidelven.Environment
         public RiverParticles riverParticles;
         public Light sunLight;
 
+        private float baseSunIntensity;
+
         [Header("Weather Data")]
         [Tooltip("Load weather from StreamingAssets/weather_data.json")]
         public bool loadFromFile = true;
@@ -138,6 +140,9 @@ namespace Nidelven.Environment
         {
             currentState = new WeatherState();
             targetState = new WeatherState();
+
+            if (sunLight != null)
+                baseSunIntensity = sunLight.intensity;
 
             if (loadFromFile)
             {
@@ -337,7 +342,7 @@ namespace Nidelven.Environment
             // Sun intensity
             if (sunLight != null)
             {
-                sunLight.intensity = Mathf.Clamp(sunLight.intensity * currentState.sunIntensityMultiplier, 0f, 2f);
+                sunLight.intensity = baseSunIntensity * currentState.sunIntensityMultiplier;
             }
 
             // Day/Night cycle sync

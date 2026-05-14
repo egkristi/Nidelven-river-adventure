@@ -209,21 +209,24 @@ namespace Nidelven.UI
         // Audio callbacks
         public void OnMasterVolumeChanged(float value)
         {
-            audioMixer.SetFloat("MasterVolume", Mathf.Log10(value) * 20);
+            float db = value > 0.0001f ? Mathf.Log10(value) * 20f : -80f;
+            audioMixer.SetFloat("MasterVolume", db);
             PlayerPrefs.SetFloat("MasterVolume", value);
             UpdateVolumeText();
         }
         
         public void OnMusicVolumeChanged(float value)
         {
-            audioMixer.SetFloat("MusicVolume", Mathf.Log10(value) * 20);
+            float db = value > 0.0001f ? Mathf.Log10(value) * 20f : -80f;
+            audioMixer.SetFloat("MusicVolume", db);
             PlayerPrefs.SetFloat("MusicVolume", value);
             UpdateVolumeText();
         }
         
         public void OnSFXVolumeChanged(float value)
         {
-            audioMixer.SetFloat("SFXVolume", Mathf.Log10(value) * 20);
+            float db = value > 0.0001f ? Mathf.Log10(value) * 20f : -80f;
+            audioMixer.SetFloat("SFXVolume", db);
             PlayerPrefs.SetFloat("SFXVolume", value);
             UpdateVolumeText();
         }
