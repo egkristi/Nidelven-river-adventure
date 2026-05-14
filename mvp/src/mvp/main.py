@@ -134,6 +134,10 @@ def main():
             from renderer import run_renderer
             
             if terrain_mesh and flow_data:
+                # Load DEM for river mesh generation
+                from terrain_mesh import load_dem
+                dem_data, _ = load_dem(dem_path)
+                
                 # Generate river mesh for rendering
                 from river_flow import generate_river_mesh
                 river_mesh = generate_river_mesh(
@@ -149,7 +153,7 @@ def main():
                 print("  Cannot launch interactive renderer: missing terrain or river data")
         except ImportError as e:
             print(f"  Cannot launch interactive renderer: {e}")
-            print("  Install moderngl and moderngl_window for interactive mode")
+            print("  Install with: uv pip install -e '.[interactive]'")
     
     # Summary
     elapsed = time.time() - start_time
