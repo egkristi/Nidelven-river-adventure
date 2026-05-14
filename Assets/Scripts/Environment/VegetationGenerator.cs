@@ -37,8 +37,19 @@ namespace Nidelven.Environment
         public bool useGPUInstancing = true;
         public bool generateOnStart = true;
         
+        [Header("LOD")]
+        [Tooltip("Maximum render distance for trees")]
+        public float treeLODDistance = 200f;
+        [Tooltip("Maximum render distance for rocks")]
+        public float rockLODDistance = 100f;
+        [Tooltip("Distance at which trees/rocks start fading (fraction of max)")]
+        [Range(0.5f, 1f)]
+        public float lodFadeStart = 0.7f;
+        
         private List<Matrix4x4> treeMatrices = new List<Matrix4x4>();
         private List<Matrix4x4> rockMatrices = new List<Matrix4x4>();
+        private Vector3[] treePositions;
+        private Vector3[] rockPositions;
         private MaterialPropertyBlock propertyBlock;
         
         // Pre-allocated batch arrays to avoid GC pressure (PF2 fix)
@@ -46,6 +57,10 @@ namespace Nidelven.Environment
         private int[] treeBatchCounts;
         private Matrix4x4[][] rockBatches;
         private int[] rockBatchCounts;
+        
+        // LOD working buffers (pre-allocated)
+        private Matrix4x4[] lodBuffer;
+        private Camera mainCamera;
         
         void Start()
         {
@@ -77,9 +92,22 @@ namespace Nidelven.Environment
             GenerateTrees();
             GenerateRocks();
             
+            // Cache positions for LOD distance checks
+            treePositions = new Vector3[treeMatrices.Count];
+            for (int i = 0; i < treeMatrices.Count; i++)
+                treePositions[i] = treeMatrices[i].GetColumn(3);
+            
+            rockPositions = new Vector3[rockMatrices.Count];
+            for (int i = 0; i < rockMatrices.Count; i++)
+                rockPositions[i] = rockMatrices[i].GetColumn(3);
+            
+            // Pre-allocate LOD working buffer (max possible batch)
+            int maxCount = Mathf.Max(treeMatrices.Count, rockMatrices.Count);
+            lodBuffer = new Matrix4x4[Mathf.Min(maxCount, 1023)];
+            
             PreAllocateBatches();
             
-            Debug.Log($"Generated {treeMatrices.Count} trees and {rockMatrices.Count} rocks");
+            Debug.Log($"Generated {treeMatrices.Count} trees and {rockMatrices.Count} rocks (LOD: trees {treeLODDistance}m, rocks {rockLODDistance}m)");
         }
         
         void GenerateTrees()
@@ -198,39 +226,62 @@ namespace Nidelven.Environment
                 propertyBlock = new MaterialPropertyBlock();
             }
             
-            // Render trees
-            if (treeBatches != null)
+            if (mainCamera == null)
+                mainCamera = Camera.main;
+            
+            if (mainCamera == null) return;
+            
+            Vector3 camPos = mainCamera.transform.position;
+            float treeLODSqr = treeLODDistance * treeLODDistance;
+            float rockLODSqr = rockLODDistance * rockLODDistance;
+            
+            // Render trees with LOD culling
+            if (treeMeshes.Length > 0 && treeMatrices.Count > 0)
             {
-                for (int meshIdx = 0; meshIdx < treeMeshes.Length; meshIdx++)
+                RenderWithLOD(treeMeshes, treeMaterials, treeMatrices, treePositions, camPos, treeLODSqr);
+            }
+            
+            // Render rocks with LOD culling
+            if (rockMeshes.Length > 0 && rockMatrices.Count > 0)
+            {
+                RenderWithLOD(rockMeshes, rockMaterials, rockMatrices, rockPositions, camPos, rockLODSqr);
+            }
+        }
+        
+        void RenderWithLOD(Mesh[] meshes, Material[] materials, List<Matrix4x4> matrices, Vector3[] positions, Vector3 camPos, float maxDistSqr)
+        {
+            int count = 0;
+            
+            for (int i = 0; i < matrices.Count; i++)
+            {
+                float distSqr = (positions[i] - camPos).sqrMagnitude;
+                if (distSqr > maxDistSqr) continue;
+                
+                lodBuffer[count] = matrices[i];
+                count++;
+                
+                if (count >= 1023)
                 {
-                    Mesh mesh = treeMeshes[meshIdx];
-                    Material mat = treeMaterials[meshIdx % treeMaterials.Length];
-                    
-                    if (mesh != null && mat != null)
-                    {
-                        for (int b = 0; b < treeBatches.Length; b++)
-                        {
-                            Graphics.DrawMeshInstanced(mesh, 0, mat, treeBatches[b], treeBatchCounts[b], propertyBlock);
-                        }
-                    }
+                    FlushBatch(meshes, materials, lodBuffer, count);
+                    count = 0;
                 }
             }
             
-            // Render rocks
-            if (rockBatches != null)
+            if (count > 0)
             {
-                for (int meshIdx = 0; meshIdx < rockMeshes.Length; meshIdx++)
+                FlushBatch(meshes, materials, lodBuffer, count);
+            }
+        }
+        
+        void FlushBatch(Mesh[] meshes, Material[] materials, Matrix4x4[] batch, int count)
+        {
+            for (int meshIdx = 0; meshIdx < meshes.Length; meshIdx++)
+            {
+                Mesh mesh = meshes[meshIdx];
+                Material mat = materials[meshIdx % materials.Length];
+                if (mesh != null && mat != null)
                 {
-                    Mesh mesh = rockMeshes[meshIdx];
-                    Material mat = rockMaterials[meshIdx % rockMaterials.Length];
-                    
-                    if (mesh != null && mat != null)
-                    {
-                        for (int b = 0; b < rockBatches.Length; b++)
-                        {
-                            Graphics.DrawMeshInstanced(mesh, 0, mat, rockBatches[b], rockBatchCounts[b], propertyBlock);
-                        }
-                    }
+                    Graphics.DrawMeshInstanced(mesh, 0, mat, batch, count, propertyBlock);
                 }
             }
         }
