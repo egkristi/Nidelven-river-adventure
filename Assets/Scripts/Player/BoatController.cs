@@ -83,6 +83,10 @@ namespace Nidelven.Player
         // Buoyancy points (simplified as single center)
         private Vector3 buoyancyCenter = Vector3.zero;
         
+        // Continuous input flags (set in Update, applied in FixedUpdate)
+        private bool isSprinting = false;
+        private bool isBraking = false;
+        
         // Achievement tracking
         private float totalDistance = 0f;
         private Vector3 lastAchievementPos;
@@ -150,6 +154,12 @@ namespace Nidelven.Player
             ApplyRiverCurrent();
             ApplyStability();
             CheckCapsize();
+            
+            // Apply continuous forces in FixedUpdate for consistent physics
+            if (isSprinting)
+                ApplySprint();
+            if (isBraking)
+                ApplyBrakeForce();
         }
         
         void Update()
@@ -304,17 +314,11 @@ namespace Nidelven.Player
                 PaddleRight();
             }
             
-            // Sprint (hold Shift)
-            if (Input.GetKey(KeyCode.LeftShift) && currentStamina > 0)
-            {
-                Sprint();
-            }
+            // Sprint (hold Shift) — flag for FixedUpdate
+            isSprinting = Input.GetKey(KeyCode.LeftShift) && currentStamina > 0;
             
-            // Brake (Space)
-            if (Input.GetKey(KeyCode.Space))
-            {
-                Brake();
-            }
+            // Brake (Space) — flag for FixedUpdate
+            isBraking = Input.GetKey(KeyCode.Space);
         }
         
         void PaddleForward()
@@ -369,14 +373,14 @@ namespace Nidelven.Player
             PlayPaddleSound();
         }
         
-        void Sprint()
+        void ApplySprint()
         {
             if (currentStamina > 0 && !staminaDepleted)
             {
                 float speedFactor = 1f - Mathf.Clamp01(rb.linearVelocity.magnitude / (maxPaddleSpeed * sprintMultiplier));
                 Vector3 force = transform.forward * paddleForce * sprintMultiplier * speedFactor;
-                rb.AddForce(force * Time.deltaTime, ForceMode.Force);
-                currentStamina -= staminaDrain * Time.deltaTime;
+                rb.AddForce(force * Time.fixedDeltaTime, ForceMode.Force);
+                currentStamina -= staminaDrain * Time.fixedDeltaTime;
                 
                 if (currentStamina <= 0)
                 {
@@ -387,9 +391,9 @@ namespace Nidelven.Player
             }
         }
         
-        void Brake()
+        void ApplyBrakeForce()
         {
-            rb.AddForce(-rb.linearVelocity * rb.mass * 2f * Time.deltaTime, ForceMode.Force);
+            rb.AddForce(-rb.linearVelocity * rb.mass * 2f * Time.fixedDeltaTime, ForceMode.Force);
         }
         
         void RecoverStamina()

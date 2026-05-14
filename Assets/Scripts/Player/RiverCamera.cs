@@ -117,8 +117,8 @@ namespace Nidelven.Player
         
         void HandleInput()
         {
-            // Pause/unpause
-            if (Input.GetKeyDown(KeyCode.Space))
+            // Pause/unpause — only when no boat is being followed (avoids conflict with BoatController brake)
+            if (followTarget == null && Input.GetKeyDown(KeyCode.Space))
             {
                 TogglePause();
             }
