@@ -3,7 +3,9 @@
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 [![CodeQL](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/codeql.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/codeql.yml)
 
-A relaxing river exploration game set on the **Nidelven river in Agder, Norway**. Paddle through a photorealistic valley generated from real 30m satellite elevation data. Built with Unity 6000 LTS and a Python terrain pipeline.
+A relaxing river exploration game set on the **Nidelven river in Agder, Norway**. Paddle through a valley generated from real 30m satellite elevation data. Built with Unity 6000 LTS and a Python terrain pipeline.
+
+> **Status:** Pre-alpha. Unity builds compile and run but use procedural terrain. Real DEM integration in progress — see [ROADMAP.md](ROADMAP.md) for the full audit and plan.
 
 ---
 
@@ -24,40 +26,44 @@ A relaxing river exploration game set on the **Nidelven river in Agder, Norway**
 git clone https://github.com/egkristi/Nidelven-river-adventure.git
 ```
 
-1. Install [Unity Hub](https://unity.com/download) and Unity **6000.4.x LTS**
+1. Install [Unity Hub](https://unity.com/download) and Unity **6000.4.6f1** (LTS)
 2. Open the cloned folder via Unity Hub → "Add project from disk"
 3. Open `Assets/Scenes/MainScene.unity`
 4. Press **Play** ▶️
 
-### Python MVP (terrain viewer only)
+### Python Terrain Pipeline
 
 ```bash
 cd mvp
-uv sync
-uv run mvp                      # generates terrain + preview images
-uv run mvp --interactive        # 3D terrain viewer (requires OpenGL)
+uv sync                          # install dependencies
+uv run mvp                       # download real DEM + generate terrain + previews
+uv run mvp --sample              # use synthetic terrain (no download)
+uv run mvp --interactive         # 3D terrain viewer (requires OpenGL)
+uv run pytest tests/ -v          # run test suite
 ```
 
-The MVP downloads real Copernicus GLO-30 DEM data automatically on first run. Use `--sample` to skip the download and use synthetic terrain instead.
+The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
 
 ---
 
 ## Features
 
-| Category | Details |
-|----------|---------|
-| **Terrain** | Real 30m DEM (Copernicus GLO-30) covering the Nidelven valley |
-| **River** | Flow simulation based on elevation gradient descent |
-| **Boat Physics** | Buoyancy, paddling, capsize & recovery |
-| **Vegetation** | GPU-instanced trees and rocks |
-| **Day/Night** | Dynamic sun cycle, atmospheric lighting |
-| **Audio** | River ambience, birdsong, forest sounds |
-| **Wildlife** | Birds, deer with steering-behavior AI |
-| **Photo Mode** | Freeze time, color filters, screenshot capture |
-| **Save/Load** | JSON persistence with auto-save |
-| **Settings** | Graphics quality, audio levels, control remapping |
-| **Tutorial** | Contextual first-time player guidance |
-| **Steam** | Achievements, cloud saves (opt-in via `DISABLESTEAMWORKS`) |
+| Category | Details | Status |
+|----------|---------|--------|
+| **Terrain** | 30m DEM from Copernicus GLO-30 (Nidelven valley) | ✅ Python / ⚠️ Unity uses synthetic |
+| **River** | Flow simulation via gradient descent | ✅ Works on synthetic |
+| **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
+| **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
+| **Day/Night** | Dynamic sun cycle, ambient gradients, fog | ✅ Implemented |
+| **Water Shader** | URP shader with waves, foam, fresnel, specular | ✅ Shader done / ⚠️ Flow anim broken |
+| **Audio** | River ambience, birdsong, forest, paddle SFX | ✅ Implemented |
+| **Wildlife** | Birds, deer with steering AI | ✅ Implemented (minor bugs) |
+| **Photo Mode** | Freeze time, brightness/contrast/saturation, capture | ✅ Implemented |
+| **Save/Load** | JSON persistence with auto-save + distance tracking | ✅ Implemented |
+| **Settings** | Resolution, quality, fullscreen, render scale, audio | ✅ Implemented |
+| **Tutorial** | Step-based with key-wait and time-wait | ✅ Implemented |
+| **Steam** | Achievements, stats, cloud saves (opt-in) | ✅ Guarded with `#if` |
+| **CI/CD** | Python lint/test, Unity test/build, CodeQL | ✅ All green |
 
 ---
 
@@ -65,18 +71,23 @@ The MVP downloads real Copernicus GLO-30 DEM data automatically on first run. Us
 
 ```
 Assets/
-  Scenes/            Unity scenes (MainScene.unity)
+  Scenes/              MainScene.unity (camera + directional light)
   Scripts/
-    Core/            GameManager, AudioManager, SaveManager, PhotoMode, Steam
-    Environment/     DayNightCycle, TerrainGenerator, Vegetation, Wildlife, River
-    Player/          BoatController, RiverCamera
-    UI/              SettingsMenu, TutorialSystem
-  Shaders/           SimpleWater.shader
+    Core/              GameManager, AudioManager, SaveManager, PhotoMode, SteamManager
+    Environment/       DayNightCycle, TerrainGenerator, RiverController, Vegetation, Wildlife
+    Player/            BoatController, RiverCamera
+    UI/                SettingsMenu, TutorialSystem
+  Shaders/             SimpleWater.shader (URP)
 mvp/
-  src/mvp/           Python pipeline (DEM download, terrain mesh, river flow, renderer)
-  tests/             Pytest suite (7 tests)
-Packages/            Unity package manifest
-.github/workflows/   CI (Python + Unity) and CodeQL
+  src/mvp/             Python pipeline
+    dem_downloader.py  Copernicus GLO-30 tile download + merge
+    terrain_mesh.py    DEM → OBJ mesh with normals
+    river_flow.py      Gradient descent river tracer + flow properties
+    renderer.py        Interactive ModernGL 3D viewer (optional)
+    headless_renderer.py  Matplotlib preview images
+  tests/               7 pytest tests (~25% coverage)
+Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
+.github/workflows/     ci.yml, codeql.yml
 ```
 
 ---
@@ -86,8 +97,8 @@ Packages/            Unity package manifest
 | Key | Action |
 |-----|--------|
 | W / A / S / D | Paddle (forward / left / back / right) |
-| Shift | Sprint |
-| F12 | Photo Mode |
+| Shift | Sprint (uses stamina) |
+| F12 | Toggle Photo Mode |
 | Escape | Settings / Pause |
 
 ---
@@ -96,11 +107,11 @@ Packages/            Unity package manifest
 
 | Layer | Technology |
 |-------|-----------|
-| Engine | Unity 6000 LTS, Universal Render Pipeline |
-| Language | C# (Unity), Python 3.11 (MVP pipeline) |
-| Elevation Data | Copernicus GLO-30 DEM — 30m resolution, free, no auth |
-| Package Manager | UV (Python), Unity Package Manager |
-| CI/CD | GitHub Actions (lint, test, build, CodeQL) |
+| Engine | Unity 6000.4.6f1 LTS, Universal Render Pipeline |
+| Language | C# (Unity), Python 3.11 (terrain pipeline) |
+| Elevation Data | Copernicus GLO-30 DEM — 30m resolution, free, AWS S3 |
+| Package Manager | UV / hatchling (Python), Unity Package Manager |
+| CI/CD | GitHub Actions — game-ci/unity-builder, CodeQL |
 | Build Targets | Windows x64, Linux x64 |
 
 ---
@@ -111,9 +122,9 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest, full pipeline run |
-| **Unity Test** | Compile + EditMode/PlayMode tests (game-ci) |
-| **Unity Build** | Produces Windows + Linux builds (artifacts on `main` only) |
+| **Python MVP** | Ruff lint, Black format check, pytest (7 tests), full pipeline run |
+| **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
+| **Unity Build** | Win64 + Linux64 artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python |
 
 ---
@@ -121,17 +132,40 @@ All pipelines run on every push and PR to `main`:
 ## Development
 
 ```bash
-# Run tests
+# Python tests
 cd mvp && uv run pytest tests/ -v
 
-# Lint
+# Lint + format
 cd mvp && uv run ruff check src/
-
-# Format
 cd mvp && uv run black src/
+
+# Full pipeline with real DEM
+cd mvp && uv run mvp --skip-render
+
+# Interactive 3D viewer (requires moderngl)
+cd mvp && uv pip install -e '.[interactive]' && uv run mvp --interactive
 ```
 
-See [ROADMAP.md](ROADMAP.md) for planned features and progress, [CI_SETUP.md](CI_SETUP.md) for CI configuration details, and [mvp/README.md](mvp/README.md) for the Python pipeline documentation.
+---
+
+## Known Issues
+
+See [ROADMAP.md](ROADMAP.md) for the full audit. Key items:
+
+- Python → Unity integration not automated (real DEM not yet in Unity builds)
+- River flow animation broken (shader property mismatch)
+- ~25% test coverage
+- Several runtime bugs documented in ROADMAP Phase 0
+
+---
+
+## Documentation
+
+| Document | Content |
+|----------|---------|
+| [ROADMAP.md](ROADMAP.md) | Full project audit, bugs, phased roadmap, tech debt |
+| [CI_SETUP.md](CI_SETUP.md) | CI/CD configuration and secrets setup |
+| [mvp/README.md](mvp/README.md) | Python terrain pipeline details |
 
 ---
 
