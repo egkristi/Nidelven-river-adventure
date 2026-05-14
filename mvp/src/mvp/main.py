@@ -224,6 +224,11 @@ def main():
 
                 river_mesh = generate_river_mesh(flow_data, dem_data, terrain_mesh)
 
+                # Clear sys.argv so moderngl-window doesn't choke on our CLI flags
+                import sys
+
+                sys.argv = [sys.argv[0]]
+
                 run_renderer(
                     terrain_mesh=terrain_mesh, water_mesh=river_mesh, river_path=river_path
                 )
