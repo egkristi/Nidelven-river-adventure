@@ -104,6 +104,11 @@ mvp/src/mvp/data/
 ehthumbs.db
 Thumbs.db
 
+# Generated terrain data (large binaries)
+Assets/StreamingAssets/terrain.raw
+Assets/StreamingAssets/terrain_metadata.json
+mvp/output/
+
 # Secrets (never commit these)
 .env
 .env.local
@@ -112,5 +117,3 @@ Thumbs.db
 *.ulf
 *.key
 secrets/
-*.alf
-*.ulf

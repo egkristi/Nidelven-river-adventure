@@ -23,7 +23,7 @@ from pathlib import Path
 from .dem_downloader import get_dem_path
 from .headless_renderer import generate_preview_images
 from .river_flow import create_river_from_dem
-from .terrain_mesh import create_terrain_from_dem
+from .terrain_mesh import create_terrain_from_dem, export_unity_raw
 
 
 def main():
@@ -81,6 +81,10 @@ def main():
         print("-" * 40)
 
         terrain_mesh = create_terrain_from_dem(dem_path, output_dir, save_obj=True)
+
+        # Also export Unity-ready RAW heightmap
+        print("\n  Exporting Unity terrain...")
+        export_unity_raw(dem_path, output_dir)
         print()
     else:
         print("STEP 2: Skipping terrain mesh generation")
@@ -175,7 +179,8 @@ def main():
     print("Next steps:")
     print("  - View output images in the output directory")
     print("  - Run with --interactive for 3D preview")
-    print("  - Import terrain.obj into Unity for full development")
+    print("  - Copy terrain.raw + terrain_metadata.json to Assets/StreamingAssets/")
+    print("  - Unity will auto-load real terrain on Play")
     print()
 
 

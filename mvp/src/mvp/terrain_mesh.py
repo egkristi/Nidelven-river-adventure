@@ -292,6 +292,97 @@ def create_terrain_from_dem(
     return mesh
 
 
+def export_unity_raw(
+    dem_path: Path,
+    output_dir: Path,
+    resolution: int = 513,
+) -> Path:
+    """
+    Export DEM as 16-bit RAW heightmap for Unity Terrain import.
+
+    Unity Terrain expects:
+    - Square power-of-2+1 (e.g. 513, 1025, 2049)
+    - 16-bit unsigned little-endian
+    - Values 0-65535 (0 = min elevation, 65535 = max elevation)
+
+    Also writes a metadata JSON with terrain dimensions.
+
+    Returns:
+        Path to the generated .raw file
+    """
+    import json
+
+    from scipy.ndimage import zoom
+
+    dem_data, metadata = load_dem(dem_path)
+
+    # Handle NaN
+    if np.any(np.isnan(dem_data)):
+        from scipy.ndimage import distance_transform_edt
+
+        mask = np.isnan(dem_data)
+        if not np.all(mask):
+            indices = distance_transform_edt(mask, return_distances=False, return_indices=True)
+            dem_data[mask] = dem_data[indices[0][mask], indices[1][mask]]
+        else:
+            dem_data = np.zeros_like(dem_data)
+
+    # Record real elevation range before normalization
+    min_elev = float(np.nanmin(dem_data))
+    max_elev = float(np.nanmax(dem_data))
+
+    # Resample to target resolution
+    h, w = dem_data.shape
+    resampled = zoom(dem_data, (resolution / h, resolution / w), order=1)
+
+    # Normalize to 0-65535
+    if max_elev > min_elev:
+        normalized = (resampled - min_elev) / (max_elev - min_elev)
+    else:
+        normalized = np.zeros_like(resampled)
+
+    raw_data = (normalized * 65535).astype(np.uint16)
+
+    # Write RAW file
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    raw_path = output_dir / "terrain.raw"
+    raw_data.tofile(raw_path)
+
+    # Calculate terrain world size from BBOX
+    bbox = metadata["bbox"]
+    width_m = (bbox[2] - bbox[0]) * 111000 * np.cos(np.radians((bbox[1] + bbox[3]) / 2))
+    depth_m = (bbox[3] - bbox[1]) * 111000
+    height_m = max_elev - min_elev
+
+    # Write metadata JSON for Unity
+    unity_meta = {
+        "format": "raw16_little_endian",
+        "resolution": resolution,
+        "min_elevation_m": min_elev,
+        "max_elevation_m": max_elev,
+        "height_range_m": height_m,
+        "terrain_width_m": float(width_m),
+        "terrain_depth_m": float(depth_m),
+        "bbox": list(bbox),
+        "crs": metadata.get("crs", "EPSG:4326"),
+        "source_resolution_m": metadata.get("resolution", [30, 30]),
+        "unity_terrain_size": [float(width_m), float(height_m), float(depth_m)],
+    }
+
+    meta_path = output_dir / "terrain_metadata.json"
+    with open(meta_path, "w") as f:
+        json.dump(unity_meta, f, indent=2)
+
+    print(f"  Unity RAW: {raw_path} ({raw_path.stat().st_size / 1024:.0f} KB)")
+    print(f"  Metadata: {meta_path}")
+    print(f"  Resolution: {resolution}x{resolution}")
+    print(f"  Elevation: {min_elev:.1f}m → {max_elev:.1f}m (range: {height_m:.1f}m)")
+    print(f"  World size: {width_m:.0f}m × {depth_m:.0f}m")
+
+    return raw_path
+
+
 if __name__ == "__main__":
     import sys
 

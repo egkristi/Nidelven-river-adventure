@@ -154,10 +154,10 @@ However, the two halves are **not connected** — the Python pipeline output is 
 
 - [x] Create main Unity scene
 - [x] Enable Unity build in CI
+- [x] Fix remaining Unity bugs (U3, U4)
 - [ ] Fix `TerrainGenerator.LoadGeoTiff()` to parse real TIFF (or use RAW format)
 - [ ] Build pipeline: Python DEM → Unity StreamingAssets (automated copy or build step)
 - [ ] Wire up boat + camera with real terrain in scene
-- [ ] Fix remaining Unity bugs (U3, U4)
 - [ ] Fix Input System configuration (set to "Both")
 - [ ] First playable build with real terrain
 
