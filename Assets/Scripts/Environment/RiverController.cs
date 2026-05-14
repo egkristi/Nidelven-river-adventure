@@ -111,6 +111,8 @@ namespace Nidelven.Environment
             // Generate path using gradient following
             Vector3 currentPos = startPos;
             riverPath.Add(currentPos);
+            flowSpeeds.Add(baseFlowSpeed);
+            riverWidths.Add(baseWidth * widthCurve.Evaluate(0f));
             
             for (int i = 1; i < pathResolution; i++)
             {

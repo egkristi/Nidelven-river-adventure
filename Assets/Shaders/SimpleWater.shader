@@ -9,6 +9,7 @@ Shader "Nidelven/SimpleWater"
         _WaveScale ("Wave Scale", Float) = 10.0
         _FoamThreshold ("Foam Threshold", Float) = 0.5
         _FlowSpeed ("Flow Speed", Float) = 1.0
+        _FlowOffset ("Flow Offset", Vector) = (0, 0, 0, 0)
         _Smoothness ("Smoothness", Range(0, 1)) = 0.9
     }
     
@@ -61,6 +62,7 @@ Shader "Nidelven/SimpleWater"
                 float _WaveScale;
                 float _FoamThreshold;
                 float _FlowSpeed;
+                float4 _FlowOffset;
                 float _Smoothness;
             CBUFFER_END
             
@@ -139,11 +141,12 @@ Shader "Nidelven/SimpleWater"
                 float3 normalWS = normalize(input.normalWS);
                 
                 // Calculate flow foam
-                float flowNoise = noise(input.uv * _WaveScale * 2.0 + float2(_Time.y * _FlowSpeed, 0.0));
+                float2 flowUV = input.uv + _FlowOffset.xy;
+                float flowNoise = noise(flowUV * _WaveScale * 2.0 + float2(_Time.y * _FlowSpeed, 0.0));
                 float foam = smoothstep(_FoamThreshold - 0.1, _FoamThreshold + 0.1, flowNoise);
                 
                 // Base color with flow variation
-                float flowVariation = noise(input.uv * _WaveScale + float2(_Time.y * _FlowSpeed, 0.0));
+                float flowVariation = noise(flowUV * _WaveScale + float2(_Time.y * _FlowSpeed, 0.0));
                 float4 baseColor = lerp(_BaseColor * 0.8, _BaseColor, flowVariation);
                 
                 // Add foam
