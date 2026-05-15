@@ -95,6 +95,16 @@ def main():
         action="store_true",
         help="Export Kartverket Dybdedata river depth profiles for physics/rendering",
     )
+    parser.add_argument(
+        "--ais",
+        action="store_true",
+        help="Export Barentswatch AIS vessel traffic data for harbor ambient ships",
+    )
+    parser.add_argument(
+        "--heritage",
+        action="store_true",
+        help="Export Riksantikvaren cultural heritage POIs for discovery gameplay",
+    )
 
     args = parser.parse_args()
 
@@ -308,6 +318,26 @@ def main():
         from .dybdedata import export_bathymetry_json
 
         export_bathymetry_json(output_dir / "bathymetry.json", fetch_live=True)
+        print()
+
+    # Step 3.15: Export AIS vessel traffic data (optional)
+    if args.ais:
+        print("STEP 3.15: Barentswatch AIS Vessel Traffic")
+        print("-" * 40)
+
+        from .barentswatch_ais import export_vessel_traffic_json
+
+        export_vessel_traffic_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.16: Export cultural heritage POIs (optional)
+    if args.heritage:
+        print("STEP 3.16: Riksantikvaren Cultural Heritage")
+        print("-" * 40)
+
+        from .riksantikvaren import export_heritage_json
+
+        export_heritage_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images

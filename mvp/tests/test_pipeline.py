@@ -2032,3 +2032,252 @@ class TestDybdedata:
         assert "profiles" in data
         assert "depth_grid" in data
         assert len(data["profiles"]) == 7
+
+
+class TestBarentswatchAis:
+    """Tests for the Barentswatch AIS vessel traffic client."""
+
+    def test_get_vessel_traffic(self):
+        from mvp.barentswatch_ais import get_vessel_traffic
+
+        vessels = get_vessel_traffic()
+        assert len(vessels) >= 5
+        for v in vessels:
+            assert "name" in v
+            assert "vessel_type" in v
+            assert "latitude" in v
+            assert "longitude" in v
+            assert v["latitude"] > 58.0
+            assert v["longitude"] > 8.0
+
+    def test_classify_vessel_type(self):
+        from mvp.barentswatch_ais import classify_vessel_type
+
+        assert classify_vessel_type(30) == "fishing"
+        assert classify_vessel_type(70) == "cargo"
+        assert classify_vessel_type(80) == "tanker"
+        assert classify_vessel_type(60) == "passenger"
+        assert classify_vessel_type(36) == "sailing"
+        assert classify_vessel_type(99) == "unknown"
+        assert classify_vessel_type(0) == "unknown"
+
+    def test_get_vessel_prefab(self):
+        from mvp.barentswatch_ais import get_vessel_prefab
+
+        assert get_vessel_prefab("cargo") == "VesselCargo"
+        assert get_vessel_prefab("passenger") == "VesselPassenger"
+        assert get_vessel_prefab("fishing") == "VesselFishing"
+        assert get_vessel_prefab("unknown") == "VesselGeneric"
+
+    def test_build_vessel_traffic_data(self):
+        from mvp.barentswatch_ais import build_vessel_traffic_data
+
+        data = build_vessel_traffic_data()
+        assert data["vessel_count"] >= 5
+        assert "bbox" in data
+        assert "type_summary" in data
+        assert "route_patterns" in data
+
+        for v in data["vessels"]:
+            assert "name" in v
+            assert "vessel_type" in v
+            assert "prefab" in v
+            assert "position" in v
+            assert "route" in v
+            assert "spawn_probability" in v
+            assert 0 < v["spawn_probability"] <= 1.0
+            assert v["route"]["waypoints"]
+
+    def test_build_with_custom_vessels(self):
+        from mvp.barentswatch_ais import build_vessel_traffic_data
+
+        custom = [
+            {
+                "name": "Test Vessel",
+                "vessel_type": "cargo",
+                "latitude": 58.46,
+                "longitude": 8.77,
+                "heading": 90.0,
+                "speed_knots": 5.0,
+                "length_m": 50.0,
+                "route": "harbor_approach",
+                "frequency": "low",
+            }
+        ]
+        data = build_vessel_traffic_data(custom)
+        assert data["vessel_count"] == 1
+        assert data["vessels"][0]["prefab"] == "VesselCargo"
+        assert data["vessels"][0]["spawn_probability"] == 0.2
+
+    def test_route_patterns(self):
+        from mvp.barentswatch_ais import ROUTE_PATTERNS
+
+        assert "harbor_ferry" in ROUTE_PATTERNS
+        assert "estuary_patrol" in ROUTE_PATTERNS
+        for name, route in ROUTE_PATTERNS.items():
+            assert "waypoints" in route
+            assert len(route["waypoints"]) >= 2
+            assert "loop" in route
+            assert "interval_minutes" in route
+
+    def test_export_offline(self, tmp_path):
+        from mvp.barentswatch_ais import export_vessel_traffic_json
+
+        result = export_vessel_traffic_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "vessel_traffic.json"
+        with open(result) as f:
+            data = json.load(f)
+        assert data["vessel_count"] >= 5
+        assert "vessels" in data
+        assert "route_patterns" in data
+
+    def test_safe_conversions(self):
+        from mvp.barentswatch_ais import _safe_float, _safe_int
+
+        assert _safe_float("3.14") == 3.14
+        assert _safe_float(None) == 0.0
+        assert _safe_float("bad") == 0.0
+        assert _safe_int("42") == 42
+        assert _safe_int(None) == 0
+        assert _safe_int("bad") == 0
+
+
+class TestRiksantikvaren:
+    """Tests for the Riksantikvaren cultural heritage client."""
+
+    def test_get_heritage_sites(self):
+        from mvp.riksantikvaren import get_heritage_sites
+
+        sites = get_heritage_sites()
+        assert len(sites) >= 8
+        for s in sites:
+            assert "name" in s
+            assert "category" in s
+            assert "latitude" in s
+            assert "longitude" in s
+            assert s["latitude"] > 58.0
+            assert s["longitude"] > 8.0
+
+    def test_heritage_categories(self):
+        from mvp.riksantikvaren import get_heritage_sites
+
+        sites = get_heritage_sites()
+        categories = {s["category"] for s in sites}
+        assert "industrial" in categories
+        assert "religious" in categories
+
+    def test_classify_heritage(self):
+        from mvp.riksantikvaren import classify_heritage
+
+        assert classify_heritage("Kraftstasjon") == "industrial"
+        assert classify_heritage("Jernverk") == "industrial"
+        assert classify_heritage("Sagbruk") == "industrial"
+        assert classify_heritage("Kirke") == "religious"
+        assert classify_heritage("Gravplass") == "religious"
+        assert classify_heritage("Gård") == "agricultural"
+        assert classify_heritage("Brygge") == "maritime"
+        assert classify_heritage("Naust") == "maritime"
+        assert classify_heritage("Bru") == "transport"
+        assert classify_heritage("Bolig") == "residential"
+        assert classify_heritage("") == "unknown"
+        assert classify_heritage(None) == "unknown"
+
+    def test_get_heritage_icon(self):
+        from mvp.riksantikvaren import get_heritage_icon
+
+        assert get_heritage_icon("industrial") == "POI_Industrial"
+        assert get_heritage_icon("maritime") == "POI_Maritime"
+        assert get_heritage_icon("religious") == "POI_Religious"
+        assert get_heritage_icon("nonexistent") == "POI_Generic"
+
+    def test_build_heritage_data(self):
+        from mvp.riksantikvaren import build_heritage_data
+
+        data = build_heritage_data()
+        assert data["site_count"] >= 8
+        assert data["protected_count"] >= 5
+        assert "category_summary" in data
+        assert "categories" in data
+        assert "sites" in data
+
+        for s in data["sites"]:
+            assert "name" in s
+            assert "category" in s
+            assert "icon" in s
+            assert "position" in s
+            assert "year_built" in s
+            assert "protected" in s
+            assert "discovery_radius_m" in s
+            assert "poi_visible_distance_m" in s
+            assert s["poi_visible_distance_m"] == 500.0
+
+    def test_build_with_custom_sites(self):
+        from mvp.riksantikvaren import build_heritage_data
+
+        custom = [
+            {
+                "name": "Test Site",
+                "category": "maritime",
+                "latitude": 58.46,
+                "longitude": 8.77,
+                "year_built": 1850,
+                "protected": True,
+                "description": "A test heritage site",
+            }
+        ]
+        data = build_heritage_data(custom)
+        assert data["site_count"] == 1
+        assert data["protected_count"] == 1
+        assert data["sites"][0]["icon"] == "POI_Maritime"
+        assert data["sites"][0]["discovery_radius_m"] == 100.0
+
+    def test_protected_discovery_radius(self):
+        from mvp.riksantikvaren import build_heritage_data
+
+        protected = [
+            {
+                "name": "Protected",
+                "category": "industrial",
+                "latitude": 58.5,
+                "longitude": 8.6,
+                "year_built": 1900,
+                "protected": True,
+            }
+        ]
+        unprotected = [
+            {
+                "name": "Normal",
+                "category": "industrial",
+                "latitude": 58.5,
+                "longitude": 8.6,
+                "year_built": 1900,
+                "protected": False,
+            }
+        ]
+        data_p = build_heritage_data(protected)
+        data_u = build_heritage_data(unprotected)
+        assert data_p["sites"][0]["discovery_radius_m"] == 100.0
+        assert data_u["sites"][0]["discovery_radius_m"] == 50.0
+
+    def test_export_offline(self, tmp_path):
+        from mvp.riksantikvaren import export_heritage_json
+
+        result = export_heritage_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "heritage_sites.json"
+        with open(result) as f:
+            data = json.load(f)
+        assert data["site_count"] >= 8
+        assert "sites" in data
+        assert "categories" in data
+
+    def test_safe_conversions(self):
+        from mvp.riksantikvaren import _safe_float, _safe_int
+
+        assert _safe_float("3.14") == 3.14
+        assert _safe_float(None) == 0.0
+        assert _safe_float("bad") == 0.0
+        assert _safe_int("42") == 42
+        assert _safe_int(None) == 0
+        assert _safe_int("bad") == 0
