@@ -356,16 +356,15 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 
 ### Active (remaining)
 
-| Item | Severity | Effort | GitHub |
-|------|----------|--------|--------|
-| Legacy UI (UnityEngine.UI) → TMPro | Low | 2 hr | — |
+No active tech debt items. All resolved.
 
 ### Resolved (Phase 10 - CI cleanup)
 
 | Item | Resolution | Commit |
 |------|-----------|--------|
 | `softprops/action-gh-release@v1` outdated | Upgraded to v3 (via v2 + dependabot) | 2a5c2bc + #37 |
-| Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | — |
+| Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | 2a5c2bc |
+| Legacy UI (UnityEngine.UI) → TMPro | Migrated Text/Dropdown to TMP_Text/TMP_Dropdown | fc2c199 |
 
 ### Resolved (Phase 9 - 2026-05-14)
 
@@ -414,7 +413,7 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | Global np.random.seed(42) pollution | Use local default_rng instance | 2b045d1 |
 | CodeQL only scans Python (not C#) | Added C# scanning (build-mode: none) | 787997d |
 | Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | 2a5c2bc |
-| Legacy UI (UnityEngine.UI) vs TMPro | Low | Still active | — |
+| Legacy UI (UnityEngine.UI) vs TMPro | Migrated to TMPro | fc2c199 |
 | `softprops/action-gh-release@v1` outdated (v2 exists) | Upgraded to v2 | 2a5c2bc |
 | No CLI test coverage (main.py) | 5 integration tests (TestCLI class) | 52e16d7 |
 | `export_river_path_json()` untested | Tested via TestCLI integration | 52e16d7 |
@@ -505,7 +504,7 @@ cd Nidelven-river-adventure
 
 ### Priority 3: Low priority (post v1.0.0)
 - [x] CodeQL for C# (extend existing workflow) ✔️ (787997d) — Fixes #44
-- [ ] Legacy UI (UnityEngine.UI) → TMPro migration
+- [x] Legacy UI (UnityEngine.UI) → TMPro migration ✔️ (fc2c199)
 - [x] `softprops/action-gh-release@v1` → v2 ✔️ (2a5c2bc)
 - [x] Extract CI workaround into shared script ✔️ (2a5c2bc)
 
