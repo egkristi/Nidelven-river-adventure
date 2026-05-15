@@ -1580,3 +1580,140 @@ class TestNvdbBridges:
         assert _safe_int("42") == 42
         assert _safe_int(None) is None
         assert _safe_int("abc") is None
+
+
+class TestKartverketBuildings:
+    """Tests for the Kartverket FKB-Bygning building client."""
+
+    def test_get_building_list(self):
+        """Test getting offline building list."""
+        from mvp.kartverket_buildings import get_building_list
+
+        buildings = get_building_list()
+        assert len(buildings) >= 5
+        for b in buildings:
+            assert "name" in b
+            assert "latitude" in b
+            assert "longitude" in b
+            assert "type_code" in b
+            assert b["latitude"] > 58.0
+            assert b["longitude"] > 8.0
+
+    def test_build_building_data(self):
+        """Test building Unity-ready data."""
+        from mvp.kartverket_buildings import build_building_data
+
+        data = build_building_data()
+        assert data["version"] == "1.0"
+        assert data["source"] == "Kartverket FKB-Bygning (Matrikkelen)"
+        assert data["license"] == "NLOD"
+        assert data["building_count"] >= 5
+
+        for b in data["buildings"]:
+            assert "name" in b
+            assert "position" in b
+            assert "dimensions" in b
+            assert "prefab" in b
+            assert "category" in b
+            assert b["dimensions"]["height"] > 0
+            assert b["dimensions"]["width"] > 0
+
+    def test_build_building_data_custom(self):
+        """Test building data from custom list."""
+        from mvp.kartverket_buildings import build_building_data
+
+        custom = [
+            {
+                "name": "Test House",
+                "type_code": 111,
+                "latitude": 58.5,
+                "longitude": 8.6,
+                "height_m": 8.0,
+                "footprint_m2": 100.0,
+                "year_built": 2000,
+            }
+        ]
+        data = build_building_data(custom)
+        assert data["building_count"] == 1
+        assert data["buildings"][0]["category"] == "residential"
+        assert data["buildings"][0]["prefab"] == "BuildingResidential"
+        assert data["buildings"][0]["dimensions"]["height"] == 8.0
+
+    def test_classify_building(self):
+        """Test building type classification."""
+        from mvp.kartverket_buildings import classify_building
+
+        assert classify_building(111) == "residential"
+        assert classify_building(150) == "residential"
+        assert classify_building(211) == "industrial"
+        assert classify_building(321) == "commercial"
+        assert classify_building(411) == "transport"
+        assert classify_building(520) == "hospitality"
+        assert classify_building(611) == "cultural"
+        assert classify_building(750) == "health"
+        assert classify_building(999) == "other"
+        assert classify_building(None) == "other"
+
+    def test_is_landmark(self):
+        """Test landmark detection logic."""
+        from mvp.kartverket_buildings import _is_landmark
+
+        # Named building is landmark
+        assert _is_landmark({"name": "Froland kirke"}) is True
+        # Unnamed building is not landmark
+        assert _is_landmark({"name": ""}) is False
+        # Tall building is landmark
+        assert _is_landmark({"name": "", "height_m": 15.0}) is True
+        # Large footprint is landmark
+        assert _is_landmark({"name": "", "footprint_m2": 600.0}) is True
+        # Small unnamed is not
+        assert _is_landmark({"name": "", "height_m": 5.0, "footprint_m2": 50.0}) is False
+
+    def test_extract_centroid_point(self):
+        """Test centroid extraction from Point geometry."""
+        from mvp.kartverket_buildings import _extract_centroid
+
+        lat, lon = _extract_centroid([8.5, 58.4], "Point")
+        assert abs(lat - 58.4) < 0.01
+        assert abs(lon - 8.5) < 0.01
+
+    def test_extract_centroid_polygon(self):
+        """Test centroid extraction from Polygon geometry."""
+        from mvp.kartverket_buildings import _extract_centroid
+
+        coords = [[[8.5, 58.4], [8.6, 58.4], [8.6, 58.5], [8.5, 58.5], [8.5, 58.4]]]
+        lat, lon = _extract_centroid(coords, "Polygon")
+        assert abs(lat - 58.44) < 0.05
+        assert abs(lon - 8.54) < 0.05
+
+    def test_extract_centroid_empty(self):
+        """Test centroid extraction with empty data."""
+        from mvp.kartverket_buildings import _extract_centroid
+
+        lat, lon = _extract_centroid([], "Point")
+        assert lat is None
+        assert lon is None
+
+    def test_export_building_json(self, tmp_path):
+        """Test JSON export of building data."""
+        from mvp.kartverket_buildings import export_building_json
+
+        result = export_building_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "building_data.json"
+
+        with open(result) as f:
+            data = json.load(f)
+
+        assert "buildings" in data
+        assert data["building_count"] >= 5
+        assert data["buildings"][0]["position"]["latitude"] > 58.0
+
+    def test_safe_conversions(self):
+        """Test safe float/int conversion helpers."""
+        from mvp.kartverket_buildings import _safe_float, _safe_int
+
+        assert _safe_float("3.14") == 3.14
+        assert _safe_float(None) is None
+        assert _safe_int("42") == 42
+        assert _safe_int(None) is None

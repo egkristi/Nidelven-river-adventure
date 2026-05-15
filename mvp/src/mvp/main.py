@@ -75,6 +75,11 @@ def main():
         action="store_true",
         help="Export NVDB bridge data for river landmarks/obstacles",
     )
+    parser.add_argument(
+        "--buildings",
+        action="store_true",
+        help="Export Kartverket FKB-Bygning building data for riverbank landmarks",
+    )
 
     args = parser.parse_args()
 
@@ -245,6 +250,16 @@ def main():
         from .nvdb_bridges import export_bridge_json
 
         export_bridge_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.11: Export FKB-Bygning building data (optional)
+    if args.buildings:
+        print("STEP 3.11: Kartverket FKB-Bygning Buildings")
+        print("-" * 40)
+
+        from .kartverket_buildings import export_building_json
+
+        export_building_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images
