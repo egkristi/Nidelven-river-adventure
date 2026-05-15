@@ -1,6 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 using System.Collections;
+using TMPro;
 using Nidelven.Core;
 
 namespace Nidelven.UI
@@ -25,8 +26,8 @@ namespace Nidelven.UI
         
         [Header("UI")]
         public GameObject tutorialPanel;
-        public Text titleText;
-        public Text descriptionText;
+        public TMP_Text titleText;
+        public TMP_Text descriptionText;
         public Button continueButton;
         public Button skipButton;
         

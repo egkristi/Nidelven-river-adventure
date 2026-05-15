@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.Audio;
 using System.Collections.Generic;
+using TMPro;
 using Nidelven.Core;
 
 namespace Nidelven.UI
@@ -19,25 +20,25 @@ namespace Nidelven.UI
         public GameObject controlsPanel;
         
         [Header("Graphics Settings")]
-        public Dropdown resolutionDropdown;
-        public Dropdown qualityDropdown;
+        public TMP_Dropdown resolutionDropdown;
+        public TMP_Dropdown qualityDropdown;
         public Toggle fullscreenToggle;
         public Slider renderScaleSlider;
-        public Text renderScaleText;
+        public TMP_Text renderScaleText;
         
         [Header("Audio Settings")]
         public Slider masterVolumeSlider;
         public Slider musicVolumeSlider;
         public Slider sfxVolumeSlider;
-        public Text masterVolumeText;
-        public Text musicVolumeText;
-        public Text sfxVolumeText;
+        public TMP_Text masterVolumeText;
+        public TMP_Text musicVolumeText;
+        public TMP_Text sfxVolumeText;
         
         [Header("Audio Mixer")]
         public AudioMixer audioMixer;
         
         [Header("Language")]
-        public Dropdown languageDropdown;
+        public TMP_Dropdown languageDropdown;
         
         [Header("Key Bindings")]
         public Transform keyBindContainer;
