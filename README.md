@@ -41,8 +41,10 @@ uv run nidelven --sample         # use synthetic terrain (no download)
 uv run nidelven --kartverket     # use Kartverket 1m LiDAR DEM (high-res)
 uv run nidelven --orthophoto     # download aerial orthophoto as terrain texture
 uv run nidelven --qgis           # export GeoTIFF + GeoJSON for QGIS browsing
+uv run nidelven --hydapi         # fetch NVE HydAPI river flow data
+uv run nidelven --vegetation     # fetch NIBIO AR5 land cover data
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite (66 tests)
+uv run pytest tests/ -v          # run test suite (82 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -54,7 +56,8 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | Category | Details | Status |
 |----------|---------|--------|
 | **Terrain** | 30m DEM (Copernicus GLO-30) + 1m LiDAR (Kartverket) + aerial orthophoto (Norge i bilder) + QGIS export | ✅ Pipeline + Unity |
-| **River** | D8 flow accumulation + NVE ELVIS real geometry + Leopold-Maddock widths | ✅ Works |
+| **River** | D8 flow accumulation + NVE ELVIS real geometry + Leopold-Maddock widths + NVE HydAPI live flow | ✅ Works |
+| **Vegetation Data** | NIBIO AR5 land cover classification (forest/agriculture/wetland) → vegetation map | ✅ Implemented |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
 | **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
@@ -95,9 +98,11 @@ mvp/
     qgis_export.py     QGIS project export (GeoTIFF, GeoJSON, .qgs)
     kartverket_dem.py  Kartverket 1m LiDAR DEM importer (WCS 2.0.1)
     weather.py         MET Norway weather integration (live/seasonal)
+    nve_hydapi.py      NVE HydAPI river flow client (real-time + seasonal)
+    nibio_ar5.py       NIBIO AR5 land cover client (vegetation classification)
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               66 pytest tests (core modules: 46-69% coverage)
+  tests/               82 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml (Python + C#)
 ```
@@ -135,7 +140,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (66 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (82 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python + C# |

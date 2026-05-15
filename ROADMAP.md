@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 10: CI cleanup — deduplicated workaround, upgraded action-gh-release v2)
+Last updated: 2026-05-15 (Phase 11: NVE HydAPI river flow + NIBIO AR5 land cover integration)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -10,7 +10,7 @@ Last updated: 2026-05-15 (Phase 10: CI cleanup — deduplicated workaround, upgr
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 10 phases complete.** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 11 phases complete.** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -23,6 +23,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` �
 > ✅ **Phase 8** — Tech debt: FixedUpdate physics, timeScale, auto-save, CI fix
 > ✅ **Phase 9** — Close all open issues: flow perf, CodeQL C#, CLI tests
 > ✅ **Phase 10** — CI cleanup: deduplicate workaround, upgrade action-gh-release v2
+> ✅ **Phase 11** — NVE HydAPI river flow + NIBIO AR5 land cover data integration
 
 ### Full Audit (2026-05-15)
 
@@ -42,7 +43,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (66 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, CLI — all lint clean |
+| Python MVP pipeline | ✅ Functional (82 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, CLI — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -50,7 +51,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 | CodeQL | ✅ Passing | Python + C# security scanning |
 | Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
 | Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
-| Audit status | ✅ All issues resolved | 0 open issues (all 45 closed) |
+| Audit status | ✅ All issues resolved | 0 open issues (all 48 closed) |
 
 ---
 
@@ -160,8 +161,10 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `renderer.py` | ❌ | All (OpenGL, hard to unit test) |
 | `camera.py` | ❌ | All (OpenGL, hard to unit test) |
 | `main.py` | `main()` with --sample, --qgis, --skip-* flags | `--interactive` (requires display), `--kartverket` (network), `--orthophoto` (network) |
+| `nve_hydapi.py` | `get_seasonal_flow`, `build_river_physics_params`, `export_flow_json`, `fetch_flow_statistics` | `fetch_observations`, `fetch_current_flow` (network) |
+| `nibio_ar5.py` | `classify_features`, `get_vegetation_params`, `generate_vegetation_map`, `build_unity_vegetation_data`, `export_vegetation_json` | `fetch_land_cover` (network) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 66 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 82 tests passing. Integration test included.
 
 ---
 
@@ -302,6 +305,27 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 - [x] Add CodeQL C# scanning for Unity scripts (build-mode: none) ✔️ (787997d) — Fixes #44
 - [x] Add 5 CLI integration tests for main.py entry point ✔️ (52e16d7) — Fixes #45
 - [x] Fix `--interactive` renderer argv import ordering ✔️ (14c84db)
+
+### Phase 10: CI Cleanup ✅ COMPLETE
+
+- [x] Extract ShaderGraph workaround into `.github/scripts/prepare-ci.sh` ✔️ (2a5c2bc)
+- [x] Upgrade `softprops/action-gh-release` v1 → v3 ✔️ (2a5c2bc + #37)
+- [x] Merge 9 dependabot PRs (actions/checkout@v6, cache@v5, upload-artifact@v7, codeql-action@v4, black>=26, matplotlib>=3.10, moderngl>=5.12, rasterio>=1.4) ✔️
+- [x] Migrate UI scripts from UnityEngine.UI to TMPro ✔️ (fc2c199)
+
+### Phase 11: NVE HydAPI + NIBIO AR5 Data Integration ✅ COMPLETE
+
+- [x] Implement `nve_hydapi.py` — NVE HydAPI river flow client ✔️ (1e215a8)
+  - Real-time water discharge/level from station 2.145.0 (Rygenefoss)
+  - Seasonal climate normals as offline fallback (NIDELVA_FLOW_NORMALS)
+  - Converts to Unity physics params (flow_speed, turbulence, current_strength, water_clarity)
+- [x] Implement `nibio_ar5.py` — NIBIO AR5 land cover client ✔️ (1e215a8)
+  - Fetch land cover classification from NIBIO WFS
+  - Classifies forest/agriculture/water/wetland with forest subtypes (spruce/pine/birch)
+  - Rasterizes to vegetation map for Unity VegetationGenerator
+- [x] Add `--hydapi` and `--vegetation` CLI flags to main.py ✔️ (1e215a8)
+- [x] Add 16 new tests (7 HydAPI + 9 AR5), total: 82 passing ✔️ (1e215a8)
+- [x] Create issues for future data integration: #46 (Artsdatabanken), #47 (FKB-Bygning), #48 (NVDB bridges)
 
 ---
 
@@ -655,9 +679,9 @@ This section catalogs all identified real-life data sources relevant to building
 
 Based on the ratings above, recommended integration order:
 
-1. **NVE ELVIS + HydAPI** — Replace gradient-descent river path with real river geometry + flow data
+1. ~~**NVE ELVIS + HydAPI** — Replace gradient-descent river path with real river geometry + flow data~~ ✅ (1e215a8)
 2. **Kartverket DTM 10** — Upgrade terrain from 30m to 10m resolution
-3. **NIBIO AR5** — Drive vegetation placement from real land-use data
+3. ~~**NIBIO AR5** — Drive vegetation placement from real land-use data~~ ✅ (1e215a8)
 4. **Artsdatabanken** — Query real species list for Nidelva → spawn accurate wildlife
 5. **xeno-canto** — Download actual bird calls for species present
 6. **Kartverket FKB-Bygning** — Place real buildings along riverbanks
