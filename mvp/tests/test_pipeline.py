@@ -1298,3 +1298,144 @@ class TestNibioAr5:
         }
         coords = _extract_coordinates(geometry)
         assert len(coords) == 10  # 5 + 5 points
+
+
+class TestArtsdatabanken:
+    """Tests for the Artsdatabanken species observation client."""
+
+    def test_get_species_list_all(self):
+        """Test getting full species list."""
+        from mvp.artsdatabanken import get_species_list
+
+        species = get_species_list()
+        assert "birds" in species
+        assert "fish" in species
+        assert "mammals" in species
+        assert len(species["birds"]) >= 4
+        assert len(species["fish"]) >= 3
+        assert len(species["mammals"]) >= 4
+
+    def test_get_species_list_filtered(self):
+        """Test getting species list for a single group."""
+        from mvp.artsdatabanken import get_species_list
+
+        birds = get_species_list("birds")
+        assert "birds" in birds
+        assert "fish" not in birds
+        assert "mammals" not in birds
+
+    def test_get_species_list_unknown_group(self):
+        """Test unknown group returns all species."""
+        from mvp.artsdatabanken import get_species_list
+
+        result = get_species_list("aliens")
+        assert "birds" in result
+        assert "fish" in result
+
+    def test_build_wildlife_spawn_data(self):
+        """Test building Unity spawn data from species list."""
+        from mvp.artsdatabanken import build_wildlife_spawn_data
+
+        data = build_wildlife_spawn_data()
+        assert "categories" in data
+        assert "version" in data
+        assert data["source"] == "Artsdatabanken/GBIF"
+
+        # Check birds category
+        birds = data["categories"]["birds"]
+        assert birds["prefab_type"] == "Bird"
+        assert birds["species_count"] >= 4
+        assert birds["flight_capable"] is True
+        assert birds["despawn_distance"] == 150.0
+
+        # Check fish category
+        fish = data["categories"]["fish"]
+        assert fish["prefab_type"] == "Fish"
+        assert fish["spawn_height_offset"] == -0.5
+
+        # Check spawn probabilities sum to ~1.0
+        for group, cat in data["categories"].items():
+            total_prob = sum(s["spawn_probability"] for s in cat["species"])
+            assert 0.99 <= total_prob <= 1.01, f"{group} probabilities sum to {total_prob}"
+
+    def test_build_wildlife_spawn_data_seasonal_filter(self):
+        """Test seasonal filtering removes off-season species."""
+        from mvp.artsdatabanken import build_wildlife_spawn_data
+
+        # January — salmon not in peak season (peak: Jun-Sep)
+        winter_data = build_wildlife_spawn_data(month=1)
+        fish_species = [s["scientific_name"] for s in winter_data["categories"]["fish"]["species"]]
+        assert "Salmo salar" not in fish_species
+
+        # July — salmon in peak season
+        summer_data = build_wildlife_spawn_data(month=7)
+        fish_species = [s["scientific_name"] for s in summer_data["categories"]["fish"]["species"]]
+        assert "Salmo salar" in fish_species
+
+    def test_build_wildlife_spawn_data_custom_species(self):
+        """Test with custom species data."""
+        from mvp.artsdatabanken import build_wildlife_spawn_data
+
+        custom = {
+            "birds": [
+                {
+                    "scientific_name": "Testus birdus",
+                    "english_name": "Test bird",
+                    "norwegian_name": "Testfugl",
+                    "habitat": "river",
+                    "abundance": "common",
+                    "spawn_weight": 1.0,
+                }
+            ]
+        }
+        data = build_wildlife_spawn_data(species_data=custom)
+        assert data["categories"]["birds"]["species_count"] == 1
+        assert data["categories"]["birds"]["species"][0]["spawn_probability"] == 1.0
+
+    def test_export_wildlife_json(self, tmp_path):
+        """Test JSON export of wildlife data."""
+        from mvp.artsdatabanken import export_wildlife_json
+
+        result = export_wildlife_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "wildlife_data.json"
+
+        with open(result) as f:
+            data = json.load(f)
+
+        assert "categories" in data
+        assert "birds" in data["categories"]
+        assert "fish" in data["categories"]
+        assert "mammals" in data["categories"]
+        total = sum(c["species_count"] for c in data["categories"].values())
+        assert total >= 10  # We have at least 10 curated species
+
+    def test_merge_with_offline(self):
+        """Test merging live observations with offline data."""
+        from mvp.artsdatabanken import _merge_with_offline
+
+        live_obs = [
+            {"scientific_name": "Cinclus cinclus", "english_name": "Dipper"},
+            {"scientific_name": "Picus viridis", "english_name": "Green woodpecker"},
+        ]
+        merged = _merge_with_offline("birds", live_obs)
+
+        # Should include all offline birds + the new live one
+        names = [s["scientific_name"] for s in merged]
+        assert "Cinclus cinclus" in names  # Already in offline
+        assert "Picus viridis" in names  # New from live
+        # Should not duplicate
+        assert names.count("Cinclus cinclus") == 1
+
+    def test_spawner_categories(self):
+        """Test spawner category configuration."""
+        from mvp.artsdatabanken import SPAWNER_CATEGORIES
+
+        assert "birds" in SPAWNER_CATEGORIES
+        assert "fish" in SPAWNER_CATEGORIES
+        assert "mammals" in SPAWNER_CATEGORIES
+
+        # Verify sensible values
+        assert SPAWNER_CATEGORIES["birds"]["max_count"] > 0
+        assert SPAWNER_CATEGORIES["fish"]["spawn_height_offset"] < 0  # underwater
+        assert SPAWNER_CATEGORIES["mammals"]["spawn_height_offset"] == 0.0

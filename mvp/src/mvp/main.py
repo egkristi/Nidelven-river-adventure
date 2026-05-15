@@ -65,6 +65,11 @@ def main():
         action="store_true",
         help="Fetch NIBIO AR5 land cover data for vegetation placement",
     )
+    parser.add_argument(
+        "--wildlife",
+        action="store_true",
+        help="Export Artsdatabanken species data for wildlife spawning",
+    )
 
     args = parser.parse_args()
 
@@ -215,6 +220,16 @@ def main():
         from .nibio_ar5 import export_vegetation_json
 
         export_vegetation_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.9: Export wildlife species data (optional)
+    if args.wildlife:
+        print("STEP 3.9: Artsdatabanken Wildlife Data")
+        print("-" * 40)
+
+        from .artsdatabanken import export_wildlife_json
+
+        export_wildlife_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images
