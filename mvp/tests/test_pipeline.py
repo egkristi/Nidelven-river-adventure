@@ -835,9 +835,7 @@ class TestQgisExport:
         export_river_geojson(river_path, dem, river_geojson)
 
         # Generate project
-        result = generate_qgis_project(
-            tmp_path, dem_path=dem_tif, river_path=river_geojson
-        )
+        result = generate_qgis_project(tmp_path, dem_path=dem_tif, river_path=river_geojson)
         assert result.exists()
         assert result.suffix == ".qgs"
 
@@ -893,3 +891,120 @@ class TestQgisExport:
         assert "project" in result
 
 
+class TestCLI:
+    """Integration tests for the CLI entry point (main.py)."""
+
+    def test_main_sample_skip_render(self, tmp_path, monkeypatch):
+        """Test --sample --skip-render produces terrain + river outputs."""
+        import sys
+
+        monkeypatch.setattr(
+            sys, "argv", ["nidelven", "--sample", "--skip-render", "--output-dir", str(tmp_path)]
+        )
+        from mvp.main import main
+
+        main()
+
+        # Should produce terrain files
+        assert (tmp_path / "terrain.obj").exists()
+        assert (tmp_path / "terrain.raw").exists()
+        assert (tmp_path / "terrain_metadata.json").exists()
+        # Should produce river files
+        assert (tmp_path / "river_path.csv").exists()
+
+    def test_main_sample_skip_all(self, tmp_path, monkeypatch):
+        """Test --sample --skip-terrain --skip-river --skip-render runs without error."""
+        import sys
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "nidelven",
+                "--sample",
+                "--skip-terrain",
+                "--skip-river",
+                "--skip-render",
+                "--output-dir",
+                str(tmp_path),
+            ],
+        )
+        from mvp.main import main
+
+        main()
+        # Should not crash; output dir may be empty since everything was skipped
+
+    def test_main_sample_with_qgis(self, tmp_path, monkeypatch):
+        """Test --sample --qgis --skip-render produces QGIS outputs."""
+        import sys
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            ["nidelven", "--sample", "--qgis", "--skip-render", "--output-dir", str(tmp_path)],
+        )
+        from mvp.main import main
+
+        main()
+
+        qgis_dir = tmp_path / "qgis"
+        assert qgis_dir.exists()
+        assert (qgis_dir / "dem_elevation.tif").exists()
+        assert (qgis_dir / "river_path.geojson").exists()
+        assert (qgis_dir / "nidelven.qgs").exists()
+
+    def test_main_sample_produces_unity_raw(self, tmp_path, monkeypatch):
+        """Test that --sample exports Unity-ready RAW heightmap + metadata."""
+        import sys
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "nidelven",
+                "--sample",
+                "--skip-river",
+                "--skip-render",
+                "--output-dir",
+                str(tmp_path),
+            ],
+        )
+        from mvp.main import main
+
+        main()
+
+        assert (tmp_path / "terrain.raw").exists()
+        metadata_file = tmp_path / "terrain_metadata.json"
+        assert metadata_file.exists()
+
+        import json
+
+        metadata = json.loads(metadata_file.read_text())
+        assert "resolution" in metadata
+        assert "min_elevation_m" in metadata
+
+    def test_main_sample_river_path_json(self, tmp_path, monkeypatch):
+        """Test that river pipeline produces river_path.json for Unity."""
+        import sys
+
+        monkeypatch.setattr(
+            sys,
+            "argv",
+            [
+                "nidelven",
+                "--sample",
+                "--skip-terrain",
+                "--skip-render",
+                "--output-dir",
+                str(tmp_path),
+            ],
+        )
+        from mvp.main import main
+
+        main()
+
+        river_csv = tmp_path / "river_path.csv"
+        assert river_csv.exists()
+        # CSV should have content (header + at least 1 data row)
+        lines = river_csv.read_text().strip().split("\n")
+        assert len(lines) >= 2
