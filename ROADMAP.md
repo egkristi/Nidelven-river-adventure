@@ -699,15 +699,15 @@ This section catalogs all identified real-life data sources relevant to building
 Based on the ratings above, recommended integration order:
 
 1. ~~**NVE ELVIS + HydAPI** — Replace gradient-descent river path with real river geometry + flow data~~ ✅ (1e215a8)
-2. **Kartverket DTM 10** — Upgrade terrain from 30m to 10m resolution
+2. ~~**Kartverket DTM 10** — Upgrade terrain from 30m to 10m resolution~~ ✅ (kartverket_dem.py, --kartverket flag)
 3. ~~**NIBIO AR5** — Drive vegetation placement from real land-use data~~ ✅ (1e215a8)
-4. **Artsdatabanken** — Query real species list for Nidelva → spawn accurate wildlife
+4. ~~**Artsdatabanken** — Query real species list for Nidelva → spawn accurate wildlife~~ ✅ (e7442e8, #46)
 5. **xeno-canto** — Download actual bird calls for species present
-6. **Kartverket FKB-Bygning** — Place real buildings along riverbanks
-7. **MET Frost API** — Historical weather patterns for dynamic weather system
-8. **NVDB bridges** — Place real bridges as landmarks/obstacles
+6. ~~**Kartverket FKB-Bygning** — Place real buildings along riverbanks~~ ✅ (192b2c7, #47)
+7. ~~**MET Frost API** — Historical weather patterns for dynamic weather system~~ ✅ (weather.py, Phase 2)
+8. ~~**NVDB bridges** — Place real bridges as landmarks/obstacles~~ ✅ (20b9a9b, #48)
 9. **Kartverket Dybdedata** — River depth for underwater terrain + boat physics
-10. **Norge i bilder** — Aerial photos as terrain textures (if license permits)
+10. ~~**Norge i bilder** — Aerial photos as terrain textures~~ ✅ (norgeibilder.py, --orthophoto flag)
 11. **Lakseregisteret** — Salmon spawning events as gameplay feature
 12. **Barentswatch AIS** — Animate ship traffic near Arendal harbor
 13. **Riksantikvaren** — Cultural heritage POIs with info panels

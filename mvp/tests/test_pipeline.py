@@ -1717,3 +1717,318 @@ class TestKartverketBuildings:
         assert _safe_float(None) is None
         assert _safe_int("42") == 42
         assert _safe_int(None) is None
+
+
+class TestXenoCanto:
+    """Tests for xeno-canto bird audio client."""
+
+    def test_get_bird_audio_list(self):
+        from mvp.xenocanto import get_bird_audio_list
+
+        birds = get_bird_audio_list()
+        assert len(birds) == 6
+        assert all("scientific_name" in b for b in birds)
+        assert all("call_type" in b for b in birds)
+
+    def test_bird_audio_species(self):
+        from mvp.xenocanto import get_bird_audio_list
+
+        birds = get_bird_audio_list()
+        species = [b["scientific_name"] for b in birds]
+        assert "Cinclus cinclus" in species  # Fossekall
+        assert "Alcedo atthis" in species  # Isfugl
+
+    def test_parse_duration(self):
+        from mvp.xenocanto import _parse_duration
+
+        assert _parse_duration("1:30") == 90.0
+        assert _parse_duration("0:45") == 45.0
+        assert _parse_duration("1:00:00") == 3600.0
+        assert _parse_duration("invalid") == 0.0
+
+    def test_build_audio_manifest_offline(self):
+        from mvp.xenocanto import build_audio_manifest
+
+        manifest = build_audio_manifest({})
+        assert manifest["version"] == "1.0"
+        assert manifest["species_count"] == 6
+        assert len(manifest["bird_calls"]) == 6
+        # Offline mode uses placeholder recordings
+        for call in manifest["bird_calls"]:
+            assert len(call["recordings"]) == 1
+            assert call["recordings"][0]["quality"] == "offline"
+
+    def test_build_audio_manifest_with_recordings(self):
+        from mvp.xenocanto import build_audio_manifest
+
+        recordings = {
+            "Cinclus cinclus": [
+                {
+                    "id": "12345",
+                    "file_url": "https://example.com/song.mp3",
+                    "duration_s": 45.0,
+                    "quality": "A",
+                    "license": "CC-BY-NC-SA",
+                    "recordist": "Test User",
+                }
+            ]
+        }
+        manifest = build_audio_manifest(recordings)
+        dipper = next(c for c in manifest["bird_calls"] if c["species"] == "Cinclus cinclus")
+        assert dipper["recordings"][0]["id"] == "12345"
+        assert dipper["recordings"][0]["duration_s"] == 45.0
+
+    def test_habitat_zones(self):
+        from mvp.xenocanto import get_bird_audio_list
+
+        birds = get_bird_audio_list()
+        zones = {b["habitat_zone"] for b in birds}
+        assert "river" in zones
+        assert "river_bank" in zones
+        assert "waterfall" in zones
+
+    def test_volume_weights(self):
+        from mvp.xenocanto import get_bird_audio_list
+
+        birds = get_bird_audio_list()
+        for bird in birds:
+            assert 0.0 < bird["volume_weight"] <= 1.0
+
+    def test_export_offline(self, tmp_path):
+        from mvp.xenocanto import export_bird_audio_json
+
+        output = tmp_path / "bird_audio.json"
+        result = export_bird_audio_json(output, fetch_live=False)
+        assert output.exists()
+        assert result["species_count"] == 6
+        with open(output) as f:
+            data = json.load(f)
+        assert data["source"] == "xeno-canto.org"
+
+    def test_parse_recording(self):
+        from mvp.xenocanto import _parse_recording
+
+        rec = {
+            "id": "99999",
+            "file": "https://xc.org/99999/download",
+            "file-name": "XC99999.mp3",
+            "length": "2:15",
+            "q": "A",
+            "type": "song",
+            "rec": "Recorder Name",
+            "lic": "//creativecommons.org/licenses/by-nc-sa/4.0/",
+            "cnt": "Norway",
+            "loc": "Arendal",
+            "lat": "58.45",
+            "lng": "8.77",
+        }
+        parsed = _parse_recording(rec)
+        assert parsed["id"] == "99999"
+        assert parsed["duration_s"] == 135.0
+        assert parsed["latitude"] == 58.45
+        assert parsed["country"] == "Norway"
+
+
+class TestLakseregisteret:
+    """Tests for Lakseregisteret salmon data client."""
+
+    def test_get_salmon_data(self):
+        from mvp.lakseregisteret import get_salmon_data
+
+        data = get_salmon_data()
+        assert data["vassdrag"] == "019.Z"
+        assert data["river_name"] == "Nidelva"
+        assert "Salmo salar" in data["anadromous_species"]
+
+    def test_get_spawning_areas(self):
+        from mvp.lakseregisteret import get_spawning_areas
+
+        areas = get_spawning_areas()
+        assert len(areas) == 5
+        assert all("latitude" in a for a in areas)
+        names = [a["name"] for a in areas]
+        assert "Bøylefoss" in names
+        assert "Rykene" in names
+
+    def test_get_season_info_summer(self):
+        from mvp.lakseregisteret import get_season_info
+
+        july = get_season_info(7)
+        assert july["activity"] == "adult_migration"
+        assert july["visibility"] == "very_high"
+        assert july["spawn_chance"] == 0.7
+
+    def test_get_season_info_winter(self):
+        from mvp.lakseregisteret import get_season_info
+
+        jan = get_season_info(1)
+        assert jan["activity"] == "overwintering"
+        assert jan["spawn_chance"] == 0.0
+
+    def test_get_season_info_spawning(self):
+        from mvp.lakseregisteret import get_season_info
+
+        sep = get_season_info(9)
+        assert sep["activity"] == "spawning"
+        assert sep["spawn_chance"] == 1.0
+
+    def test_get_season_info_clamped(self):
+        from mvp.lakseregisteret import get_season_info
+
+        # Invalid month should be clamped
+        result = get_season_info(0)
+        assert "activity" in result
+        result2 = get_season_info(13)
+        assert "activity" in result2
+
+    def test_build_gameplay_data_july(self):
+        from mvp.lakseregisteret import build_gameplay_data
+
+        data = build_gameplay_data(month=7)
+        assert data["month"] == 7
+        assert len(data["events"]) > 0
+        assert data["visual_params"]["fish_visibility"] == "very_high"
+        # Should have salmon run events in migration corridors
+        event_types = [e["type"] for e in data["events"]]
+        assert "salmon_run" in event_types or "fish_ladder_passage" in event_types
+
+    def test_build_gameplay_data_spawning_season(self):
+        from mvp.lakseregisteret import build_gameplay_data
+
+        data = build_gameplay_data(month=9)
+        event_types = [e["type"] for e in data["events"]]
+        assert "salmon_spawning" in event_types
+        assert "fish_ladder_passage" in event_types
+
+    def test_build_gameplay_data_winter(self):
+        from mvp.lakseregisteret import build_gameplay_data
+
+        data = build_gameplay_data(month=1)
+        # In winter, events may still exist but with zero intensity
+        for event in data["events"]:
+            assert event["intensity"] == 0.0
+            assert event["fish_count"] == 0
+        assert data["visual_params"]["jumping_frequency"] == 0.0
+
+    def test_regulation_data(self):
+        from mvp.lakseregisteret import get_salmon_data
+
+        data = get_salmon_data()
+        reg = data["regulation"]
+        assert reg["fishing_season_start"] == "06-01"
+        assert reg["fishing_season_end"] == "08-31"
+        assert reg["daily_quota"] == 3
+
+    def test_export_offline(self, tmp_path):
+        from mvp.lakseregisteret import export_salmon_json
+
+        output = tmp_path / "salmon_data.json"
+        result = export_salmon_json(output, fetch_live=False, month=8)
+        assert output.exists()
+        assert result["vassdrag"] == "019.Z"
+        with open(output) as f:
+            data = json.load(f)
+        assert "spawning_areas" in data
+        assert "gameplay" in data
+
+
+class TestDybdedata:
+    """Tests for Kartverket Dybdedata (bathymetry) client."""
+
+    def test_get_depth_profiles(self):
+        from mvp.dybdedata import get_depth_profiles
+
+        profiles = get_depth_profiles()
+        assert len(profiles) == 7
+        assert all("max_depth_m" in p for p in profiles)
+        assert all("avg_depth_m" in p for p in profiles)
+
+    def test_depth_profile_locations(self):
+        from mvp.dybdedata import get_depth_profiles
+
+        profiles = get_depth_profiles()
+        names = [p["name"] for p in profiles]
+        assert "Arendal havn (utløp)" in names
+        assert "Rykene" in names
+        assert "Bøylefoss (nedenfor dam)" in names
+
+    def test_depth_ranges_realistic(self):
+        from mvp.dybdedata import get_depth_profiles
+
+        profiles = get_depth_profiles()
+        for p in profiles:
+            assert 0 < p["avg_depth_m"] <= p["max_depth_m"]
+            assert p["max_depth_m"] <= 15.0  # River, not ocean
+            assert p["width_m"] > 0
+
+    def test_get_depth_at_position(self):
+        from mvp.dybdedata import get_depth_at_position
+
+        # Test near Rykene
+        result = get_depth_at_position(58.445, 8.605)
+        assert "avg_depth_m" in result
+        assert "width_m" in result
+        assert result["avg_depth_m"] > 0
+
+    def test_get_depth_interpolation(self):
+        from mvp.dybdedata import get_depth_at_position
+
+        # Midpoint between two profiles should interpolate
+        result = get_depth_at_position(58.460, 8.600)
+        assert 1.0 < result["avg_depth_m"] < 8.0
+
+    def test_build_depth_grid(self):
+        from mvp.dybdedata import build_depth_grid
+
+        grid_data = build_depth_grid(grid_points=20)
+        assert grid_data["grid_points"] == 20
+        assert grid_data["profiles_used"] == 7
+        assert len(grid_data["grid"]) == 20
+        assert grid_data["depth_range_m"]["min"] > 0
+        assert grid_data["depth_range_m"]["max"] > grid_data["depth_range_m"]["min"]
+
+    def test_depth_grid_continuity(self):
+        from mvp.dybdedata import build_depth_grid
+
+        grid_data = build_depth_grid(grid_points=50)
+        grid = grid_data["grid"]
+        # Grid should have monotonic t values
+        for i in range(len(grid) - 1):
+            assert grid[i]["t"] < grid[i + 1]["t"]
+        # All depths positive
+        for point in grid:
+            assert point["avg_depth_m"] > 0
+            assert point["max_depth_m"] > 0
+
+    def test_extract_layer_names(self):
+        from mvp.dybdedata import _extract_layer_names
+
+        xml = "<Name>layer1</Name><Name>layer2</Name>"
+        layers = _extract_layer_names(xml)
+        assert layers == ["layer1", "layer2"]
+
+    def test_extract_layer_names_empty(self):
+        from mvp.dybdedata import _extract_layer_names
+
+        layers = _extract_layer_names("")
+        assert layers == []
+
+    def test_estimate_resolution(self):
+        from mvp.dybdedata import _estimate_resolution
+
+        bbox = {"min_lon": 8.72, "min_lat": 58.38, "max_lon": 8.80, "max_lat": 58.43}
+        res = _estimate_resolution(bbox, 256, 256)
+        assert 1.0 < res < 50.0  # Should be reasonable resolution in meters
+
+    def test_export_offline(self, tmp_path):
+        from mvp.dybdedata import export_bathymetry_json
+
+        output = tmp_path / "bathymetry.json"
+        result = export_bathymetry_json(output, fetch_live=False)
+        assert output.exists()
+        assert result["version"] == "1.0"
+        with open(output) as f:
+            data = json.load(f)
+        assert "profiles" in data
+        assert "depth_grid" in data
+        assert len(data["profiles"]) == 7

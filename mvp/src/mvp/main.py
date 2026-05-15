@@ -80,6 +80,21 @@ def main():
         action="store_true",
         help="Export Kartverket FKB-Bygning building data for riverbank landmarks",
     )
+    parser.add_argument(
+        "--bird-audio",
+        action="store_true",
+        help="Export xeno-canto bird call manifest for AudioManager",
+    )
+    parser.add_argument(
+        "--salmon",
+        action="store_true",
+        help="Export Lakseregisteret salmon spawning data for gameplay events",
+    )
+    parser.add_argument(
+        "--bathymetry",
+        action="store_true",
+        help="Export Kartverket Dybdedata river depth profiles for physics/rendering",
+    )
 
     args = parser.parse_args()
 
@@ -260,6 +275,36 @@ def main():
         from .kartverket_buildings import export_building_json
 
         export_building_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.12: Export bird audio manifest (optional)
+    if args.bird_audio:
+        print("STEP 3.12: xeno-canto Bird Audio")
+        print("-" * 40)
+
+        from .xenocanto import export_bird_audio_json
+
+        export_bird_audio_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.13: Export salmon spawning data (optional)
+    if args.salmon:
+        print("STEP 3.13: Lakseregisteret Salmon Data")
+        print("-" * 40)
+
+        from .lakseregisteret import export_salmon_json
+
+        export_salmon_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.14: Export bathymetry/depth data (optional)
+    if args.bathymetry:
+        print("STEP 3.14: Kartverket Dybdedata Bathymetry")
+        print("-" * 40)
+
+        from .dybdedata import export_bathymetry_json
+
+        export_bathymetry_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images
