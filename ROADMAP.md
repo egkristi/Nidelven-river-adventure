@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 11: NVE HydAPI river flow + NIBIO AR5 land cover integration)
+Last updated: 2026-05-15 (Phase 12: Artsdatabanken species + NVDB bridges + FKB-Bygning buildings)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -10,7 +10,7 @@ Last updated: 2026-05-15 (Phase 11: NVE HydAPI river flow + NIBIO AR5 land cover
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 11 phases complete.** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` + `wildlife_data.json` + `bridge_data.json` + `building_data.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 12 phases complete.** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -24,6 +24,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` +
 > ✅ **Phase 9** — Close all open issues: flow perf, CodeQL C#, CLI tests
 > ✅ **Phase 10** — CI cleanup: deduplicate workaround, upgrade action-gh-release v2
 > ✅ **Phase 11** — NVE HydAPI river flow + NIBIO AR5 land cover data integration
+> ✅ **Phase 12** — Artsdatabanken species + NVDB bridges + FKB-Bygning buildings
 
 ### Full Audit (2026-05-15)
 
@@ -43,7 +44,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (82 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, CLI — all lint clean |
+| Python MVP pipeline | ✅ Functional (109 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, Artsdatabanken, NVDB, FKB-Bygning, CLI — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -51,7 +52,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 | CodeQL | ✅ Passing | Python + C# security scanning |
 | Integration (Python→Unity) | ✅ Complete | `export_unity_raw()` + `river_path.json` + `weather.json` → StreamingAssets |
 | Playable experience | ✅ Feature-complete | Tutorial, localization, achievements, physics, sound |
-| Audit status | ✅ All issues resolved | 0 open issues (all 48 closed) |
+| Audit status | ✅ All issues resolved | 0 open issues (all 51 closed) |
 
 ---
 
@@ -163,8 +164,11 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `main.py` | `main()` with --sample, --qgis, --skip-* flags | `--interactive` (requires display), `--kartverket` (network), `--orthophoto` (network) |
 | `nve_hydapi.py` | `get_seasonal_flow`, `build_river_physics_params`, `export_flow_json`, `fetch_flow_statistics` | `fetch_observations`, `fetch_current_flow` (network) |
 | `nibio_ar5.py` | `classify_features`, `get_vegetation_params`, `generate_vegetation_map`, `build_unity_vegetation_data`, `export_vegetation_json` | `fetch_land_cover` (network) |
+| `artsdatabanken.py` | `get_species_list`, `build_wildlife_spawn_data`, `export_wildlife_json`, `_merge_with_offline`, `SPAWNER_CATEGORIES` | `fetch_species_observations` (network) |
+| `nvdb_bridges.py` | `get_bridge_list`, `build_bridge_data`, `_classify_bridge_type`, `_parse_wkt_centroid`, `export_bridge_json`, `_safe_float/int` | `fetch_bridges` (network) |
+| `kartverket_buildings.py` | `get_building_list`, `build_building_data`, `classify_building`, `_is_landmark`, `_extract_centroid`, `export_building_json`, `_safe_float/int` | `fetch_buildings` (network) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 82 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 109 tests passing. Integration test included.
 
 ---
 
@@ -326,6 +330,21 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 - [x] Add `--hydapi` and `--vegetation` CLI flags to main.py ✔️ (1e215a8)
 - [x] Add 16 new tests (7 HydAPI + 9 AR5), total: 82 passing ✔️ (1e215a8)
 - [x] Create issues for future data integration: #46 (Artsdatabanken), #47 (FKB-Bygning), #48 (NVDB bridges)
+
+### Phase 12: Artsdatabanken + NVDB + FKB-Bygning ✅ COMPLETE
+
+- [x] Implement `artsdatabanken.py` — Artsdatabanken/GBIF species client ✔️ (e7442e8) — Fixes #46
+  - Offline curated species list for Nidelva (15 species: 6 birds, 4 fish, 5 mammals)
+  - GBIF API integration for live occurrence queries by bbox
+  - Seasonal filtering and Unity WildlifeSpawner format export
+- [x] Implement `nvdb_bridges.py` — NVDB API V4 bridge client ✔️ (20b9a9b) — Fixes #48
+  - Offline curated data: 5 bridges on Nidelva (E18, Sørlandsbanen, Rykene, Bøylefoss, Froland)
+  - Bridge type classification (beam/arch/suspension/truss), obstacle detection (clearance < 3m)
+- [x] Implement `kartverket_buildings.py` — FKB-Bygning building client ✔️ (192b2c7) — Fixes #47
+  - Offline curated data: 6 buildings along Nidelva (kraftstasjoner, kirke, gård)
+  - Kartverket WFS integration, building type classification, landmark detection
+- [x] Add `--wildlife`, `--bridges`, `--buildings` CLI flags to main.py ✔️
+- [x] Add 27 new tests (9 Artsdatabanken + 8 NVDB + 10 FKB-Bygning), total: 109 passing ✔️
 
 ---
 

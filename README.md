@@ -43,8 +43,11 @@ uv run nidelven --orthophoto     # download aerial orthophoto as terrain texture
 uv run nidelven --qgis           # export GeoTIFF + GeoJSON for QGIS browsing
 uv run nidelven --hydapi         # fetch NVE HydAPI river flow data
 uv run nidelven --vegetation     # fetch NIBIO AR5 land cover data
+uv run nidelven --wildlife       # export Artsdatabanken species data
+uv run nidelven --bridges        # export NVDB bridge data
+uv run nidelven --buildings      # export Kartverket FKB-Bygning data
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite (82 tests)
+uv run pytest tests/ -v          # run test suite (109 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -58,6 +61,9 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Terrain** | 30m DEM (Copernicus GLO-30) + 1m LiDAR (Kartverket) + aerial orthophoto (Norge i bilder) + QGIS export | ✅ Pipeline + Unity |
 | **River** | D8 flow accumulation + NVE ELVIS real geometry + Leopold-Maddock widths + NVE HydAPI live flow | ✅ Works |
 | **Vegetation Data** | NIBIO AR5 land cover classification (forest/agriculture/wetland) → vegetation map | ✅ Implemented |
+| **Wildlife Data** | Artsdatabanken/GBIF species observations → Unity WildlifeSpawner | ✅ Implemented |
+| **Bridges** | NVDB API V4 bridge objects → river landmarks/obstacles | ✅ Implemented |
+| **Buildings** | Kartverket FKB-Bygning → riverbank landmarks | ✅ Implemented |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
 | **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
@@ -100,9 +106,12 @@ mvp/
     weather.py         MET Norway weather integration (live/seasonal)
     nve_hydapi.py      NVE HydAPI river flow client (real-time + seasonal)
     nibio_ar5.py       NIBIO AR5 land cover client (vegetation classification)
+    artsdatabanken.py  Artsdatabanken/GBIF species client (wildlife spawning)
+    nvdb_bridges.py    NVDB API V4 bridge client (landmarks/obstacles)
+    kartverket_buildings.py  FKB-Bygning building client (riverbank landmarks)
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               82 pytest tests (core modules: 46-69% coverage)
+  tests/               109 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml (Python + C#)
 ```
