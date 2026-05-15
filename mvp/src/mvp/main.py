@@ -55,6 +55,16 @@ def main():
         action="store_true",
         help="Export results as QGIS project (GeoTIFF + GeoJSON + .qgs)",
     )
+    parser.add_argument(
+        "--hydapi",
+        action="store_true",
+        help="Fetch real river flow data from NVE HydAPI (Nidelva discharge/level)",
+    )
+    parser.add_argument(
+        "--vegetation",
+        action="store_true",
+        help="Fetch NIBIO AR5 land cover data for vegetation placement",
+    )
 
     args = parser.parse_args()
 
@@ -185,6 +195,26 @@ def main():
             speeds=speeds_list,
             orthophoto_path=ortho_ref,
         )
+        print()
+
+    # Step 3.7: Fetch river flow data from NVE HydAPI (optional)
+    if args.hydapi:
+        print("STEP 3.7: NVE HydAPI River Flow Data")
+        print("-" * 40)
+
+        from .nve_hydapi import export_flow_json
+
+        export_flow_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.8: Fetch NIBIO AR5 land cover (optional)
+    if args.vegetation:
+        print("STEP 3.8: NIBIO AR5 Land Cover")
+        print("-" * 40)
+
+        from .nibio_ar5 import export_vegetation_json
+
+        export_vegetation_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images

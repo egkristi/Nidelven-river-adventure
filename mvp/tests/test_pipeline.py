@@ -1008,3 +1008,293 @@ class TestCLI:
         # CSV should have content (header + at least 1 data row)
         lines = river_csv.read_text().strip().split("\n")
         assert len(lines) >= 2
+
+
+class TestNveHydapi:
+    """Tests for NVE HydAPI river flow client."""
+
+    def test_get_seasonal_flow_default(self):
+        """Test seasonal flow returns valid structure."""
+        from mvp.nve_hydapi import get_seasonal_flow
+
+        result = get_seasonal_flow(month=6)
+        assert "discharge_m3s" in result
+        assert "stage_m" in result
+        assert "flow_speed_ms" in result
+        assert "river_width_m" in result
+        assert result["source"] == "climate_normals"
+        assert result["month"] == 6
+
+    def test_get_seasonal_flow_all_months(self):
+        """Test seasonal flow for all 12 months."""
+        from mvp.nve_hydapi import get_seasonal_flow
+
+        for month in range(1, 13):
+            result = get_seasonal_flow(month=month)
+            assert result["discharge_m3s"] > 0
+            assert result["stage_m"] > 0
+            assert result["flow_speed_ms"] > 0
+            assert result["river_width_m"] > 20
+
+    def test_get_seasonal_flow_spring_flood(self):
+        """Test that spring months have higher discharge."""
+        from mvp.nve_hydapi import get_seasonal_flow
+
+        spring = get_seasonal_flow(month=5)  # May = peak snowmelt
+        winter = get_seasonal_flow(month=2)  # Feb = low flow
+        assert spring["discharge_m3s"] > winter["discharge_m3s"]
+
+    def test_build_river_physics_params(self):
+        """Test conversion to Unity physics parameters."""
+        from mvp.nve_hydapi import build_river_physics_params
+
+        flow_data = {
+            "discharge_m3s": 50.0,
+            "stage_m": 1.5,
+            "flow_speed_ms": 1.2,
+            "river_width_m": 37.5,
+            "temp_c": 14.0,
+            "source": "test",
+        }
+        params = build_river_physics_params(flow_data)
+        assert "flow_speed" in params
+        assert "river_width" in params
+        assert "water_depth" in params
+        assert "turbulence" in params
+        assert "current_strength" in params
+        assert "water_clarity" in params
+        assert 0.3 <= params["flow_speed"] <= 3.0
+        assert 0.0 <= params["turbulence"] <= 1.0
+        assert 0.0 <= params["current_strength"] <= 1.0
+        assert 0.0 <= params["water_clarity"] <= 1.0
+
+    def test_build_river_physics_params_extreme_flow(self):
+        """Test physics params with extreme discharge values."""
+        from mvp.nve_hydapi import build_river_physics_params
+
+        # Very high flow (flood)
+        flood = build_river_physics_params(
+            {"discharge_m3s": 200.0, "flow_speed_ms": 4.0, "river_width_m": 60.0}
+        )
+        assert flood["flow_speed"] == 3.0  # Clamped to max
+        assert flood["turbulence"] >= 0.9
+
+        # Very low flow
+        low = build_river_physics_params(
+            {"discharge_m3s": 5.0, "flow_speed_ms": 0.1, "river_width_m": 30.0}
+        )
+        assert low["flow_speed"] == 0.3  # Clamped to min
+        assert low["turbulence"] < 0.1
+
+    def test_export_flow_json(self, tmp_path):
+        """Test JSON export with seasonal data (no network)."""
+        from mvp.nve_hydapi import export_flow_json
+
+        result = export_flow_json(tmp_path, fetch_live=False, month=7)
+        assert result.exists()
+        assert result.name == "flow_data.json"
+
+        data = json.loads(result.read_text())
+        assert "flow_data" in data
+        assert "physics_params" in data
+        assert "stations" in data
+        assert data["flow_data"]["source"] == "climate_normals"
+
+    def test_default_statistics(self):
+        """Test fallback statistics."""
+        from mvp.nve_hydapi import _default_statistics
+
+        stats = _default_statistics()
+        assert stats["mean_discharge_m3s"] > 0
+        assert stats["min_discharge_m3s"] < stats["max_discharge_m3s"]
+
+
+class TestNibioAr5:
+    """Tests for NIBIO AR5 land cover client."""
+
+    def test_classify_features_empty(self):
+        """Test classification with empty feature collection."""
+        from mvp.nibio_ar5 import classify_features
+
+        result = classify_features({"type": "FeatureCollection", "features": []})
+        assert result == []
+
+    def test_classify_features_basic(self):
+        """Test classification of a simple forest polygon."""
+        from mvp.nibio_ar5 import classify_features
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 30, "treslag": 31},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [[8.5, 58.4], [8.6, 58.4], [8.6, 58.5], [8.5, 58.5], [8.5, 58.4]]
+                        ],
+                    },
+                }
+            ],
+        }
+        result = classify_features(geojson)
+        assert len(result) == 1
+        assert result[0]["class"] == "forest"
+        assert result[0]["forest_type"] == "spruce"
+        assert result[0]["arealtype"] == 30
+
+    def test_classify_features_multiple(self):
+        """Test classification with multiple land cover types."""
+        from mvp.nibio_ar5 import classify_features
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 30, "treslag": 32},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [8.5, 58.5],
+                    },
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 20, "treslag": 0},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [8.6, 58.5],
+                    },
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 80, "treslag": 0},
+                    "geometry": {
+                        "type": "Point",
+                        "coordinates": [8.55, 58.45],
+                    },
+                },
+            ],
+        }
+        result = classify_features(geojson)
+        assert len(result) == 3
+        classes = [r["class"] for r in result]
+        assert "forest" in classes
+        assert "agriculture" in classes
+        assert "freshwater" in classes
+
+    def test_get_vegetation_params(self):
+        """Test vegetation parameter lookup."""
+        from mvp.nibio_ar5 import get_vegetation_params
+
+        forest = get_vegetation_params("forest")
+        assert forest["tree_density"] > 0.5
+        assert forest["grass_density"] < forest["tree_density"]
+
+        water = get_vegetation_params("freshwater")
+        assert water["tree_density"] == 0.0
+        assert water["grass_density"] == 0.0
+
+        # Unknown class returns defaults
+        unknown = get_vegetation_params("martian_landscape")
+        assert "tree_density" in unknown
+
+    def test_generate_vegetation_map(self):
+        """Test rasterized vegetation map generation."""
+        from mvp.nibio_ar5 import generate_vegetation_map
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 30},
+                    "geometry": {
+                        "type": "Polygon",
+                        "coordinates": [
+                            [
+                                [8.5, 58.4],
+                                [8.6, 58.4],
+                                [8.6, 58.5],
+                                [8.5, 58.5],
+                                [8.5, 58.4],
+                            ]
+                        ],
+                    },
+                }
+            ],
+        }
+        veg_map = generate_vegetation_map(
+            geojson,
+            dem_shape=(64, 64),
+            bbox=(8.45, 58.38, 8.85, 58.62),
+        )
+        assert veg_map.shape == (64, 64)
+        assert veg_map.dtype == np.uint8
+        # Should have some forest (30) cells
+        assert np.any(veg_map == 30)
+
+    def test_build_unity_vegetation_data(self):
+        """Test Unity vegetation data structure."""
+        from mvp.nibio_ar5 import build_unity_vegetation_data, classify_features
+
+        geojson = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 30, "treslag": 31},
+                    "geometry": {"type": "Point", "coordinates": [8.5, 58.5]},
+                },
+                {
+                    "type": "Feature",
+                    "properties": {"arealtype": 20, "treslag": 0},
+                    "geometry": {"type": "Point", "coordinates": [8.6, 58.5]},
+                },
+            ],
+        }
+        classified = classify_features(geojson)
+        data = build_unity_vegetation_data(classified)
+
+        assert "class_distribution" in data
+        assert "forest_types" in data
+        assert "zones" in data
+        assert data["source"] == "nibio_ar5"
+        assert len(data["zones"]) == 2
+
+    def test_export_vegetation_json_offline(self, tmp_path):
+        """Test JSON export without network (default data)."""
+        from mvp.nibio_ar5 import export_vegetation_json
+
+        result = export_vegetation_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "vegetation_data.json"
+
+        data = json.loads(result.read_text())
+        assert "class_distribution" in data
+        assert "forest_types" in data
+        assert data["source"] == "default_estimate"
+
+    def test_default_vegetation_data(self):
+        """Test default vegetation data structure."""
+        from mvp.nibio_ar5 import _default_vegetation_data
+
+        data = _default_vegetation_data((8.45, 58.38, 8.85, 58.62))
+        assert data["source"] == "default_estimate"
+        assert "forest" in data["class_distribution"]
+        assert data["class_distribution"]["forest"] > 0
+
+    def test_extract_coordinates_multipolygon(self):
+        """Test coordinate extraction from MultiPolygon."""
+        from mvp.nibio_ar5 import _extract_coordinates
+
+        geometry = {
+            "type": "MultiPolygon",
+            "coordinates": [
+                [[[8.5, 58.4], [8.6, 58.4], [8.6, 58.5], [8.5, 58.5], [8.5, 58.4]]],
+                [[[8.7, 58.4], [8.8, 58.4], [8.8, 58.5], [8.7, 58.5], [8.7, 58.4]]],
+            ],
+        }
+        coords = _extract_coordinates(geometry)
+        assert len(coords) == 10  # 5 + 5 points
