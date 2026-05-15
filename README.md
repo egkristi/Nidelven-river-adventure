@@ -42,7 +42,7 @@ uv run nidelven --kartverket     # use Kartverket 1m LiDAR DEM (high-res)
 uv run nidelven --orthophoto     # download aerial orthophoto as terrain texture
 uv run nidelven --qgis           # export GeoTIFF + GeoJSON for QGIS browsing
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite (61 tests)
+uv run pytest tests/ -v          # run test suite (66 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -69,7 +69,7 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Localization** | English / Norwegian with JSON file override | ✅ Implemented |
 | **Achievements** | Steam achievements (first journey, 10km, capsize recovery, speed) | ✅ Implemented |
 | **Steam** | Achievements, stats, cloud saves (opt-in) | ✅ Guarded with `#if` |
-| **CI/CD** | Python lint/test, Unity test/build, CodeQL | ✅ All green |
+| **CI/CD** | Python lint/test, Unity test/build, CodeQL (Python + C#) | ✅ All green |
 
 ---
 
@@ -97,9 +97,9 @@ mvp/
     weather.py         MET Norway weather integration (live/seasonal)
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               61 pytest tests (core modules: 46-69% coverage)
+  tests/               66 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
-.github/workflows/     ci.yml, codeql.yml
+.github/workflows/     ci.yml, codeql.yml (Python + C#)
 ```
 
 ---
