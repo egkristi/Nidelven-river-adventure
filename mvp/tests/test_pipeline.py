@@ -1439,3 +1439,144 @@ class TestArtsdatabanken:
         assert SPAWNER_CATEGORIES["birds"]["max_count"] > 0
         assert SPAWNER_CATEGORIES["fish"]["spawn_height_offset"] < 0  # underwater
         assert SPAWNER_CATEGORIES["mammals"]["spawn_height_offset"] == 0.0
+
+
+class TestNvdbBridges:
+    """Tests for the NVDB bridge data client."""
+
+    def test_get_bridge_list(self):
+        """Test getting offline bridge list."""
+        from mvp.nvdb_bridges import get_bridge_list
+
+        bridges = get_bridge_list()
+        assert len(bridges) >= 4
+        for bridge in bridges:
+            assert "name" in bridge
+            assert "latitude" in bridge
+            assert "longitude" in bridge
+            assert "length_m" in bridge
+            assert bridge["latitude"] > 58.0
+            assert bridge["longitude"] > 8.0
+
+    def test_build_bridge_data(self):
+        """Test building Unity-ready bridge data."""
+        from mvp.nvdb_bridges import build_bridge_data
+
+        data = build_bridge_data()
+        assert data["version"] == "1.0"
+        assert data["source"] == "NVDB (Statens vegvesen)"
+        assert data["license"] == "NLOD"
+        assert data["bridge_count"] >= 4
+
+        for bridge in data["bridges"]:
+            assert "name" in bridge
+            assert "position" in bridge
+            assert "dimensions" in bridge
+            assert "prefab" in bridge
+            assert bridge["dimensions"]["length"] > 0
+            assert bridge["dimensions"]["width"] > 0
+            assert bridge["dimensions"]["clearance"] > 0
+
+    def test_build_bridge_data_custom(self):
+        """Test building data from custom bridge list."""
+        from mvp.nvdb_bridges import build_bridge_data
+
+        custom = [
+            {
+                "name": "Test Bridge",
+                "road": "E18",
+                "latitude": 58.45,
+                "longitude": 8.6,
+                "length_m": 100.0,
+                "width_m": 10.0,
+                "clearance_m": 2.0,
+                "bridge_type": "arch",
+                "material": "stone",
+            }
+        ]
+        data = build_bridge_data(custom)
+        assert data["bridge_count"] == 1
+        assert data["bridges"][0]["prefab"] == "BridgeArch"
+        assert data["bridges"][0]["is_obstacle"] is True
+
+    def test_bridge_obstacle_detection(self):
+        """Test that low-clearance bridges are flagged as obstacles."""
+        from mvp.nvdb_bridges import build_bridge_data
+
+        low = [
+            {
+                "name": "Low",
+                "road": "FV1",
+                "latitude": 58.5,
+                "longitude": 8.5,
+                "length_m": 30.0,
+                "width_m": 5.0,
+                "clearance_m": 2.5,
+                "bridge_type": "beam",
+                "material": "concrete",
+            }
+        ]
+        high = [
+            {
+                "name": "High",
+                "road": "E18",
+                "latitude": 58.5,
+                "longitude": 8.5,
+                "length_m": 100.0,
+                "width_m": 12.0,
+                "clearance_m": 8.0,
+                "bridge_type": "beam",
+                "material": "concrete",
+            }
+        ]
+        assert build_bridge_data(low)["bridges"][0]["is_obstacle"] is True
+        assert build_bridge_data(high)["bridges"][0]["is_obstacle"] is False
+
+    def test_classify_bridge_type(self):
+        """Test bridge type classification."""
+        from mvp.nvdb_bridges import _classify_bridge_type
+
+        assert _classify_bridge_type({"Konstruksjon": "Buebru"}) == "arch"
+        assert _classify_bridge_type({"Konstruksjon": "Hengebru"}) == "suspension"
+        assert _classify_bridge_type({"Konstruksjon": "Fagverksbru"}) == "truss"
+        assert _classify_bridge_type({"Konstruksjon": "Platebru"}) == "beam"
+        assert _classify_bridge_type({}) == "beam"
+
+    def test_parse_wkt_centroid(self):
+        """Test WKT geometry centroid extraction."""
+        from mvp.nvdb_bridges import _parse_wkt_centroid
+
+        wkt = "LINESTRING (8.5 58.4, 8.6 58.5)"
+        lat, lon = _parse_wkt_centroid(wkt)
+        assert abs(lat - 58.45) < 0.01
+        assert abs(lon - 8.55) < 0.01
+
+        lat, lon = _parse_wkt_centroid("")
+        assert lat is None
+        assert lon is None
+
+    def test_export_bridge_json(self, tmp_path):
+        """Test JSON export of bridge data."""
+        from mvp.nvdb_bridges import export_bridge_json
+
+        result = export_bridge_json(tmp_path, fetch_live=False)
+        assert result.exists()
+        assert result.name == "bridge_data.json"
+
+        with open(result) as f:
+            data = json.load(f)
+
+        assert "bridges" in data
+        assert data["bridge_count"] >= 4
+        assert data["bridges"][0]["position"]["latitude"] > 58.0
+
+    def test_safe_conversions(self):
+        """Test safe float/int conversion helpers."""
+        from mvp.nvdb_bridges import _safe_float, _safe_int
+
+        assert _safe_float("3.14") == 3.14
+        assert _safe_float(None) is None
+        assert _safe_float("not_a_number") is None
+        assert _safe_int("42") == 42
+        assert _safe_int(None) is None
+        assert _safe_int("abc") is None

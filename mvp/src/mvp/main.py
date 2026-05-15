@@ -70,6 +70,11 @@ def main():
         action="store_true",
         help="Export Artsdatabanken species data for wildlife spawning",
     )
+    parser.add_argument(
+        "--bridges",
+        action="store_true",
+        help="Export NVDB bridge data for river landmarks/obstacles",
+    )
 
     args = parser.parse_args()
 
@@ -230,6 +235,16 @@ def main():
         from .artsdatabanken import export_wildlife_json
 
         export_wildlife_json(output_dir, fetch_live=True)
+        print()
+
+    # Step 3.10: Export NVDB bridge data (optional)
+    if args.bridges:
+        print("STEP 3.10: NVDB Bridge Data")
+        print("-" * 40)
+
+        from .nvdb_bridges import export_bridge_json
+
+        export_bridge_json(output_dir, fetch_live=True)
         print()
 
     # Step 4: Generate preview images
