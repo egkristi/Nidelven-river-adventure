@@ -172,8 +172,10 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `xenocanto.py` | `get_bird_audio_list`, `_parse_duration`, `_parse_recording`, `build_audio_manifest`, `export_bird_audio_json` | `fetch_recordings` (network) |
 | `lakseregisteret.py` | `get_salmon_data`, `get_spawning_areas`, `get_season_info`, `build_gameplay_data`, `export_salmon_json` | `fetch_salmon_registrations` (network) |
 | `dybdedata.py` | `get_depth_profiles`, `get_depth_at_position`, `build_depth_grid`, `_extract_layer_names`, `_estimate_resolution`, `export_bathymetry_json` | `fetch_bathymetry` (network) |
+| `barentswatch_ais.py` | `get_vessel_traffic`, `classify_vessel_type`, `get_vessel_prefab`, `build_vessel_traffic_data`, `route_patterns`, `export_vessel_traffic_json`, `_safe_float/int` | `fetch_ais_positions` (network) |
+| `riksantikvaren.py` | `get_heritage_sites`, `classify_heritage`, `get_heritage_icon`, `build_heritage_data`, `protected_discovery_radius`, `export_heritage_json`, `_safe_float/int` | `fetch_heritage_data` (network) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 140 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 157 tests passing. Integration test included.
 
 ---
 
