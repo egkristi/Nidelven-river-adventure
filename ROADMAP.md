@@ -358,8 +358,13 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | Item | Severity | Effort | GitHub |
 |------|----------|--------|--------|
 | Legacy UI (UnityEngine.UI) → TMPro | Low | 2 hr | — |
-| `softprops/action-gh-release@v1` outdated (v2 exists) | Low | 10 min | — |
-| Duplicated CI workaround code (3x) | Low | 1 hr | — |
+
+### Resolved (Phase 10 - CI cleanup)
+
+| Item | Resolution | Commit |
+|------|-----------|--------|
+| `softprops/action-gh-release@v1` outdated | Upgraded to v2 | — |
+| Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | — |
 
 ### Resolved (Phase 9 - 2026-05-14)
 
@@ -407,9 +412,9 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | camera.py unconditional import of optional deps | Lazy-import glm | 2b045d1 |
 | Global np.random.seed(42) pollution | Use local default_rng instance | 2b045d1 |
 | CodeQL only scans Python (not C#) | Medium | 30 min | — |
-| Duplicated CI workaround code (3x) | Low | 1 hr | — |
+| Duplicated CI workaround code (3x) | ~~Resolved~~ | — | — |
 | Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | — |
-| `softprops/action-gh-release@v1` outdated (v2 exists) | Low | 10 min | — |
+| `softprops/action-gh-release@v1` outdated (v2 exists) | ~~Resolved~~ | — | — |
 | No CLI test coverage (main.py) | Low | 1 hr | — |
 | `export_river_path_json()` untested | Low | 30 min | — |
 | `pytest-cov` not declared as dependency | Low | 5 min | — |
@@ -500,8 +505,8 @@ cd Nidelven-river-adventure
 ### Priority 3: Low priority (post v1.0.0)
 - [ ] CodeQL for C# (extend existing workflow) (#44)
 - [ ] Legacy UI (UnityEngine.UI) → TMPro migration
-- [ ] `softprops/action-gh-release@v1` → v2
-- [ ] Extract CI workaround into composite action
+- [x] `softprops/action-gh-release@v1` → v2 ✔️
+- [x] Extract CI workaround into shared script ✔️
 
 ### Future features
 - Weather effects (rain, fog particles)

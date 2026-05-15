@@ -135,10 +135,10 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (61 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (66 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
-| **CodeQL** | Static security analysis for Python |
+| **CodeQL** | Static security analysis for Python + C# |
 
 ---
 

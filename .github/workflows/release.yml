@@ -54,16 +54,7 @@ jobs:
           lfs: true
 
       - name: Prepare for CI (workaround ShaderGraph GUID issue)
-        run: |
-          python3 -c "
-          import json
-          with open('Packages/manifest.json', 'r') as f:
-              m = json.load(f)
-          m['dependencies'].pop('com.unity.render-pipelines.universal', None)
-          with open('Packages/manifest.json', 'w') as f:
-              json.dump(m, f, indent=2)
-          "
-          printf '%s\n' '-define:DISABLESTEAMWORKS' '-define:DISABLE_URP' > Assets/csc.rsp
+        run: bash .github/scripts/prepare-ci.sh
 
       - name: Generate terrain data for build
         run: |
@@ -182,7 +173,7 @@ jobs:
           ls -la release/
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           files: release/*
           draft: true
