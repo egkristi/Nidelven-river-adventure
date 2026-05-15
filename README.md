@@ -46,8 +46,11 @@ uv run nidelven --vegetation     # fetch NIBIO AR5 land cover data
 uv run nidelven --wildlife       # export Artsdatabanken species data
 uv run nidelven --bridges        # export NVDB bridge data
 uv run nidelven --buildings      # export Kartverket FKB-Bygning data
+uv run nidelven --bird-audio     # export xeno-canto bird call manifest
+uv run nidelven --salmon         # export Lakseregisteret salmon data
+uv run nidelven --bathymetry     # export Kartverket Dybdedata depth profiles
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite (109 tests)
+uv run pytest tests/ -v          # run test suite (140 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -64,6 +67,9 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Wildlife Data** | Artsdatabanken/GBIF species observations → Unity WildlifeSpawner | ✅ Implemented |
 | **Bridges** | NVDB API V4 bridge objects → river landmarks/obstacles | ✅ Implemented |
 | **Buildings** | Kartverket FKB-Bygning → riverbank landmarks | ✅ Implemented |
+| **Bird Audio** | xeno-canto bird call recordings manifest for AudioManager | ✅ Implemented |
+| **Salmon** | Lakseregisteret spawning areas + seasonal gameplay events | ✅ Implemented |
+| **Bathymetry** | Kartverket Dybdedata depth profiles + interpolated grid | ✅ Implemented |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
 | **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
@@ -109,9 +115,12 @@ mvp/
     artsdatabanken.py  Artsdatabanken/GBIF species client (wildlife spawning)
     nvdb_bridges.py    NVDB API V4 bridge client (landmarks/obstacles)
     kartverket_buildings.py  FKB-Bygning building client (riverbank landmarks)
+    xenocanto.py       xeno-canto bird call manifest (AudioManager)
+    lakseregisteret.py Salmon spawning areas + seasonal gameplay events
+    dybdedata.py       Kartverket bathymetry depth profiles + grid
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               109 pytest tests (core modules: 46-69% coverage)
+  tests/               140 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml (Python + C#)
 ```

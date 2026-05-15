@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 12: Artsdatabanken species + NVDB bridges + FKB-Bygning buildings)
+Last updated: 2026-05-15 (Phase 13: xeno-canto bird audio + Lakseregisteret salmon + Dybdedata bathymetry)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -24,7 +24,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` +
 > ✅ **Phase 9** — Close all open issues: flow perf, CodeQL C#, CLI tests
 > ✅ **Phase 10** — CI cleanup: deduplicate workaround, upgrade action-gh-release v2
 > ✅ **Phase 11** — NVE HydAPI river flow + NIBIO AR5 land cover data integration
-> ✅ **Phase 12** — Artsdatabanken species + NVDB bridges + FKB-Bygning buildings
+> ✅ **Phase 13** — xeno-canto bird audio + Lakseregisteret salmon + Dybdedata bathymetry
 
 ### Full Audit (2026-05-15)
 
@@ -44,7 +44,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (109 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, Artsdatabanken, NVDB, FKB-Bygning, CLI — all lint clean |
+| Python MVP pipeline | ✅ Functional (140 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, Artsdatabanken, NVDB, FKB-Bygning, xeno-canto, Lakseregisteret, Dybdedata, CLI — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -167,8 +167,11 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
 | `artsdatabanken.py` | `get_species_list`, `build_wildlife_spawn_data`, `export_wildlife_json`, `_merge_with_offline`, `SPAWNER_CATEGORIES` | `fetch_species_observations` (network) |
 | `nvdb_bridges.py` | `get_bridge_list`, `build_bridge_data`, `_classify_bridge_type`, `_parse_wkt_centroid`, `export_bridge_json`, `_safe_float/int` | `fetch_bridges` (network) |
 | `kartverket_buildings.py` | `get_building_list`, `build_building_data`, `classify_building`, `_is_landmark`, `_extract_centroid`, `export_building_json`, `_safe_float/int` | `fetch_buildings` (network) |
+| `xenocanto.py` | `get_bird_audio_list`, `_parse_duration`, `_parse_recording`, `build_audio_manifest`, `export_bird_audio_json` | `fetch_recordings` (network) |
+| `lakseregisteret.py` | `get_salmon_data`, `get_spawning_areas`, `get_season_info`, `build_gameplay_data`, `export_salmon_json` | `fetch_salmon_registrations` (network) |
+| `dybdedata.py` | `get_depth_profiles`, `get_depth_at_position`, `build_depth_grid`, `_extract_layer_names`, `_estimate_resolution`, `export_bathymetry_json` | `fetch_bathymetry` (network) |
 
-**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 109 tests passing. Integration test included.
+**Core module coverage: terrain_mesh 69%, river_flow 46%, dem_downloader 30%+.** 140 tests passing. Integration test included.
 
 ---
 
@@ -345,6 +348,25 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
   - Kartverket WFS integration, building type classification, landmark detection
 - [x] Add `--wildlife`, `--bridges`, `--buildings` CLI flags to main.py ✔️
 - [x] Add 27 new tests (9 Artsdatabanken + 8 NVDB + 10 FKB-Bygning), total: 109 passing ✔️
+
+### Phase 13: xeno-canto + Lakseregisteret + Dybdedata ✅ COMPLETE
+
+- [x] Implement `xenocanto.py` — xeno-canto bird call audio client ✔️ (7d820b5) — Fixes #49
+  - 6 bird species with call type, habitat zone, volume weight, loop config
+  - xeno-canto API v2 integration for live recording queries
+  - Audio manifest generation for Unity AudioManager bird soundscape
+- [x] Implement `lakseregisteret.py` — Lakseregisteret salmon data client ✔️ (7d820b5) — Fixes #50
+  - 5 spawning areas on Nidelva (Bøylefoss, Rykene, Haugsjå, Frolands Verk, Helle)
+  - Seasonal salmon behavior model (12 months: overwintering → migration → spawning)
+  - Fish ladder data (Bøylefoss fisketrapp, built 1912)
+  - Gameplay event generation (salmon runs, spawning, smolt migration, fish ladder)
+- [x] Implement `dybdedata.py` — Kartverket Dybdedata bathymetry client ✔️ (7d820b5) — Fixes #51
+  - 7 depth profiles from estuary (12m) to upper Nidelva (8m)
+  - Depth interpolation between cross-sections
+  - Continuous depth grid generation for buoyancy physics
+  - Kartverket WMS capabilities check
+- [x] Add `--bird-audio`, `--salmon`, `--bathymetry` CLI flags to main.py ✔️
+- [x] Add 31 new tests (9 xeno-canto + 11 Lakseregisteret + 11 Dybdedata), total: 140 passing ✔️
 
 ---
 
@@ -702,13 +724,13 @@ Based on the ratings above, recommended integration order:
 2. ~~**Kartverket DTM 10** — Upgrade terrain from 30m to 10m resolution~~ ✅ (kartverket_dem.py, --kartverket flag)
 3. ~~**NIBIO AR5** — Drive vegetation placement from real land-use data~~ ✅ (1e215a8)
 4. ~~**Artsdatabanken** — Query real species list for Nidelva → spawn accurate wildlife~~ ✅ (e7442e8, #46)
-5. **xeno-canto** — Download actual bird calls for species present
+5. ~~**xeno-canto** — Download actual bird calls for species present~~ ✅ (7d820b5, #49)
 6. ~~**Kartverket FKB-Bygning** — Place real buildings along riverbanks~~ ✅ (192b2c7, #47)
 7. ~~**MET Frost API** — Historical weather patterns for dynamic weather system~~ ✅ (weather.py, Phase 2)
 8. ~~**NVDB bridges** — Place real bridges as landmarks/obstacles~~ ✅ (20b9a9b, #48)
-9. **Kartverket Dybdedata** — River depth for underwater terrain + boat physics
+9. ~~**Kartverket Dybdedata** — River depth for underwater terrain + boat physics~~ ✅ (7d820b5, #51)
 10. ~~**Norge i bilder** — Aerial photos as terrain textures~~ ✅ (norgeibilder.py, --orthophoto flag)
-11. **Lakseregisteret** — Salmon spawning events as gameplay feature
+11. ~~**Lakseregisteret** — Salmon spawning events as gameplay feature~~ ✅ (7d820b5, #50)
 12. **Barentswatch AIS** — Animate ship traffic near Arendal harbor
 13. **Riksantikvaren** — Cultural heritage POIs with info panels
 
