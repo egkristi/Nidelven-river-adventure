@@ -30,7 +30,7 @@ dependencies = [
 
 [project.optional-dependencies]
 interactive = [
-    "moderngl>=5.8.0",
+    "moderngl>=5.12.0",
     "moderngl-window>=2.4.0",
     "PyGLM>=2.7.0",
 ]
