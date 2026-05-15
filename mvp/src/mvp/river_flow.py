@@ -90,10 +90,15 @@ def compute_flow_direction_d8_fast(dem: np.ndarray) -> np.ndarray:
 
 def compute_flow_accumulation(dem: np.ndarray, flow_dir: np.ndarray | None = None) -> np.ndarray:
     """
-    Compute flow accumulation using D8 flow directions.
+    Compute flow accumulation using D8 flow directions (optimized).
 
     Each cell gets a count of how many upstream cells drain through it.
     High values indicate river channels (convergent flow).
+
+    Optimized vs naive approach:
+    - Pre-computes a flat receiver index array (no per-cell offset lookup)
+    - Iterates flat arrays in topological (elevation-sorted) order
+    - Avoids per-cell row/col division and bounds checking
 
     Args:
         dem: 2D elevation array
@@ -106,24 +111,40 @@ def compute_flow_accumulation(dem: np.ndarray, flow_dir: np.ndarray | None = Non
         flow_dir = compute_flow_direction_d8_fast(dem)
 
     h, w = dem.shape
-    accumulation = np.ones((h, w), dtype=np.float64)
+    n = h * w
 
-    # Sort cells by elevation (highest first) for topological processing
-    flat_indices = np.argsort(dem.ravel())[::-1]
+    # Build flat receiver index: for each cell, the flat index it drains into
+    rows, cols = np.mgrid[0:h, 0:w]
+    fd_flat = flow_dir.ravel()
 
-    for idx in flat_indices:
-        row = idx // w
-        col = idx % w
-        d = flow_dir[row, col]
-        if d < 0:
-            continue
+    # Compute neighbor positions for all cells at once
+    fd_clipped = np.clip(fd_flat, 0, 7)
+    dy = _D8_OFFSETS[fd_clipped, 0]
+    dx = _D8_OFFSETS[fd_clipped, 1]
 
-        dy, dx = _D8_OFFSETS[d]
-        nr, nc = row + dy, col + dx
-        if 0 <= nr < h and 0 <= nc < w:
-            accumulation[nr, nc] += accumulation[row, col]
+    nr = rows.ravel() + dy
+    nc = cols.ravel() + dx
 
-    return accumulation
+    # Build receiver array (flat index of downstream cell)
+    # Out-of-bounds or sinks point to themselves (no transfer)
+    is_valid = (fd_flat >= 0) & (nr >= 0) & (nr < h) & (nc >= 0) & (nc < w)
+    receiver = np.arange(n, dtype=np.intp)  # default: self
+    valid_recv = nr[is_valid] * w + nc[is_valid]
+    receiver[is_valid] = valid_recv
+
+    # Sort cells by elevation (highest first) — topological order
+    sorted_indices = np.argsort(dem.ravel())[::-1]
+
+    # Propagate accumulation in topological order using flat arrays
+    accumulation = np.ones(n, dtype=np.float64)
+    recv = receiver  # pre-computed receiver lookup
+
+    for idx in sorted_indices:
+        r = recv[idx]
+        if r != idx:
+            accumulation[r] += accumulation[idx]
+
+    return accumulation.reshape(h, w)
 
 
 def trace_river_d8(
