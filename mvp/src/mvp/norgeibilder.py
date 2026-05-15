@@ -143,6 +143,7 @@ def download_orthophoto(
     zoom: int = DEFAULT_ZOOM,
     output_path: Path | None = None,
     max_tiles: int = 100,
+    verbose: bool = True,
 ) -> np.ndarray | None:
     """
     Download and stitch aerial orthophoto tiles for a bounding box.
@@ -152,6 +153,7 @@ def download_orthophoto(
         zoom: WMTS zoom level (higher = more detail, more tiles)
         output_path: Optional path to save the stitched image as PNG
         max_tiles: Maximum number of tiles to download (safety limit)
+        verbose: Print progress messages
 
     Returns:
         Numpy array (H, W, 3) of RGB pixel values, or None on failure
@@ -171,23 +173,51 @@ def download_orthophoto(
     if total_tiles == 0:
         return None
 
+    if verbose:
+        print(f"  Downloading {total_tiles} tiles at zoom {zoom}...")
+
+    # Pre-check: try first tile with short timeout to detect unreachable service
+    first_tile = download_tile(x_min, y_min, zoom, timeout=5)
+    if first_tile is None:
+        if verbose:
+            print("  Service unreachable (first tile failed) — skipping download")
+        return None
+
     # Create output image
     width = num_x * TILE_SIZE
     height = num_y * TILE_SIZE
     result = np.zeros((height, width, 3), dtype=np.uint8)
 
-    downloaded = 0
+    # Place first tile
+    tile_arr = np.array(first_tile)
+    h, w = tile_arr.shape[:2]
+    result[0:h, 0:w] = tile_arr[:, :, :3]
+    downloaded = 1
+
+    failed = 0
     for ty in range(y_min, y_max + 1):
         for tx in range(x_min, x_max + 1):
+            # Skip first tile (already downloaded)
+            if tx == x_min and ty == y_min:
+                continue
             tile_img = download_tile(tx, ty, zoom)
             if tile_img is not None:
                 px = (tx - x_min) * TILE_SIZE
                 py = (ty - y_min) * TILE_SIZE
                 tile_arr = np.array(tile_img)
-                # Handle tiles that may be smaller at edges
                 h, w = tile_arr.shape[:2]
                 result[py : py + h, px : px + w] = tile_arr[:, :, :3]
                 downloaded += 1
+            else:
+                failed += 1
+                # Abort early if too many consecutive failures
+                if failed >= 3 and downloaded <= 1:
+                    if verbose:
+                        print("  Too many failures — service may be unavailable")
+                    return None
+
+    if verbose:
+        print(f"  Downloaded {downloaded}/{total_tiles} tiles ({failed} failed)")
 
     if downloaded == 0:
         return None
