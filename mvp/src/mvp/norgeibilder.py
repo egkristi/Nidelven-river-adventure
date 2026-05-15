@@ -27,8 +27,8 @@ USER_AGENT = "NidelvenRiverAdventure/0.1 (github.com/egkristi/Nidelven-river-adv
 # Tile size in pixels (standard WMTS)
 TILE_SIZE = 256
 
-# Default zoom level (15 gives ~4.7m/pixel at 58°N, good for terrain textures)
-DEFAULT_ZOOM = 15
+# Default zoom level (12 gives ~38m/pixel at 58°N — fits NIDELVEN_BBOX in <100 tiles)
+DEFAULT_ZOOM = 12
 
 
 def wgs84_to_tile(lon: float, lat: float, zoom: int) -> tuple[int, int]:
@@ -93,7 +93,7 @@ def download_tile(
     x: int,
     y: int,
     zoom: int = DEFAULT_ZOOM,
-    timeout: int = 30,
+    timeout: int = 10,
 ) -> Image.Image | None:
     """
     Download a single WMTS tile from Norge i bilder.

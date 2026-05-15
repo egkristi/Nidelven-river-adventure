@@ -177,11 +177,14 @@ def main():
 
         from .norgeibilder import export_terrain_texture
 
-        texture_path = export_terrain_texture(output_dir=output_dir)
-        if texture_path:
-            print(f"  ✓ Terrain texture exported: {texture_path}")
-        else:
-            print("  ✗ Orthophoto download failed (network issue or tiles unavailable)")
+        try:
+            texture_path = export_terrain_texture(output_dir=output_dir)
+            if texture_path:
+                print(f"  ✓ Terrain texture exported: {texture_path}")
+            else:
+                print("  ✗ Orthophoto download failed (network issue or tiles unavailable)")
+        except Exception as e:
+            print(f"  ✗ Orthophoto export failed: {e}")
         print()
 
     # Step 3.6: Export QGIS project (optional)
@@ -284,7 +287,7 @@ def main():
 
         from .xenocanto import export_bird_audio_json
 
-        export_bird_audio_json(output_dir, fetch_live=True)
+        export_bird_audio_json(output_dir / "bird_audio.json", fetch_live=True)
         print()
 
     # Step 3.13: Export salmon spawning data (optional)
@@ -294,7 +297,7 @@ def main():
 
         from .lakseregisteret import export_salmon_json
 
-        export_salmon_json(output_dir, fetch_live=True)
+        export_salmon_json(output_dir / "salmon_data.json", fetch_live=True)
         print()
 
     # Step 3.14: Export bathymetry/depth data (optional)
@@ -304,7 +307,7 @@ def main():
 
         from .dybdedata import export_bathymetry_json
 
-        export_bathymetry_json(output_dir, fetch_live=True)
+        export_bathymetry_json(output_dir / "bathymetry.json", fetch_live=True)
         print()
 
     # Step 4: Generate preview images
