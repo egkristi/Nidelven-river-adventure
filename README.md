@@ -94,11 +94,11 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 Assets/
   Scenes/              MainScene.unity (camera + directional light)
   Scripts/
-    Core/              GameManager, AudioManager, SaveManager, PhotoMode, SteamManager, LocalizationManager
-    Environment/       DayNightCycle, TerrainGenerator, RiverController, Vegetation, Wildlife, Weather
+    Core/              GameManager, AudioManager, SaveManager, PhotoMode, SteamManager, LocalizationManager, GameQuitter
+    Environment/       DayNightCycle, TerrainGenerator, RiverController, RiverParticles, VegetationGenerator, WildlifeSpawner, WeatherSystem
     Player/            BoatController, RiverCamera
     UI/                SettingsMenu, TutorialSystem
-  Shaders/             SimpleWater.shader (URP)
+  Shaders/             SimpleWater.shader (URP), PhotoFilter.shader
 mvp/
   src/mvp/             Python pipeline
     dem_downloader.py  Copernicus GLO-30 tile download + merge
@@ -158,7 +158,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (82 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (140 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python + C# |

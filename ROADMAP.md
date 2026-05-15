@@ -10,7 +10,7 @@ Last updated: 2026-05-15 (Phase 13: xeno-canto bird audio + Lakseregisteret salm
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` + `wildlife_data.json` + `bridge_data.json` + `building_data.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 12 phases complete.** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` + `wildlife_data.json` + `bridge_data.json` + `building_data.json` + `bird_audio.json` + `salmon_data.json` + `bathymetry.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 14 phases complete (Phase 0-13).** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -24,6 +24,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` +
 > ✅ **Phase 9** — Close all open issues: flow perf, CodeQL C#, CLI tests
 > ✅ **Phase 10** — CI cleanup: deduplicate workaround, upgrade action-gh-release v2
 > ✅ **Phase 11** — NVE HydAPI river flow + NIBIO AR5 land cover data integration
+> ✅ **Phase 12** — Artsdatabanken wildlife + NVDB bridges + FKB-Bygning buildings
 > ✅ **Phase 13** — xeno-canto bird audio + Lakseregisteret salmon + Dybdedata bathymetry
 
 ### Full Audit (2026-05-15)
