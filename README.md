@@ -49,8 +49,10 @@ uv run nidelven --buildings      # export Kartverket FKB-Bygning data
 uv run nidelven --bird-audio     # export xeno-canto bird call manifest
 uv run nidelven --salmon         # export Lakseregisteret salmon data
 uv run nidelven --bathymetry     # export Kartverket Dybdedata depth profiles
+uv run nidelven --ais            # export Barentswatch AIS vessel traffic
+uv run nidelven --heritage       # export Riksantikvaren cultural heritage POIs
 uv run nidelven --interactive    # 3D terrain viewer (requires OpenGL)
-uv run pytest tests/ -v          # run test suite (140 tests)
+uv run pytest tests/ -v          # run test suite (157 tests)
 ```
 
 The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22 MB per tile, no auth required).
@@ -70,6 +72,8 @@ The pipeline downloads Copernicus GLO-30 DEM tiles from AWS S3 on first run (~22
 | **Bird Audio** | xeno-canto bird call recordings manifest for AudioManager | ✅ Implemented |
 | **Salmon** | Lakseregisteret spawning areas + seasonal gameplay events | ✅ Implemented |
 | **Bathymetry** | Kartverket Dybdedata depth profiles + interpolated grid | ✅ Implemented |
+| **AIS Traffic** | Barentswatch AIS vessel traffic at Arendal harbor | ✅ Implemented |
+| **Heritage** | Riksantikvaren Askeladden cultural heritage POIs along Nidelva | ✅ Implemented |
 | **Weather** | MET Norway Locationforecast + Frost API + seasonal climate normals | ✅ Implemented |
 | **Boat Physics** | Buoyancy, paddling, capsize & recovery, stamina | ✅ Implemented |
 | **Vegetation** | GPU-instanced trees and rocks by elevation/slope | ✅ Implemented |
@@ -118,9 +122,11 @@ mvp/
     xenocanto.py       xeno-canto bird call manifest (AudioManager)
     lakseregisteret.py Salmon spawning areas + seasonal gameplay events
     dybdedata.py       Kartverket bathymetry depth profiles + grid
+    barentswatch_ais.py  Barentswatch AIS vessel traffic client
+    riksantikvaren.py  Riksantikvaren cultural heritage POIs
     renderer.py        Interactive ModernGL 3D viewer (optional)
     headless_renderer.py  Matplotlib preview images
-  tests/               140 pytest tests (core modules: 46-69% coverage)
+  tests/               157 pytest tests (core modules: 46-69% coverage)
 Packages/              Unity package manifest (URP, Input System, Cinemachine, TMPro)
 .github/workflows/     ci.yml, codeql.yml (Python + C#)
 ```
@@ -158,7 +164,7 @@ All pipelines run on every push and PR to `main`:
 
 | Workflow | What it does |
 |----------|-------------|
-| **Python MVP** | Ruff lint, Black format check, pytest (140 tests), full pipeline run |
+| **Python MVP** | Ruff lint, Black format check, pytest (157 tests), full pipeline run |
 | **Unity Test** | Compile + EditMode/PlayMode tests via game-ci Docker |
 | **Unity Build** | Win64 + Linux64 + macOS artifacts (on `main` push only) |
 | **CodeQL** | Static security analysis for Python + C# |

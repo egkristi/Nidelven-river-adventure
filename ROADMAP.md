@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-15 (Phase 13: xeno-canto bird audio + Lakseregisteret salmon + Dybdedata bathymetry)
+Last updated: 2026-05-15 (Phase 14: Barentswatch AIS vessel traffic + Riksantikvaren cultural heritage)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -10,7 +10,7 @@ Last updated: 2026-05-15 (Phase 13: xeno-canto bird audio + Lakseregisteret salm
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` + `wildlife_data.json` + `bridge_data.json` + `building_data.json` + `bird_audio.json` + `salmon_data.json` + `bathymetry.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 14 phases complete (Phase 0-13).** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` + `flow_data.json` + `vegetation_data.json` + `wildlife_data.json` + `bridge_data.json` + `building_data.json` + `bird_audio.json` + `salmon_data.json` + `bathymetry.json` + `vessel_traffic.json` + `heritage_sites.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 15 phases complete (Phase 0-14).** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -26,6 +26,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` +
 > ✅ **Phase 11** — NVE HydAPI river flow + NIBIO AR5 land cover data integration
 > ✅ **Phase 12** — Artsdatabanken wildlife + NVDB bridges + FKB-Bygning buildings
 > ✅ **Phase 13** — xeno-canto bird audio + Lakseregisteret salmon + Dybdedata bathymetry
+> ✅ **Phase 14** — Barentswatch AIS vessel traffic + Riksantikvaren cultural heritage
 
 ### Full Audit (2026-05-15)
 
@@ -45,7 +46,7 @@ GitHub issues filed: #26, #27, #28, #29, #30, #31, #32
 
 | Component | State | Confidence |
 |-----------|-------|-----------|
-| Python MVP pipeline | ✅ Functional (140 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, Artsdatabanken, NVDB, FKB-Bygning, xeno-canto, Lakseregisteret, Dybdedata, CLI — all lint clean |
+| Python MVP pipeline | ✅ Functional (157 tests) | DEM, mesh, D8 flow, river, splatmap, weather, orthophoto, QGIS export, HydAPI, AR5, Artsdatabanken, NVDB, FKB-Bygning, xeno-canto, Lakseregisteret, Dybdedata, Barentswatch AIS, Riksantikvaren, CLI — all lint clean |
 | Unity scripts (17) | ✅ Compile clean (0 warnings) | All logic implemented, deprecated APIs fixed |
 | CI — Python | ✅ Passing | Ruff + Black + pytest + pipeline smoke test |
 | CI — Unity Test | ✅ Passing | Compiles in game-ci Docker (6000.4.5f1) |
@@ -368,6 +369,21 @@ All Critical and High issues from the 2026-05-15 audit have been fixed:
   - Kartverket WMS capabilities check
 - [x] Add `--bird-audio`, `--salmon`, `--bathymetry` CLI flags to main.py ✔️
 - [x] Add 31 new tests (9 xeno-canto + 11 Lakseregisteret + 11 Dybdedata), total: 140 passing ✔️
+
+### Phase 14: Barentswatch AIS + Riksantikvaren ✅ COMPLETE
+
+- [x] Implement `barentswatch_ais.py` — Barentswatch AIS vessel traffic client ✔️ (5b86760) — Fixes #52
+  - 5 vessel types at Arendal harbor (ferry, fishing, cargo, sailing, passenger)
+  - AIS ship type classification (codes 0-99 → category)
+  - Route patterns with waypoints, loop config, and spawn probability
+  - Barentswatch AIS API integration (live vessel positions)
+- [x] Implement `riksantikvaren.py` — Riksantikvaren cultural heritage POI client ✔️ (5b86760) — Fixes #53
+  - 8 heritage sites along Nidelva (power stations, iron works, churches, farms, wharves)
+  - Heritage category classification (industrial, religious, agricultural, maritime, transport, residential)
+  - Discovery radius (100m protected, 50m normal) for gameplay POI triggers
+  - Riksantikvaren Askeladden WMS integration
+- [x] Add `--ais`, `--heritage` CLI flags to main.py ✔️
+- [x] Add 17 new tests (8 Barentswatch AIS + 9 Riksantikvaren), total: 157 passing ✔️
 
 ---
 
@@ -732,8 +748,8 @@ Based on the ratings above, recommended integration order:
 9. ~~**Kartverket Dybdedata** — River depth for underwater terrain + boat physics~~ ✅ (7d820b5, #51)
 10. ~~**Norge i bilder** — Aerial photos as terrain textures~~ ✅ (norgeibilder.py, --orthophoto flag)
 11. ~~**Lakseregisteret** — Salmon spawning events as gameplay feature~~ ✅ (7d820b5, #50)
-12. **Barentswatch AIS** — Animate ship traffic near Arendal harbor
-13. **Riksantikvaren** — Cultural heritage POIs with info panels
+12. ~~**Barentswatch AIS** — Animate ship traffic near Arendal harbor~~ ✅ (5b86760, #52)
+13. ~~**Riksantikvaren** — Cultural heritage POIs with info panels~~ ✅ (5b86760, #53)
 
 ### Data Licensing Summary
 
@@ -757,6 +773,8 @@ Based on the ratings above, recommended integration order:
 - Wildlife: © Artsdatabanken (CC-BY), xeno-canto (CC-BY-NC)
 - Weather: © MET Norway (Frost API, CC-BY)
 - Infrastructure: © Kartverket (FKB, NLOD), © Statens vegvesen (NVDB, NLOD)
+- Heritage: © Riksantikvaren (Askeladden, NLOD)
+- Maritime: © Barentswatch (AIS, open delayed data)
 - Land use: © NIBIO (AR5, NLOD)
 - Maritime: © Kystverket/Barentswatch (AIS, NLOD)
 - Cultural heritage: © Riksantikvaren (Askeladden, NLOD)

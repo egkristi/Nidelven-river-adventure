@@ -108,6 +108,8 @@ docs/                  Data pipeline docs, Jira issues
 | `nve_river.py` | NVE ELVIS WFS river geometry import | partial |
 | `weather.py` | MET Norway weather integration (live + seasonal) | partial |
 | `dem_downloader.py` | Copernicus GLO-30 tile download | 30% |
+| `barentswatch_ais.py` | Barentswatch AIS vessel traffic client | partial |
+| `riksantikvaren.py` | Riksantikvaren Askeladden heritage POIs | partial |
 | `camera.py` | Interactive 3D viewer (OpenGL/glm) | 0% |
 | `headless_renderer.py` | Matplotlib preview images | 0% |
 | `renderer.py` | ModernGL interactive renderer | 0% |
