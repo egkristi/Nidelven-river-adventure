@@ -1,6 +1,6 @@
 # Nidelven River Adventure — Roadmap & Project Audit
 
-Last updated: 2026-05-14 (Phase 9: All open issues resolved — #43, #44, #45 closed)
+Last updated: 2026-05-15 (Phase 10: CI cleanup — deduplicated workaround, upgraded action-gh-release v2)
 
 [![CI](https://github.com/egkristi/Nidelven-river-adventure/actions/workflows/ci.yml/badge.svg)](https://github.com/egkristi/Nidelven-river-adventure/actions)
 
@@ -10,7 +10,7 @@ Last updated: 2026-05-14 (Phase 9: All open issues resolved — #43, #44, #45 cl
 
 The project has a **complete Unity codebase** (17 scripts, 2 shaders, URP pipeline) and a **working Python terrain pipeline** (DEM download, mesh generation, D8 flow accumulation, river tracing, weather integration, splatmap generation). CI/CD produces automated Win64 + Linux64 + macOS builds on every push.
 
-The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 9 phases complete.** v1.0.0 feature-complete.
+The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` → Unity `StreamingAssets/` auto-loads at runtime. **All 10 phases complete.** v1.0.0 feature-complete.
 
 > ✅ **Phase 0** — Security fixes, Python lint clean, critical bugs resolved
 > ✅ **Phase 1** — Playable scene, boat+camera on terrain, CI builds
@@ -22,6 +22,7 @@ The Python pipeline exports `terrain.raw` + `river_path.json` + `weather.json` �
 > ✅ **Phase 7** — Norge i bilder aerial orthophoto terrain textures
 > ✅ **Phase 8** — Tech debt: FixedUpdate physics, timeScale, auto-save, CI fix
 > ✅ **Phase 9** — Close all open issues: flow perf, CodeQL C#, CLI tests
+> ✅ **Phase 10** — CI cleanup: deduplicate workaround, upgrade action-gh-release v2
 
 ### Full Audit (2026-05-15)
 
@@ -363,7 +364,7 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 
 | Item | Resolution | Commit |
 |------|-----------|--------|
-| `softprops/action-gh-release@v1` outdated | Upgraded to v2 | — |
+| `softprops/action-gh-release@v1` outdated | Upgraded to v3 (via v2 + dependabot) | 2a5c2bc + #37 |
 | Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | — |
 
 ### Resolved (Phase 9 - 2026-05-14)
@@ -411,13 +412,13 @@ s3://sentinel-cogs/sentinel-s2-l2a-cogs/{year}/{tile}/
 | SaveManager GetSlotScreenshot leaks Texture2D | Cache in screenshotCache[] | 2b045d1 |
 | camera.py unconditional import of optional deps | Lazy-import glm | 2b045d1 |
 | Global np.random.seed(42) pollution | Use local default_rng instance | 2b045d1 |
-| CodeQL only scans Python (not C#) | Medium | 30 min | — |
-| Duplicated CI workaround code (3x) | ~~Resolved~~ | — | — |
-| Legacy UI (UnityEngine.UI) vs TMPro | Low | 2 hr | — |
-| `softprops/action-gh-release@v1` outdated (v2 exists) | ~~Resolved~~ | — | — |
-| No CLI test coverage (main.py) | Low | 1 hr | — |
-| `export_river_path_json()` untested | Low | 30 min | — |
-| `pytest-cov` not declared as dependency | Low | 5 min | — |
+| CodeQL only scans Python (not C#) | Added C# scanning (build-mode: none) | 787997d |
+| Duplicated CI workaround code (3x) | Extracted to `.github/scripts/prepare-ci.sh` | 2a5c2bc |
+| Legacy UI (UnityEngine.UI) vs TMPro | Low | Still active | — |
+| `softprops/action-gh-release@v1` outdated (v2 exists) | Upgraded to v2 | 2a5c2bc |
+| No CLI test coverage (main.py) | 5 integration tests (TestCLI class) | 52e16d7 |
+| `export_river_path_json()` untested | Tested via TestCLI integration | 52e16d7 |
+| `pytest-cov` not declared as dependency | Added to dev dependency group | e6f1e57 |
 
 ### Resolved
 
@@ -486,7 +487,7 @@ cd Nidelven-river-adventure
 
 ---
 
-## Next Steps — Phase 8: Tech Debt & Quality
+## Next Steps — Remaining Tech Debt
 
 ### Priority 1: Quick fixes (< 15 min each) ✅ ALL DONE
 - [x] Sprint in `Update()` not `FixedUpdate()` (physics jitter at low FPS) ✔️ (006cdcd)
@@ -498,15 +499,15 @@ cd Nidelven-river-adventure
 ### Priority 2: Medium effort (30 min — 2 hr)
 - [x] Time.timeScale competition (multiple systems) ✔️ (42141f0)
 - [x] SaveManager auto-save overwrites last user slot ✔️ (3272722)
-- [ ] `compute_flow_accumulation` O(n) Python loop → vectorize (#43)
+- [x] `compute_flow_accumulation` O(n) Python loop → vectorize ✔️ (7c7ce9b) — Fixes #43
 - [x] Add `pytest-cov` to dev deps ✔️ (e6f1e57)
-- [ ] Add CLI tests (main.py entry point) (#45)
+- [x] Add CLI tests (main.py entry point) ✔️ (52e16d7) — Fixes #45
 
 ### Priority 3: Low priority (post v1.0.0)
-- [ ] CodeQL for C# (extend existing workflow) (#44)
+- [x] CodeQL for C# (extend existing workflow) ✔️ (787997d) — Fixes #44
 - [ ] Legacy UI (UnityEngine.UI) → TMPro migration
-- [x] `softprops/action-gh-release@v1` → v2 ✔️
-- [x] Extract CI workaround into shared script ✔️
+- [x] `softprops/action-gh-release@v1` → v2 ✔️ (2a5c2bc)
+- [x] Extract CI workaround into shared script ✔️ (2a5c2bc)
 
 ### Future features
 - Weather effects (rain, fog particles)
